@@ -54,8 +54,9 @@ echo ====================================================
 start http://127.0.0.1:5173
 
 echo.
-echo ¡Sistema listo y lanzado!
+echo Â¡Sistema listo y lanzado!
 echo Puedes cerrar esta ventana sin detener los servicios en segundo plano.
 echo Para cerrarlos definitivamente en el futuro, vuelve a correr este archivo.
 echo.
 pause
+
