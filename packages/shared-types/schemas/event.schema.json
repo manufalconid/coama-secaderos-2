@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://coama.local/schemas/sync-event.schema.json",
+  "title": "SyncEvent",
+  "type": "object",
+  "required": [
+    "evento_id",
+    "tablet_id",
+    "secadero_id",
+    "fecha_hora_inicio",
+    "estado_evento",
+    "version",
+    "origenes"
+  ],
+  "properties": {
+    "evento_id": { "type": "string", "format": "uuid" },
+    "tablet_id": { "type": "string", "minLength": 1 },
+    "secadero_id": { "type": "string", "minLength": 1 },
+    "razon_id": { "type": ["string", "null"] },
+    "fecha_hora_inicio": { "type": "string", "format": "date-time" },
+    "fecha_hora_fin": { "type": ["string", "null"], "format": "date-time" },
+    "duracion_segundos": { "type": ["integer", "null"], "minimum": 0 },
+    "observacion": { "type": ["string", "null"] },
+    "estado_evento": {
+      "type": "string",
+      "enum": ["abierto", "cerrado", "corregido", "anulado"]
+    },
+    "version": { "type": "integer", "minimum": 1 },
+    "origenes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "properties": {
+          "origen_id": { "type": ["string", "null"] },
+          "origen_manual": { "type": ["string", "null"] }
+        }
+      }
+    },
+    "propuesta_manual": {
+      "type": ["object", "null"],
+      "properties": {
+        "tipo": { "type": "string", "enum": ["razon", "origen"] },
+        "texto": { "type": "string", "minLength": 1 },
+        "origen_manual": { "type": ["string", "null"] },
+        "comentario": { "type": ["string", "null"] }
+      }
+    },
+    "fecha_registro": { "type": ["string", "null"] },
+    "hora_registro": { "type": ["string", "null"] },
+    "timestamp_registro": { "type": ["string", "null"], "format": "date-time" },
+    "hora_inicio_turno": { "type": ["string", "null"] },
+    "hora_fin_turno": { "type": ["string", "null"] },
+    "tipo_turno": { "type": ["string", "null"] },
+    "hora_inicio_descanso": { "type": ["string", "null"] },
+    "hora_fin_descanso": { "type": ["string", "null"] },
+    "linea": { "type": ["string", "null"] },
+    "hora_desde": { "type": ["string", "null"], "format": "date-time" },
+    "hora_hasta": { "type": ["string", "null"], "format": "date-time" },
+    "categoria_tm": { "type": ["string", "null"] },
+    "tiempo_muerto": { "type": ["string", "null"] },
+    "observaciones": { "type": ["string", "null"] },
+    "ubicacion": { "type": ["string", "null"] },
+    "tiempo_disponible_turno": { "type": ["number", "null"] },
+    "tiempo_parada": { "type": ["integer", "null"], "minimum": 0 }
+  }
+}

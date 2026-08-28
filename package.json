@@ -1,0 +1,26 @@
+{
+  "name": "coama-tiempos-muertos-2",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "api": "node apps/api/src/server.mjs",
+    "api:postgres": "node --env-file-if-exists=.env apps/api/src/server-postgres.mjs",
+    "supervisor:dev": "npm run dev -w @coama/supervisor-web",
+    "supervisor:build": "npm run build -w @coama/supervisor-web",
+    "build:apk": "node scripts/build-apk.mjs",
+    "validate:sync": "node scripts/validate-sync.mjs",
+    "validate:master-data": "node scripts/validate-master-data.mjs",
+    "validate:sync:postgres": "node scripts/validate-sync-postgres.mjs",
+    "export:erp": "node scripts/export-erp.mjs",
+    "check": "node --check apps/api/src/server.mjs && node --check apps/api/src/server-postgres.mjs && node --check apps/api/src/store.mjs && node --check apps/api/src/postgres-store.mjs && node --check packages/validation/src/event-validation.mjs && node --check scripts/validate-sync.mjs && node --check scripts/validate-master-data.mjs && node --check scripts/validate-sync-postgres.mjs"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "dependencies": {
+    "pg": "^8.23.0",
+    "xlsx": "^0.18.5"
+  }
+}

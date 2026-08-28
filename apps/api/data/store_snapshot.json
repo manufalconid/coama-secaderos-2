@@ -1,0 +1,2564 @@
+{
+  "events": [
+    [
+      "a98e3ca7-3eae-402e-8361-fbe93c5d2207",
+      {
+        "evento_id": "a98e3ca7-3eae-402e-8361-fbe93c5d2207",
+        "tablet_id": "tab-sec-omeco",
+        "secadero_id": "sec-omeco",
+        "fecha_hora_inicio": "2026-08-28T14:57:27.729Z",
+        "fecha_hora_fin": "2026-08-28T14:57:51.591Z",
+        "duracion_segundos": 24,
+        "estado_evento": "cerrado",
+        "tipo_registro": "manual",
+        "origen_id": "ori-electrico",
+        "razon_id": "raz-cargador",
+        "observacion": "",
+        "version": 2,
+        "sincronizado": false,
+        "timestamp_registro": "2026-08-28T14:57:27.729Z",
+        "fecha_registro": "2026-08-28",
+        "hora_registro": "11:57:27",
+        "hora_desde": "2026-08-28T14:57:27.729Z",
+        "linea": "OMECO",
+        "hora_inicio_turno": "06:00:00",
+        "hora_fin_turno": "18:00:00",
+        "tipo_turno": "Turno Día (06:00 a 18:00)",
+        "hora_inicio_descanso": "12:00:00",
+        "hora_fin_descanso": "13:00:00",
+        "tiempo_disponible_turno": 11,
+        "turno_id": "tur-dia",
+        "hora_hasta": "2026-08-28T14:57:51.591Z",
+        "tiempo_parada": 24,
+        "categoria_tm": "ELECTRICO",
+        "tiempo_muerto": "CARGADOR",
+        "observaciones": "",
+        "ubicacion": null,
+        "origenes": [
+          {
+            "origen_id": "ori-electrico"
+          }
+        ],
+        "propuesta_manual": null,
+        "recibido_en_servidor": "2026-08-28T14:57:52.996Z"
+      }
+    ],
+    [
+      "6a32fb40-83ac-4dc9-8e85-47e413423b4c",
+      {
+        "evento_id": "6a32fb40-83ac-4dc9-8e85-47e413423b4c",
+        "inicio_evento_id": "a98e3ca7-3eae-402e-8361-fbe93c5d2207",
+        "tablet_id": "tab-sec-omeco",
+        "secadero_id": "sec-omeco",
+        "fecha_hora_inicio": "2026-08-28T14:57:27.729Z",
+        "fecha_hora_fin": "2026-08-28T14:57:51.591Z",
+        "duracion_segundos": 24,
+        "estado_evento": "cerrado",
+        "tipo_registro": "manual",
+        "origen_id": "ori-electrico",
+        "razon_id": "raz-cargador",
+        "observacion": "",
+        "version": 1,
+        "sincronizado": false,
+        "hora_inicio_turno": "06:00:00",
+        "hora_fin_turno": "18:00:00",
+        "tipo_turno": "Turno Día (06:00 a 18:00)",
+        "hora_inicio_descanso": "12:00:00",
+        "hora_fin_descanso": "13:00:00",
+        "linea": "OMECO",
+        "hora_desde": "2026-08-28T14:57:27.729Z",
+        "hora_hasta": "2026-08-28T14:57:51.591Z",
+        "categoria_tm": "ELECTRICO",
+        "tiempo_muerto": "CARGADOR",
+        "observaciones": "",
+        "ubicacion": null,
+        "tiempo_disponible_turno": 11,
+        "tiempo_parada": 24,
+        "turno_id": "tur-dia",
+        "origenes": [
+          {
+            "origen_id": "ori-electrico"
+          }
+        ],
+        "propuesta_manual": null,
+        "recibido_en_servidor": "2026-08-28T14:57:52.996Z",
+        "fecha_registro": "2026-08-28",
+        "hora_registro": "11:57:52",
+        "timestamp_registro": "2026-08-28T14:57:52.996Z"
+      }
+    ],
+    [
+      "610e7d67-ca1f-49ae-a3bc-62f877162ef6",
+      {
+        "evento_id": "610e7d67-ca1f-49ae-a3bc-62f877162ef6",
+        "tablet_id": "tab-sec-omeco",
+        "secadero_id": "sec-omeco",
+        "fecha_hora_inicio": "2026-08-28T14:58:12.621Z",
+        "fecha_hora_fin": "2026-08-28T14:58:18.271Z",
+        "duracion_segundos": 6,
+        "estado_evento": "cerrado",
+        "tipo_registro": "manual",
+        "origen_id": "ori-mecanico",
+        "razon_id": "raz-cargador",
+        "observacion": "",
+        "version": 2,
+        "sincronizado": false,
+        "timestamp_registro": "2026-08-28T14:58:12.621Z",
+        "fecha_registro": "2026-08-28",
+        "hora_registro": "11:58:12",
+        "hora_desde": "2026-08-28T14:58:12.621Z",
+        "linea": "OMECO",
+        "hora_inicio_turno": "06:00:00",
+        "hora_fin_turno": "18:00:00",
+        "tipo_turno": "Turno Día (06:00 a 18:00)",
+        "hora_inicio_descanso": "12:00:00",
+        "hora_fin_descanso": "13:00:00",
+        "tiempo_disponible_turno": 11,
+        "turno_id": "tur-dia",
+        "hora_hasta": "2026-08-28T14:58:18.271Z",
+        "tiempo_parada": 6,
+        "categoria_tm": "MECANICO",
+        "tiempo_muerto": "CARGADOR",
+        "observaciones": "",
+        "ubicacion": null,
+        "origenes": [
+          {
+            "origen_id": "ori-mecanico"
+          }
+        ],
+        "propuesta_manual": null,
+        "recibido_en_servidor": "2026-08-28T14:58:19.668Z"
+      }
+    ],
+    [
+      "6b6c4b74-250e-4d15-9ebf-02ee11285b8f",
+      {
+        "evento_id": "6b6c4b74-250e-4d15-9ebf-02ee11285b8f",
+        "inicio_evento_id": "610e7d67-ca1f-49ae-a3bc-62f877162ef6",
+        "tablet_id": "tab-sec-omeco",
+        "secadero_id": "sec-omeco",
+        "fecha_hora_inicio": "2026-08-28T14:58:12.621Z",
+        "fecha_hora_fin": "2026-08-28T14:58:18.271Z",
+        "duracion_segundos": 6,
+        "estado_evento": "cerrado",
+        "tipo_registro": "manual",
+        "origen_id": "ori-mecanico",
+        "razon_id": "raz-cargador",
+        "observacion": "",
+        "version": 1,
+        "sincronizado": false,
+        "hora_inicio_turno": "06:00:00",
+        "hora_fin_turno": "18:00:00",
+        "tipo_turno": "Turno Día (06:00 a 18:00)",
+        "hora_inicio_descanso": "12:00:00",
+        "hora_fin_descanso": "13:00:00",
+        "linea": "OMECO",
+        "hora_desde": "2026-08-28T14:58:12.621Z",
+        "hora_hasta": "2026-08-28T14:58:18.271Z",
+        "categoria_tm": "MECANICO",
+        "tiempo_muerto": "CARGADOR",
+        "observaciones": "",
+        "ubicacion": null,
+        "tiempo_disponible_turno": 11,
+        "tiempo_parada": 6,
+        "turno_id": "tur-dia",
+        "origenes": [
+          {
+            "origen_id": "ori-mecanico"
+          }
+        ],
+        "propuesta_manual": null,
+        "recibido_en_servidor": "2026-08-28T14:58:19.669Z",
+        "fecha_registro": "2026-08-28",
+        "hora_registro": "11:58:19",
+        "timestamp_registro": "2026-08-28T14:58:19.669Z"
+      }
+    ],
+    [
+      "22393428-9e66-4992-8a9c-685d25e3eb5f",
+      {
+        "evento_id": "22393428-9e66-4992-8a9c-685d25e3eb5f",
+        "tablet_id": "tab-sec-omeco",
+        "secadero_id": "sec-omeco",
+        "fecha_hora_inicio": "2026-08-28T15:00:01.402Z",
+        "fecha_hora_fin": "2026-08-28T15:00:21.105Z",
+        "duracion_segundos": 20,
+        "estado_evento": "cerrado",
+        "tipo_registro": "manual",
+        "origen_id": "ori-proceso",
+        "razon_id": "raz-secadero-trancado",
+        "observacion": "",
+        "version": 2,
+        "sincronizado": false,
+        "timestamp_registro": "2026-08-28T15:00:01.402Z",
+        "fecha_registro": "2026-08-28",
+        "hora_registro": "12:00:01",
+        "hora_desde": "2026-08-28T15:00:01.402Z",
+        "linea": "OMECO",
+        "hora_inicio_turno": "06:00:00",
+        "hora_fin_turno": "18:00:00",
+        "tipo_turno": "Turno Día (06:00 a 18:00)",
+        "hora_inicio_descanso": "12:00:00",
+        "hora_fin_descanso": "13:00:00",
+        "tiempo_disponible_turno": 11,
+        "turno_id": "tur-dia",
+        "hora_hasta": "2026-08-28T15:00:21.105Z",
+        "tiempo_parada": 20,
+        "categoria_tm": "PROCESO",
+        "tiempo_muerto": "SECADERO TRANCADO",
+        "observaciones": "",
+        "ubicacion": "N1P1",
+        "origenes": [
+          {
+            "origen_id": "ori-proceso"
+          }
+        ],
+        "propuesta_manual": null,
+        "recibido_en_servidor": "2026-08-28T15:00:22.512Z"
+      }
+    ],
+    [
+      "442c4f01-b58a-4820-a2b4-d032703c47ff",
+      {
+        "evento_id": "442c4f01-b58a-4820-a2b4-d032703c47ff",
+        "inicio_evento_id": "22393428-9e66-4992-8a9c-685d25e3eb5f",
+        "tablet_id": "tab-sec-omeco",
+        "secadero_id": "sec-omeco",
+        "fecha_hora_inicio": "2026-08-28T15:00:01.402Z",
+        "fecha_hora_fin": "2026-08-28T15:00:21.105Z",
+        "duracion_segundos": 20,
+        "estado_evento": "cerrado",
+        "tipo_registro": "manual",
+        "origen_id": "ori-proceso",
+        "razon_id": "raz-secadero-trancado",
+        "observacion": "",
+        "version": 1,
+        "sincronizado": false,
+        "hora_inicio_turno": "06:00:00",
+        "hora_fin_turno": "18:00:00",
+        "tipo_turno": "Turno Día (06:00 a 18:00)",
+        "hora_inicio_descanso": "12:00:00",
+        "hora_fin_descanso": "13:00:00",
+        "linea": "OMECO",
+        "hora_desde": "2026-08-28T15:00:01.402Z",
+        "hora_hasta": "2026-08-28T15:00:21.105Z",
+        "categoria_tm": "PROCESO",
+        "tiempo_muerto": "SECADERO TRANCADO",
+        "observaciones": "",
+        "ubicacion": "N1P1",
+        "tiempo_disponible_turno": 11,
+        "tiempo_parada": 20,
+        "turno_id": "tur-dia",
+        "origenes": [
+          {
+            "origen_id": "ori-proceso"
+          }
+        ],
+        "propuesta_manual": null,
+        "recibido_en_servidor": "2026-08-28T15:00:22.513Z",
+        "fecha_registro": "2026-08-28",
+        "hora_registro": "12:00:22",
+        "timestamp_registro": "2026-08-28T15:00:22.513Z"
+      }
+    ],
+    [
+      "5cdb187a-6fef-4aeb-8017-281ea9a7df8d",
+      {
+        "evento_id": "5cdb187a-6fef-4aeb-8017-281ea9a7df8d",
+        "tablet_id": "tab-sec-omeco",
+        "secadero_id": "sec-omeco",
+        "fecha_hora_inicio": "2026-08-28T15:01:55.904Z",
+        "fecha_hora_fin": "2026-08-28T15:02:07.421Z",
+        "duracion_segundos": 12,
+        "estado_evento": "cerrado",
+        "tipo_registro": "manual",
+        "origen_id": "ori-logistica",
+        "razon_id": null,
+        "observacion": "[Sugerido] Prueba.",
+        "version": 2,
+        "sincronizado": false,
+        "timestamp_registro": "2026-08-28T15:01:55.904Z",
+        "fecha_registro": "2026-08-28",
+        "hora_registro": "12:01:55",
+        "hora_desde": "2026-08-28T15:01:55.904Z",
+        "linea": "OMECO",
+        "hora_inicio_turno": "06:00:00",
+        "hora_fin_turno": "18:00:00",
+        "tipo_turno": "Turno Día (06:00 a 18:00)",
+        "hora_inicio_descanso": "12:00:00",
+        "hora_fin_descanso": "13:00:00",
+        "tiempo_disponible_turno": 11,
+        "turno_id": "tur-dia",
+        "hora_hasta": "2026-08-28T15:02:07.421Z",
+        "tiempo_parada": 12,
+        "categoria_tm": "LOGISTICA",
+        "tiempo_muerto": "Prueba",
+        "observaciones": "[Sugerido] Prueba.",
+        "ubicacion": null,
+        "origenes": [
+          {
+            "origen_id": "ori-logistica"
+          }
+        ],
+        "propuesta_manual": {
+          "tipo": "razon",
+          "texto": "Prueba",
+          "comentario": ""
+        },
+        "recibido_en_servidor": "2026-08-28T15:02:08.821Z"
+      }
+    ],
+    [
+      "14628b8c-9d79-4a3b-9479-c0d012bcc4e9",
+      {
+        "evento_id": "14628b8c-9d79-4a3b-9479-c0d012bcc4e9",
+        "inicio_evento_id": "5cdb187a-6fef-4aeb-8017-281ea9a7df8d",
+        "tablet_id": "tab-sec-omeco",
+        "secadero_id": "sec-omeco",
+        "fecha_hora_inicio": "2026-08-28T15:01:55.904Z",
+        "fecha_hora_fin": "2026-08-28T15:02:07.421Z",
+        "duracion_segundos": 12,
+        "estado_evento": "cerrado",
+        "tipo_registro": "manual",
+        "origen_id": "ori-logistica",
+        "razon_id": null,
+        "observacion": "[Sugerido] Prueba.",
+        "version": 1,
+        "sincronizado": false,
+        "hora_inicio_turno": "06:00:00",
+        "hora_fin_turno": "18:00:00",
+        "tipo_turno": "Turno Día (06:00 a 18:00)",
+        "hora_inicio_descanso": "12:00:00",
+        "hora_fin_descanso": "13:00:00",
+        "linea": "OMECO",
+        "hora_desde": "2026-08-28T15:01:55.904Z",
+        "hora_hasta": "2026-08-28T15:02:07.421Z",
+        "categoria_tm": "LOGISTICA",
+        "tiempo_muerto": "Prueba",
+        "observaciones": "[Sugerido] Prueba.",
+        "ubicacion": null,
+        "tiempo_disponible_turno": 11,
+        "tiempo_parada": 12,
+        "turno_id": "tur-dia",
+        "origenes": [
+          {
+            "origen_id": "ori-logistica"
+          }
+        ],
+        "propuesta_manual": {
+          "tipo": "razon",
+          "texto": "Prueba",
+          "comentario": ""
+        },
+        "recibido_en_servidor": "2026-08-28T15:02:08.822Z",
+        "fecha_registro": "2026-08-28",
+        "hora_registro": "12:02:08",
+        "timestamp_registro": "2026-08-28T15:02:08.822Z"
+      }
+    ],
+    [
+      "2ec7cb06-6c57-4843-a549-bed6ad1e0309",
+      {
+        "evento_id": "2ec7cb06-6c57-4843-a549-bed6ad1e0309",
+        "tablet_id": "tab-sec-omeco",
+        "secadero_id": "sec-omeco",
+        "fecha_hora_inicio": "2026-08-28T15:04:42.121Z",
+        "fecha_hora_fin": "2026-08-28T15:05:03.001Z",
+        "duracion_segundos": 21,
+        "estado_evento": "cerrado",
+        "tipo_registro": "manual",
+        "origen_id": "ori-mecanico",
+        "razon_id": "raz-cadena",
+        "observacion": "",
+        "version": 2,
+        "sincronizado": false,
+        "timestamp_registro": "2026-08-28T15:04:42.121Z",
+        "fecha_registro": "2026-08-28",
+        "hora_registro": "12:04:42",
+        "hora_desde": "2026-08-28T15:04:42.121Z",
+        "linea": "OMECO",
+        "hora_inicio_turno": "06:00:00",
+        "hora_fin_turno": "18:00:00",
+        "tipo_turno": "Turno Día (06:00 a 18:00)",
+        "hora_inicio_descanso": "12:00:00",
+        "hora_fin_descanso": "13:00:00",
+        "tiempo_disponible_turno": 11,
+        "turno_id": "tur-dia",
+        "hora_hasta": "2026-08-28T15:05:03.001Z",
+        "tiempo_parada": 21,
+        "categoria_tm": "MECANICO",
+        "tiempo_muerto": "CADENA",
+        "observaciones": "",
+        "ubicacion": null,
+        "origenes": [
+          {
+            "origen_id": "ori-mecanico"
+          }
+        ],
+        "propuesta_manual": null,
+        "recibido_en_servidor": "2026-08-28T15:05:04.405Z"
+      }
+    ],
+    [
+      "d5e06c79-9c6c-4ab2-b2e1-b048de3780e4",
+      {
+        "evento_id": "d5e06c79-9c6c-4ab2-b2e1-b048de3780e4",
+        "inicio_evento_id": "2ec7cb06-6c57-4843-a549-bed6ad1e0309",
+        "tablet_id": "tab-sec-omeco",
+        "secadero_id": "sec-omeco",
+        "fecha_hora_inicio": "2026-08-28T15:04:42.121Z",
+        "fecha_hora_fin": "2026-08-28T15:05:03.001Z",
+        "duracion_segundos": 21,
+        "estado_evento": "cerrado",
+        "tipo_registro": "manual",
+        "origen_id": "ori-mecanico",
+        "razon_id": "raz-cadena",
+        "observacion": "",
+        "version": 1,
+        "sincronizado": false,
+        "hora_inicio_turno": "06:00:00",
+        "hora_fin_turno": "18:00:00",
+        "tipo_turno": "Turno Día (06:00 a 18:00)",
+        "hora_inicio_descanso": "12:00:00",
+        "hora_fin_descanso": "13:00:00",
+        "linea": "OMECO",
+        "hora_desde": "2026-08-28T15:04:42.121Z",
+        "hora_hasta": "2026-08-28T15:05:03.001Z",
+        "categoria_tm": "MECANICO",
+        "tiempo_muerto": "CADENA",
+        "observaciones": "",
+        "ubicacion": null,
+        "tiempo_disponible_turno": 11,
+        "tiempo_parada": 21,
+        "turno_id": "tur-dia",
+        "origenes": [
+          {
+            "origen_id": "ori-mecanico"
+          }
+        ],
+        "propuesta_manual": null,
+        "recibido_en_servidor": "2026-08-28T15:05:04.405Z",
+        "fecha_registro": "2026-08-28",
+        "hora_registro": "12:05:04",
+        "timestamp_registro": "2026-08-28T15:05:04.405Z"
+      }
+    ],
+    [
+      "f4c75d24-b248-44a2-ae44-9be53f120cb8",
+      {
+        "evento_id": "f4c75d24-b248-44a2-ae44-9be53f120cb8",
+        "tablet_id": "tab-sec-omeco",
+        "secadero_id": "sec-omeco",
+        "fecha_hora_inicio": "2026-08-28T15:06:30.764Z",
+        "fecha_hora_fin": "2026-08-28T15:06:38.981Z",
+        "duracion_segundos": 8,
+        "estado_evento": "cerrado",
+        "tipo_registro": "manual",
+        "origen_id": "ori-operativo",
+        "razon_id": "raz-caldera",
+        "observacion": "",
+        "version": 2,
+        "sincronizado": false,
+        "timestamp_registro": "2026-08-28T15:06:30.764Z",
+        "fecha_registro": "2026-08-28",
+        "hora_registro": "12:06:30",
+        "hora_desde": "2026-08-28T15:06:30.764Z",
+        "linea": "OMECO",
+        "hora_inicio_turno": "06:00:00",
+        "hora_fin_turno": "18:00:00",
+        "tipo_turno": "Turno Día (06:00 a 18:00)",
+        "hora_inicio_descanso": "12:00:00",
+        "hora_fin_descanso": "13:00:00",
+        "tiempo_disponible_turno": 11,
+        "turno_id": "tur-dia",
+        "hora_hasta": "2026-08-28T15:06:38.981Z",
+        "tiempo_parada": 8,
+        "categoria_tm": "OPERATIVO",
+        "tiempo_muerto": "CALDERA",
+        "observaciones": "",
+        "ubicacion": null,
+        "origenes": [
+          {
+            "origen_id": "ori-operativo"
+          }
+        ],
+        "propuesta_manual": null,
+        "recibido_en_servidor": "2026-08-28T15:06:40.406Z"
+      }
+    ],
+    [
+      "3975c798-4d0e-4221-91ed-c5fc9738393f",
+      {
+        "evento_id": "3975c798-4d0e-4221-91ed-c5fc9738393f",
+        "inicio_evento_id": "f4c75d24-b248-44a2-ae44-9be53f120cb8",
+        "tablet_id": "tab-sec-omeco",
+        "secadero_id": "sec-omeco",
+        "fecha_hora_inicio": "2026-08-28T15:06:30.764Z",
+        "fecha_hora_fin": "2026-08-28T15:06:38.981Z",
+        "duracion_segundos": 8,
+        "estado_evento": "cerrado",
+        "tipo_registro": "manual",
+        "origen_id": "ori-operativo",
+        "razon_id": "raz-caldera",
+        "observacion": "",
+        "version": 1,
+        "sincronizado": false,
+        "hora_inicio_turno": "06:00:00",
+        "hora_fin_turno": "18:00:00",
+        "tipo_turno": "Turno Día (06:00 a 18:00)",
+        "hora_inicio_descanso": "12:00:00",
+        "hora_fin_descanso": "13:00:00",
+        "linea": "OMECO",
+        "hora_desde": "2026-08-28T15:06:30.764Z",
+        "hora_hasta": "2026-08-28T15:06:38.981Z",
+        "categoria_tm": "OPERATIVO",
+        "tiempo_muerto": "CALDERA",
+        "observaciones": "",
+        "ubicacion": null,
+        "tiempo_disponible_turno": 11,
+        "tiempo_parada": 8,
+        "turno_id": "tur-dia",
+        "origenes": [
+          {
+            "origen_id": "ori-operativo"
+          }
+        ],
+        "propuesta_manual": null,
+        "recibido_en_servidor": "2026-08-28T15:06:40.407Z",
+        "fecha_registro": "2026-08-28",
+        "hora_registro": "12:06:40",
+        "timestamp_registro": "2026-08-28T15:06:40.407Z"
+      }
+    ],
+    [
+      "10710f04-0c22-4a72-8b88-0f28de3ba697",
+      {
+        "evento_id": "10710f04-0c22-4a72-8b88-0f28de3ba697",
+        "tablet_id": "tab-sec-omeco",
+        "secadero_id": "sec-omeco",
+        "fecha_hora_inicio": "2026-08-28T15:07:03.819Z",
+        "fecha_hora_fin": "2026-08-28T15:07:10.826Z",
+        "duracion_segundos": 7,
+        "estado_evento": "cerrado",
+        "tipo_registro": "manual",
+        "origen_id": "ori-electrico",
+        "razon_id": "raz-cargador",
+        "observacion": "",
+        "version": 2,
+        "sincronizado": false,
+        "timestamp_registro": "2026-08-28T15:07:03.819Z",
+        "fecha_registro": "2026-08-28",
+        "hora_registro": "12:07:03",
+        "hora_desde": "2026-08-28T15:07:03.819Z",
+        "linea": "OMECO",
+        "hora_inicio_turno": "06:00:00",
+        "hora_fin_turno": "18:00:00",
+        "tipo_turno": "Turno Día (06:00 a 18:00)",
+        "hora_inicio_descanso": "12:00:00",
+        "hora_fin_descanso": "13:00:00",
+        "tiempo_disponible_turno": 11,
+        "turno_id": "tur-dia",
+        "hora_hasta": "2026-08-28T15:07:10.826Z",
+        "tiempo_parada": 7,
+        "categoria_tm": "ELECTRICO",
+        "tiempo_muerto": "CARGADOR",
+        "observaciones": "",
+        "ubicacion": null,
+        "origenes": [
+          {
+            "origen_id": "ori-electrico"
+          }
+        ],
+        "propuesta_manual": null,
+        "recibido_en_servidor": "2026-08-28T15:07:12.255Z"
+      }
+    ],
+    [
+      "21403143-2fed-4ed6-a2c6-2c16bf04a605",
+      {
+        "evento_id": "21403143-2fed-4ed6-a2c6-2c16bf04a605",
+        "inicio_evento_id": "10710f04-0c22-4a72-8b88-0f28de3ba697",
+        "tablet_id": "tab-sec-omeco",
+        "secadero_id": "sec-omeco",
+        "fecha_hora_inicio": "2026-08-28T15:07:03.819Z",
+        "fecha_hora_fin": "2026-08-28T15:07:10.826Z",
+        "duracion_segundos": 7,
+        "estado_evento": "cerrado",
+        "tipo_registro": "manual",
+        "origen_id": "ori-electrico",
+        "razon_id": "raz-cargador",
+        "observacion": "",
+        "version": 1,
+        "sincronizado": false,
+        "hora_inicio_turno": "06:00:00",
+        "hora_fin_turno": "18:00:00",
+        "tipo_turno": "Turno Día (06:00 a 18:00)",
+        "hora_inicio_descanso": "12:00:00",
+        "hora_fin_descanso": "13:00:00",
+        "linea": "OMECO",
+        "hora_desde": "2026-08-28T15:07:03.819Z",
+        "hora_hasta": "2026-08-28T15:07:10.826Z",
+        "categoria_tm": "ELECTRICO",
+        "tiempo_muerto": "CARGADOR",
+        "observaciones": "",
+        "ubicacion": null,
+        "tiempo_disponible_turno": 11,
+        "tiempo_parada": 7,
+        "turno_id": "tur-dia",
+        "origenes": [
+          {
+            "origen_id": "ori-electrico"
+          }
+        ],
+        "propuesta_manual": null,
+        "recibido_en_servidor": "2026-08-28T15:07:12.256Z",
+        "fecha_registro": "2026-08-28",
+        "hora_registro": "12:07:12",
+        "timestamp_registro": "2026-08-28T15:07:12.256Z"
+      }
+    ],
+    [
+      "12ead58c-c005-44ef-aad8-8651b226ce82",
+      {
+        "evento_id": "12ead58c-c005-44ef-aad8-8651b226ce82",
+        "tablet_id": "tab-sec-omeco",
+        "secadero_id": "sec-omeco",
+        "fecha_hora_inicio": "2026-08-28T15:09:07.003Z",
+        "fecha_hora_fin": "2026-08-28T15:09:42.588Z",
+        "duracion_segundos": 36,
+        "estado_evento": "cerrado",
+        "tipo_registro": "manual",
+        "origen_id": "ori-proceso",
+        "razon_id": "raz-secadero-trancado",
+        "observacion": "",
+        "version": 2,
+        "sincronizado": false,
+        "timestamp_registro": "2026-08-28T15:09:07.003Z",
+        "fecha_registro": "2026-08-28",
+        "hora_registro": "12:09:07",
+        "hora_desde": "2026-08-28T15:09:07.003Z",
+        "linea": "OMECO",
+        "hora_inicio_turno": "06:00:00",
+        "hora_fin_turno": "18:00:00",
+        "tipo_turno": "Turno Día (06:00 a 18:00)",
+        "hora_inicio_descanso": "12:00:00",
+        "hora_fin_descanso": "13:00:00",
+        "tiempo_disponible_turno": 11,
+        "turno_id": "tur-dia",
+        "hora_hasta": "2026-08-28T15:09:42.588Z",
+        "tiempo_parada": 36,
+        "categoria_tm": "PROCESO",
+        "tiempo_muerto": "SECADERO TRANCADO",
+        "observaciones": "",
+        "ubicacion": "N6P2",
+        "origenes": [
+          {
+            "origen_id": "ori-proceso"
+          }
+        ],
+        "propuesta_manual": null,
+        "recibido_en_servidor": "2026-08-28T15:09:44.009Z"
+      }
+    ],
+    [
+      "c26bd6fc-9797-4679-a90d-b74cafc0c8b5",
+      {
+        "evento_id": "c26bd6fc-9797-4679-a90d-b74cafc0c8b5",
+        "inicio_evento_id": "12ead58c-c005-44ef-aad8-8651b226ce82",
+        "tablet_id": "tab-sec-omeco",
+        "secadero_id": "sec-omeco",
+        "fecha_hora_inicio": "2026-08-28T15:09:07.003Z",
+        "fecha_hora_fin": "2026-08-28T15:09:42.588Z",
+        "duracion_segundos": 36,
+        "estado_evento": "cerrado",
+        "tipo_registro": "manual",
+        "origen_id": "ori-proceso",
+        "razon_id": "raz-secadero-trancado",
+        "observacion": "",
+        "version": 1,
+        "sincronizado": false,
+        "hora_inicio_turno": "06:00:00",
+        "hora_fin_turno": "18:00:00",
+        "tipo_turno": "Turno Día (06:00 a 18:00)",
+        "hora_inicio_descanso": "12:00:00",
+        "hora_fin_descanso": "13:00:00",
+        "linea": "OMECO",
+        "hora_desde": "2026-08-28T15:09:07.003Z",
+        "hora_hasta": "2026-08-28T15:09:42.588Z",
+        "categoria_tm": "PROCESO",
+        "tiempo_muerto": "SECADERO TRANCADO",
+        "observaciones": "",
+        "ubicacion": "N6P2",
+        "tiempo_disponible_turno": 11,
+        "tiempo_parada": 36,
+        "turno_id": "tur-dia",
+        "origenes": [
+          {
+            "origen_id": "ori-proceso"
+          }
+        ],
+        "propuesta_manual": null,
+        "recibido_en_servidor": "2026-08-28T15:09:44.009Z",
+        "fecha_registro": "2026-08-28",
+        "hora_registro": "12:09:44",
+        "timestamp_registro": "2026-08-28T15:09:44.009Z"
+      }
+    ],
+    [
+      "0d3165ad-76cf-4309-bc2e-f2f33c5c2e3e",
+      {
+        "evento_id": "0d3165ad-76cf-4309-bc2e-f2f33c5c2e3e",
+        "tablet_id": "tab-sec-omeco",
+        "secadero_id": "sec-omeco",
+        "fecha_hora_inicio": "2026-08-28T15:13:01.781Z",
+        "fecha_hora_fin": "2026-08-28T15:13:12.009Z",
+        "duracion_segundos": 10,
+        "estado_evento": "cerrado",
+        "tipo_registro": "manual",
+        "origen_id": "ori-externo",
+        "razon_id": "raz-corte-de-energia",
+        "observacion": "",
+        "version": 2,
+        "sincronizado": false,
+        "timestamp_registro": "2026-08-28T15:13:01.781Z",
+        "fecha_registro": "2026-08-28",
+        "hora_registro": "12:13:01",
+        "hora_desde": "2026-08-28T15:13:01.781Z",
+        "linea": "OMECO",
+        "hora_inicio_turno": "06:00:00",
+        "hora_fin_turno": "18:00:00",
+        "tipo_turno": "Turno Día (06:00 a 18:00)",
+        "hora_inicio_descanso": "12:00:00",
+        "hora_fin_descanso": "13:00:00",
+        "tiempo_disponible_turno": 11,
+        "turno_id": "tur-dia",
+        "hora_hasta": "2026-08-28T15:13:12.009Z",
+        "tiempo_parada": 10,
+        "categoria_tm": "EXTERNO",
+        "tiempo_muerto": "CORTE DE ENERGIA",
+        "observaciones": "",
+        "ubicacion": null,
+        "origenes": [
+          {
+            "origen_id": "ori-externo"
+          }
+        ],
+        "propuesta_manual": null,
+        "recibido_en_servidor": "2026-08-28T15:13:13.468Z"
+      }
+    ],
+    [
+      "338ef7d4-df2d-4ffc-bfd9-d88408e751ae",
+      {
+        "evento_id": "338ef7d4-df2d-4ffc-bfd9-d88408e751ae",
+        "inicio_evento_id": "0d3165ad-76cf-4309-bc2e-f2f33c5c2e3e",
+        "tablet_id": "tab-sec-omeco",
+        "secadero_id": "sec-omeco",
+        "fecha_hora_inicio": "2026-08-28T15:13:01.781Z",
+        "fecha_hora_fin": "2026-08-28T15:13:12.009Z",
+        "duracion_segundos": 10,
+        "estado_evento": "cerrado",
+        "tipo_registro": "manual",
+        "origen_id": "ori-externo",
+        "razon_id": "raz-corte-de-energia",
+        "observacion": "",
+        "version": 1,
+        "sincronizado": false,
+        "hora_inicio_turno": "06:00:00",
+        "hora_fin_turno": "18:00:00",
+        "tipo_turno": "Turno Día (06:00 a 18:00)",
+        "hora_inicio_descanso": "12:00:00",
+        "hora_fin_descanso": "13:00:00",
+        "linea": "OMECO",
+        "hora_desde": "2026-08-28T15:13:01.781Z",
+        "hora_hasta": "2026-08-28T15:13:12.009Z",
+        "categoria_tm": "EXTERNO",
+        "tiempo_muerto": "CORTE DE ENERGIA",
+        "observaciones": "",
+        "ubicacion": null,
+        "tiempo_disponible_turno": 11,
+        "tiempo_parada": 10,
+        "turno_id": "tur-dia",
+        "origenes": [
+          {
+            "origen_id": "ori-externo"
+          }
+        ],
+        "propuesta_manual": null,
+        "recibido_en_servidor": "2026-08-28T15:13:13.469Z",
+        "fecha_registro": "2026-08-28",
+        "hora_registro": "12:13:13",
+        "timestamp_registro": "2026-08-28T15:13:13.469Z"
+      }
+    ],
+    [
+      "71c31313-c321-41f2-aab2-fae61296f193",
+      {
+        "evento_id": "71c31313-c321-41f2-aab2-fae61296f193",
+        "tablet_id": "tab-sec-omeco",
+        "secadero_id": "sec-omeco",
+        "fecha_hora_inicio": "2026-08-28T15:13:18.038Z",
+        "fecha_hora_fin": "2026-08-28T15:13:34.281Z",
+        "duracion_segundos": 16,
+        "estado_evento": "cerrado",
+        "tipo_registro": "manual",
+        "origen_id": "ori-mecanico",
+        "razon_id": null,
+        "observacion": "[Sugerido] Prruueebbaa.",
+        "version": 2,
+        "sincronizado": false,
+        "timestamp_registro": "2026-08-28T15:13:18.038Z",
+        "fecha_registro": "2026-08-28",
+        "hora_registro": "12:13:18",
+        "hora_desde": "2026-08-28T15:13:18.038Z",
+        "linea": "OMECO",
+        "hora_inicio_turno": "06:00:00",
+        "hora_fin_turno": "18:00:00",
+        "tipo_turno": "Turno Día (06:00 a 18:00)",
+        "hora_inicio_descanso": "12:00:00",
+        "hora_fin_descanso": "13:00:00",
+        "tiempo_disponible_turno": 11,
+        "turno_id": "tur-dia",
+        "hora_hasta": "2026-08-28T15:13:34.281Z",
+        "tiempo_parada": 16,
+        "categoria_tm": "MECANICO",
+        "tiempo_muerto": "Prruueebbaa",
+        "observaciones": "[Sugerido] Prruueebbaa.",
+        "ubicacion": null,
+        "origenes": [
+          {
+            "origen_id": "ori-mecanico"
+          }
+        ],
+        "propuesta_manual": {
+          "tipo": "razon",
+          "texto": "Prruueebbaa",
+          "comentario": ""
+        },
+        "recibido_en_servidor": "2026-08-28T15:13:35.696Z"
+      }
+    ],
+    [
+      "6d5b03af-3e8b-41b7-8cde-f6e44af912f8",
+      {
+        "evento_id": "6d5b03af-3e8b-41b7-8cde-f6e44af912f8",
+        "inicio_evento_id": "71c31313-c321-41f2-aab2-fae61296f193",
+        "tablet_id": "tab-sec-omeco",
+        "secadero_id": "sec-omeco",
+        "fecha_hora_inicio": "2026-08-28T15:13:18.038Z",
+        "fecha_hora_fin": "2026-08-28T15:13:34.281Z",
+        "duracion_segundos": 16,
+        "estado_evento": "cerrado",
+        "tipo_registro": "manual",
+        "origen_id": "ori-mecanico",
+        "razon_id": null,
+        "observacion": "[Sugerido] Prruueebbaa.",
+        "version": 1,
+        "sincronizado": false,
+        "hora_inicio_turno": "06:00:00",
+        "hora_fin_turno": "18:00:00",
+        "tipo_turno": "Turno Día (06:00 a 18:00)",
+        "hora_inicio_descanso": "12:00:00",
+        "hora_fin_descanso": "13:00:00",
+        "linea": "OMECO",
+        "hora_desde": "2026-08-28T15:13:18.038Z",
+        "hora_hasta": "2026-08-28T15:13:34.281Z",
+        "categoria_tm": "MECANICO",
+        "tiempo_muerto": "Prruueebbaa",
+        "observaciones": "[Sugerido] Prruueebbaa.",
+        "ubicacion": null,
+        "tiempo_disponible_turno": 11,
+        "tiempo_parada": 16,
+        "turno_id": "tur-dia",
+        "origenes": [
+          {
+            "origen_id": "ori-mecanico"
+          }
+        ],
+        "propuesta_manual": {
+          "tipo": "razon",
+          "texto": "Prruueebbaa",
+          "comentario": ""
+        },
+        "recibido_en_servidor": "2026-08-28T15:13:35.696Z",
+        "fecha_registro": "2026-08-28",
+        "hora_registro": "12:13:35",
+        "timestamp_registro": "2026-08-28T15:13:35.696Z"
+      }
+    ],
+    [
+      "73b288c1-a21c-4207-ac86-5eec73f6a064",
+      {
+        "evento_id": "73b288c1-a21c-4207-ac86-5eec73f6a064",
+        "tablet_id": "tab-sec-omeco",
+        "secadero_id": "sec-omeco",
+        "fecha_hora_inicio": "2026-08-28T15:19:44.130Z",
+        "fecha_hora_fin": "2026-08-28T15:21:52.562Z",
+        "duracion_segundos": 128,
+        "estado_evento": "cerrado",
+        "tipo_registro": "manual",
+        "origen_id": "ori-externo",
+        "razon_id": "raz-corte-de-energia",
+        "observacion": "",
+        "version": 2,
+        "sincronizado": false,
+        "timestamp_registro": "2026-08-28T15:19:44.130Z",
+        "fecha_registro": "2026-08-28",
+        "hora_registro": "12:19:44",
+        "hora_desde": "2026-08-28T15:19:44.130Z",
+        "linea": "OMECO",
+        "hora_inicio_turno": "06:00:00",
+        "hora_fin_turno": "18:00:00",
+        "tipo_turno": "Turno Día (06:00 a 18:00)",
+        "hora_inicio_descanso": "12:00:00",
+        "hora_fin_descanso": "13:00:00",
+        "tiempo_disponible_turno": 11,
+        "turno_id": "tur-dia",
+        "hora_hasta": "2026-08-28T15:21:52.562Z",
+        "tiempo_parada": 128,
+        "categoria_tm": "EXTERNO",
+        "tiempo_muerto": "CORTE DE ENERGIA",
+        "observaciones": "",
+        "ubicacion": null,
+        "origenes": [
+          {
+            "origen_id": "ori-externo"
+          }
+        ],
+        "propuesta_manual": null,
+        "recibido_en_servidor": "2026-08-28T15:21:54.049Z"
+      }
+    ],
+    [
+      "6352d883-5b0b-4ae7-8b51-fc5e20bb8552",
+      {
+        "evento_id": "6352d883-5b0b-4ae7-8b51-fc5e20bb8552",
+        "inicio_evento_id": "73b288c1-a21c-4207-ac86-5eec73f6a064",
+        "tablet_id": "tab-sec-omeco",
+        "secadero_id": "sec-omeco",
+        "fecha_hora_inicio": "2026-08-28T15:19:44.130Z",
+        "fecha_hora_fin": "2026-08-28T15:21:52.562Z",
+        "duracion_segundos": 128,
+        "estado_evento": "cerrado",
+        "tipo_registro": "manual",
+        "origen_id": "ori-externo",
+        "razon_id": "raz-corte-de-energia",
+        "observacion": "",
+        "version": 1,
+        "sincronizado": false,
+        "hora_inicio_turno": "06:00:00",
+        "hora_fin_turno": "18:00:00",
+        "tipo_turno": "Turno Día (06:00 a 18:00)",
+        "hora_inicio_descanso": "12:00:00",
+        "hora_fin_descanso": "13:00:00",
+        "linea": "OMECO",
+        "hora_desde": "2026-08-28T15:19:44.130Z",
+        "hora_hasta": "2026-08-28T15:21:52.562Z",
+        "categoria_tm": "EXTERNO",
+        "tiempo_muerto": "CORTE DE ENERGIA",
+        "observaciones": "",
+        "ubicacion": null,
+        "tiempo_disponible_turno": 11,
+        "tiempo_parada": 128,
+        "turno_id": "tur-dia",
+        "origenes": [
+          {
+            "origen_id": "ori-externo"
+          }
+        ],
+        "propuesta_manual": null,
+        "recibido_en_servidor": "2026-08-28T15:21:54.049Z",
+        "fecha_registro": "2026-08-28",
+        "hora_registro": "12:21:54",
+        "timestamp_registro": "2026-08-28T15:21:54.049Z"
+      }
+    ],
+    [
+      "a009da9b-0d08-4950-86fd-ca6cf0010770",
+      {
+        "evento_id": "a009da9b-0d08-4950-86fd-ca6cf0010770",
+        "tablet_id": "tab-sec-omeco",
+        "secadero_id": "sec-omeco",
+        "fecha_hora_inicio": "2026-08-28T15:22:24.809Z",
+        "fecha_hora_fin": "2026-08-28T15:22:38.919Z",
+        "duracion_segundos": 14,
+        "estado_evento": "cerrado",
+        "tipo_registro": "manual",
+        "origen_id": "ori-logistica",
+        "razon_id": "raz-evacuaci-n-de-paquetes",
+        "observacion": "",
+        "version": 2,
+        "sincronizado": false,
+        "timestamp_registro": "2026-08-28T15:22:24.809Z",
+        "fecha_registro": "2026-08-28",
+        "hora_registro": "12:22:24",
+        "hora_desde": "2026-08-28T15:22:24.809Z",
+        "linea": "OMECO",
+        "hora_inicio_turno": "06:00:00",
+        "hora_fin_turno": "18:00:00",
+        "tipo_turno": "Turno Día (06:00 a 18:00)",
+        "hora_inicio_descanso": "12:00:00",
+        "hora_fin_descanso": "13:00:00",
+        "tiempo_disponible_turno": 11,
+        "turno_id": "tur-dia",
+        "hora_hasta": "2026-08-28T15:22:38.919Z",
+        "tiempo_parada": 14,
+        "categoria_tm": "LOGISTICA",
+        "tiempo_muerto": "EVACUACIÓN DE PAQUETES",
+        "observaciones": "",
+        "ubicacion": null,
+        "origenes": [
+          {
+            "origen_id": "ori-logistica"
+          }
+        ],
+        "propuesta_manual": null,
+        "recibido_en_servidor": "2026-08-28T15:22:40.342Z"
+      }
+    ],
+    [
+      "4c28cf70-ad48-48e4-8d78-51fc317baf29",
+      {
+        "evento_id": "4c28cf70-ad48-48e4-8d78-51fc317baf29",
+        "inicio_evento_id": "a009da9b-0d08-4950-86fd-ca6cf0010770",
+        "tablet_id": "tab-sec-omeco",
+        "secadero_id": "sec-omeco",
+        "fecha_hora_inicio": "2026-08-28T15:22:24.809Z",
+        "fecha_hora_fin": "2026-08-28T15:22:38.919Z",
+        "duracion_segundos": 14,
+        "estado_evento": "cerrado",
+        "tipo_registro": "manual",
+        "origen_id": "ori-logistica",
+        "razon_id": "raz-evacuaci-n-de-paquetes",
+        "observacion": "",
+        "version": 1,
+        "sincronizado": false,
+        "hora_inicio_turno": "06:00:00",
+        "hora_fin_turno": "18:00:00",
+        "tipo_turno": "Turno Día (06:00 a 18:00)",
+        "hora_inicio_descanso": "12:00:00",
+        "hora_fin_descanso": "13:00:00",
+        "linea": "OMECO",
+        "hora_desde": "2026-08-28T15:22:24.809Z",
+        "hora_hasta": "2026-08-28T15:22:38.919Z",
+        "categoria_tm": "LOGISTICA",
+        "tiempo_muerto": "EVACUACIÓN DE PAQUETES",
+        "observaciones": "",
+        "ubicacion": null,
+        "tiempo_disponible_turno": 11,
+        "tiempo_parada": 14,
+        "turno_id": "tur-dia",
+        "origenes": [
+          {
+            "origen_id": "ori-logistica"
+          }
+        ],
+        "propuesta_manual": null,
+        "recibido_en_servidor": "2026-08-28T15:22:40.342Z",
+        "fecha_registro": "2026-08-28",
+        "hora_registro": "12:22:40",
+        "timestamp_registro": "2026-08-28T15:22:40.342Z"
+      }
+    ],
+    [
+      "d8b52c3a-2114-4231-b021-71ae4d825b9f",
+      {
+        "evento_id": "d8b52c3a-2114-4231-b021-71ae4d825b9f",
+        "tablet_id": "tab-sec-omeco",
+        "secadero_id": "sec-omeco",
+        "fecha_hora_inicio": "2026-08-28T15:38:21.049Z",
+        "fecha_hora_fin": "2026-08-28T15:38:44.053Z",
+        "duracion_segundos": 23,
+        "estado_evento": "cerrado",
+        "tipo_registro": "manual",
+        "origen_id": "ori-mecanico",
+        "razon_id": "raz-cargador",
+        "observacion": "",
+        "version": 2,
+        "sincronizado": false,
+        "timestamp_registro": "2026-08-28T15:38:21.049Z",
+        "fecha_registro": "2026-08-28",
+        "hora_registro": "12:38:21",
+        "hora_desde": "2026-08-28T15:38:21.049Z",
+        "linea": "OMECO",
+        "hora_inicio_turno": "06:00:00",
+        "hora_fin_turno": "18:00:00",
+        "tipo_turno": "Turno Día (06:00 a 18:00)",
+        "hora_inicio_descanso": "12:00:00",
+        "hora_fin_descanso": "13:00:00",
+        "tiempo_disponible_turno": 11,
+        "turno_id": "tur-dia",
+        "hora_hasta": "2026-08-28T15:38:44.053Z",
+        "tiempo_parada": 23,
+        "categoria_tm": "MECANICO",
+        "tiempo_muerto": "CARGADOR",
+        "observaciones": "",
+        "ubicacion": null,
+        "origenes": [
+          {
+            "origen_id": "ori-mecanico"
+          }
+        ],
+        "propuesta_manual": null,
+        "recibido_en_servidor": "2026-08-28T15:38:45.493Z"
+      }
+    ],
+    [
+      "40d369f9-8c3d-49a3-a27b-338393b1d055",
+      {
+        "evento_id": "40d369f9-8c3d-49a3-a27b-338393b1d055",
+        "inicio_evento_id": "d8b52c3a-2114-4231-b021-71ae4d825b9f",
+        "tablet_id": "tab-sec-omeco",
+        "secadero_id": "sec-omeco",
+        "fecha_hora_inicio": "2026-08-28T15:38:21.049Z",
+        "fecha_hora_fin": "2026-08-28T15:38:44.053Z",
+        "duracion_segundos": 23,
+        "estado_evento": "cerrado",
+        "tipo_registro": "manual",
+        "origen_id": "ori-mecanico",
+        "razon_id": "raz-cargador",
+        "observacion": "",
+        "version": 1,
+        "sincronizado": false,
+        "hora_inicio_turno": "06:00:00",
+        "hora_fin_turno": "18:00:00",
+        "tipo_turno": "Turno Día (06:00 a 18:00)",
+        "hora_inicio_descanso": "12:00:00",
+        "hora_fin_descanso": "13:00:00",
+        "linea": "OMECO",
+        "hora_desde": "2026-08-28T15:38:21.049Z",
+        "hora_hasta": "2026-08-28T15:38:44.053Z",
+        "categoria_tm": "MECANICO",
+        "tiempo_muerto": "CARGADOR",
+        "observaciones": "",
+        "ubicacion": null,
+        "tiempo_disponible_turno": 11,
+        "tiempo_parada": 23,
+        "turno_id": "tur-dia",
+        "origenes": [
+          {
+            "origen_id": "ori-mecanico"
+          }
+        ],
+        "propuesta_manual": null,
+        "recibido_en_servidor": "2026-08-28T15:38:45.496Z",
+        "fecha_registro": "2026-08-28",
+        "hora_registro": "12:38:45",
+        "timestamp_registro": "2026-08-28T15:38:45.496Z"
+      }
+    ],
+    [
+      "b3019785-b3a5-48e6-8be2-d60231ebdd9c",
+      {
+        "evento_id": "b3019785-b3a5-48e6-8be2-d60231ebdd9c",
+        "tablet_id": "tab-sec-omeco",
+        "secadero_id": "sec-omeco",
+        "fecha_hora_inicio": "2026-08-28T15:38:53.177Z",
+        "fecha_hora_fin": "2026-08-28T15:40:49.181Z",
+        "duracion_segundos": 116,
+        "estado_evento": "cerrado",
+        "tipo_registro": "manual",
+        "origen_id": "ori-mecanico",
+        "razon_id": "raz-cargador",
+        "observacion": "",
+        "version": 2,
+        "sincronizado": false,
+        "timestamp_registro": "2026-08-28T15:38:53.177Z",
+        "fecha_registro": "2026-08-28",
+        "hora_registro": "12:38:53",
+        "hora_desde": "2026-08-28T15:38:53.177Z",
+        "linea": "OMECO",
+        "hora_inicio_turno": "06:00:00",
+        "hora_fin_turno": "18:00:00",
+        "tipo_turno": "Turno Día (06:00 a 18:00)",
+        "hora_inicio_descanso": "12:00:00",
+        "hora_fin_descanso": "13:00:00",
+        "tiempo_disponible_turno": 11,
+        "turno_id": "tur-dia",
+        "hora_hasta": "2026-08-28T15:40:49.181Z",
+        "tiempo_parada": 116,
+        "categoria_tm": "MECANICO",
+        "tiempo_muerto": "CARGADOR",
+        "observaciones": "",
+        "ubicacion": null,
+        "origenes": [
+          {
+            "origen_id": "ori-mecanico"
+          }
+        ],
+        "propuesta_manual": null,
+        "recibido_en_servidor": "2026-08-28T15:40:50.705Z"
+      }
+    ],
+    [
+      "3c1940c5-fdd1-4984-87ff-59b283217cfe",
+      {
+        "evento_id": "3c1940c5-fdd1-4984-87ff-59b283217cfe",
+        "inicio_evento_id": "b3019785-b3a5-48e6-8be2-d60231ebdd9c",
+        "tablet_id": "tab-sec-omeco",
+        "secadero_id": "sec-omeco",
+        "fecha_hora_inicio": "2026-08-28T15:38:53.177Z",
+        "fecha_hora_fin": "2026-08-28T15:40:49.181Z",
+        "duracion_segundos": 116,
+        "estado_evento": "cerrado",
+        "tipo_registro": "manual",
+        "origen_id": "ori-mecanico",
+        "razon_id": "raz-cargador",
+        "observacion": "",
+        "version": 1,
+        "sincronizado": false,
+        "hora_inicio_turno": "06:00:00",
+        "hora_fin_turno": "18:00:00",
+        "tipo_turno": "Turno Día (06:00 a 18:00)",
+        "hora_inicio_descanso": "12:00:00",
+        "hora_fin_descanso": "13:00:00",
+        "linea": "OMECO",
+        "hora_desde": "2026-08-28T15:38:53.177Z",
+        "hora_hasta": "2026-08-28T15:40:49.181Z",
+        "categoria_tm": "MECANICO",
+        "tiempo_muerto": "CARGADOR",
+        "observaciones": "",
+        "ubicacion": null,
+        "tiempo_disponible_turno": 11,
+        "tiempo_parada": 116,
+        "turno_id": "tur-dia",
+        "origenes": [
+          {
+            "origen_id": "ori-mecanico"
+          }
+        ],
+        "propuesta_manual": null,
+        "recibido_en_servidor": "2026-08-28T15:40:50.706Z",
+        "fecha_registro": "2026-08-28",
+        "hora_registro": "12:40:50",
+        "timestamp_registro": "2026-08-28T15:40:50.706Z"
+      }
+    ],
+    [
+      "27701314-34cd-4319-886c-d7c5fa99027d",
+      {
+        "evento_id": "27701314-34cd-4319-886c-d7c5fa99027d",
+        "tablet_id": "tab-sec-omeco",
+        "secadero_id": "sec-omeco",
+        "fecha_hora_inicio": "2026-08-28T15:41:47.599Z",
+        "fecha_hora_fin": "2026-08-28T15:41:54.651Z",
+        "duracion_segundos": 7,
+        "estado_evento": "cerrado",
+        "tipo_registro": "manual",
+        "origen_id": "ori-operativo",
+        "razon_id": "raz-evacuaci-n-de-paquetes",
+        "observacion": "",
+        "version": 2,
+        "sincronizado": false,
+        "timestamp_registro": "2026-08-28T15:41:47.599Z",
+        "fecha_registro": "2026-08-28",
+        "hora_registro": "12:41:47",
+        "hora_desde": "2026-08-28T15:41:47.599Z",
+        "linea": "OMECO",
+        "hora_inicio_turno": "06:00:00",
+        "hora_fin_turno": "18:00:00",
+        "tipo_turno": "Turno Día (06:00 a 18:00)",
+        "hora_inicio_descanso": "12:00:00",
+        "hora_fin_descanso": "13:00:00",
+        "tiempo_disponible_turno": 11,
+        "turno_id": "tur-dia",
+        "hora_hasta": "2026-08-28T15:41:54.651Z",
+        "tiempo_parada": 7,
+        "categoria_tm": "OPERATIVO",
+        "tiempo_muerto": "EVACUACIÓN DE PAQUETES",
+        "observaciones": "",
+        "ubicacion": null,
+        "origenes": [
+          {
+            "origen_id": "ori-operativo"
+          }
+        ],
+        "propuesta_manual": null,
+        "recibido_en_servidor": "2026-08-28T15:41:56.084Z"
+      }
+    ],
+    [
+      "3deab3cb-ac83-4166-8f5b-97d5f4fcbe1f",
+      {
+        "evento_id": "3deab3cb-ac83-4166-8f5b-97d5f4fcbe1f",
+        "inicio_evento_id": "27701314-34cd-4319-886c-d7c5fa99027d",
+        "tablet_id": "tab-sec-omeco",
+        "secadero_id": "sec-omeco",
+        "fecha_hora_inicio": "2026-08-28T15:41:47.599Z",
+        "fecha_hora_fin": "2026-08-28T15:41:54.651Z",
+        "duracion_segundos": 7,
+        "estado_evento": "cerrado",
+        "tipo_registro": "manual",
+        "origen_id": "ori-operativo",
+        "razon_id": "raz-evacuaci-n-de-paquetes",
+        "observacion": "",
+        "version": 1,
+        "sincronizado": false,
+        "hora_inicio_turno": "06:00:00",
+        "hora_fin_turno": "18:00:00",
+        "tipo_turno": "Turno Día (06:00 a 18:00)",
+        "hora_inicio_descanso": "12:00:00",
+        "hora_fin_descanso": "13:00:00",
+        "linea": "OMECO",
+        "hora_desde": "2026-08-28T15:41:47.599Z",
+        "hora_hasta": "2026-08-28T15:41:54.651Z",
+        "categoria_tm": "OPERATIVO",
+        "tiempo_muerto": "EVACUACIÓN DE PAQUETES",
+        "observaciones": "",
+        "ubicacion": null,
+        "tiempo_disponible_turno": 11,
+        "tiempo_parada": 7,
+        "turno_id": "tur-dia",
+        "origenes": [
+          {
+            "origen_id": "ori-operativo"
+          }
+        ],
+        "propuesta_manual": null,
+        "recibido_en_servidor": "2026-08-28T15:41:56.085Z",
+        "fecha_registro": "2026-08-28",
+        "hora_registro": "12:41:56",
+        "timestamp_registro": "2026-08-28T15:41:56.085Z"
+      }
+    ],
+    [
+      "c65fbbd1-40f7-40ab-8ce2-f6bccff0ffce",
+      {
+        "evento_id": "c65fbbd1-40f7-40ab-8ce2-f6bccff0ffce",
+        "tablet_id": "tab-sec-omeco",
+        "secadero_id": "sec-omeco",
+        "fecha_hora_inicio": "2026-08-28T15:42:47.201Z",
+        "fecha_hora_fin": "2026-08-28T15:42:56.321Z",
+        "duracion_segundos": 9,
+        "estado_evento": "cerrado",
+        "tipo_registro": "manual",
+        "origen_id": "ori-operativo",
+        "razon_id": null,
+        "observacion": "[Sugerido] Poo.",
+        "version": 2,
+        "sincronizado": false,
+        "timestamp_registro": "2026-08-28T15:42:47.201Z",
+        "fecha_registro": "2026-08-28",
+        "hora_registro": "12:42:47",
+        "hora_desde": "2026-08-28T15:42:47.201Z",
+        "linea": "OMECO",
+        "hora_inicio_turno": "06:00:00",
+        "hora_fin_turno": "18:00:00",
+        "tipo_turno": "Turno Día (06:00 a 18:00)",
+        "hora_inicio_descanso": "12:00:00",
+        "hora_fin_descanso": "13:00:00",
+        "tiempo_disponible_turno": 11,
+        "turno_id": "tur-dia",
+        "hora_hasta": "2026-08-28T15:42:56.321Z",
+        "tiempo_parada": 9,
+        "categoria_tm": "OPERATIVO",
+        "tiempo_muerto": "Poo",
+        "observaciones": "[Sugerido] Poo.",
+        "ubicacion": null,
+        "origenes": [
+          {
+            "origen_id": "ori-operativo"
+          }
+        ],
+        "propuesta_manual": {
+          "tipo": "razon",
+          "texto": "Poo",
+          "comentario": ""
+        },
+        "recibido_en_servidor": "2026-08-28T15:42:57.767Z"
+      }
+    ],
+    [
+      "a11e4ff7-2a74-4b00-839c-d975fe6673dc",
+      {
+        "evento_id": "a11e4ff7-2a74-4b00-839c-d975fe6673dc",
+        "inicio_evento_id": "c65fbbd1-40f7-40ab-8ce2-f6bccff0ffce",
+        "tablet_id": "tab-sec-omeco",
+        "secadero_id": "sec-omeco",
+        "fecha_hora_inicio": "2026-08-28T15:42:47.201Z",
+        "fecha_hora_fin": "2026-08-28T15:42:56.321Z",
+        "duracion_segundos": 9,
+        "estado_evento": "cerrado",
+        "tipo_registro": "manual",
+        "origen_id": "ori-operativo",
+        "razon_id": null,
+        "observacion": "[Sugerido] Poo.",
+        "version": 1,
+        "sincronizado": false,
+        "hora_inicio_turno": "06:00:00",
+        "hora_fin_turno": "18:00:00",
+        "tipo_turno": "Turno Día (06:00 a 18:00)",
+        "hora_inicio_descanso": "12:00:00",
+        "hora_fin_descanso": "13:00:00",
+        "linea": "OMECO",
+        "hora_desde": "2026-08-28T15:42:47.201Z",
+        "hora_hasta": "2026-08-28T15:42:56.321Z",
+        "categoria_tm": "OPERATIVO",
+        "tiempo_muerto": "Poo",
+        "observaciones": "[Sugerido] Poo.",
+        "ubicacion": null,
+        "tiempo_disponible_turno": 11,
+        "tiempo_parada": 9,
+        "turno_id": "tur-dia",
+        "origenes": [
+          {
+            "origen_id": "ori-operativo"
+          }
+        ],
+        "propuesta_manual": {
+          "tipo": "razon",
+          "texto": "Poo",
+          "comentario": ""
+        },
+        "recibido_en_servidor": "2026-08-28T15:42:57.768Z",
+        "fecha_registro": "2026-08-28",
+        "hora_registro": "12:42:57",
+        "timestamp_registro": "2026-08-28T15:42:57.768Z"
+      }
+    ],
+    [
+      "55623461-7aa2-4c42-ab2c-31c536555654",
+      {
+        "evento_id": "55623461-7aa2-4c42-ab2c-31c536555654",
+        "tablet_id": "tab-sec-omeco",
+        "secadero_id": "sec-omeco",
+        "fecha_hora_inicio": "2026-08-28T15:45:44.072Z",
+        "fecha_hora_fin": "2026-08-28T15:46:32.336Z",
+        "duracion_segundos": 48,
+        "estado_evento": "cerrado",
+        "tipo_registro": "manual",
+        "origen_id": "ori-logistica",
+        "razon_id": "raz-falta-abastecimiento",
+        "observacion": "",
+        "version": 2,
+        "sincronizado": false,
+        "timestamp_registro": "2026-08-28T15:45:44.072Z",
+        "fecha_registro": "2026-08-28",
+        "hora_registro": "12:45:44",
+        "hora_desde": "2026-08-28T15:45:44.072Z",
+        "linea": "OMECO",
+        "hora_inicio_turno": "06:00:00",
+        "hora_fin_turno": "18:00:00",
+        "tipo_turno": "Turno Día (06:00 a 18:00)",
+        "hora_inicio_descanso": "12:00:00",
+        "hora_fin_descanso": "13:00:00",
+        "tiempo_disponible_turno": 11,
+        "turno_id": "tur-dia",
+        "hora_hasta": "2026-08-28T15:46:32.336Z",
+        "tiempo_parada": 48,
+        "categoria_tm": "LOGISTICA",
+        "tiempo_muerto": "FALTA ABASTECIMIENTO",
+        "observaciones": "",
+        "ubicacion": null,
+        "origenes": [
+          {
+            "origen_id": "ori-logistica"
+          }
+        ],
+        "propuesta_manual": null,
+        "recibido_en_servidor": "2026-08-28T15:46:33.771Z"
+      }
+    ],
+    [
+      "cc8e8641-c129-4941-89a2-52d5966fa155",
+      {
+        "evento_id": "cc8e8641-c129-4941-89a2-52d5966fa155",
+        "inicio_evento_id": "55623461-7aa2-4c42-ab2c-31c536555654",
+        "tablet_id": "tab-sec-omeco",
+        "secadero_id": "sec-omeco",
+        "fecha_hora_inicio": "2026-08-28T15:45:44.072Z",
+        "fecha_hora_fin": "2026-08-28T15:46:32.336Z",
+        "duracion_segundos": 48,
+        "estado_evento": "cerrado",
+        "tipo_registro": "manual",
+        "origen_id": "ori-logistica",
+        "razon_id": "raz-falta-abastecimiento",
+        "observacion": "",
+        "version": 1,
+        "sincronizado": false,
+        "hora_inicio_turno": "06:00:00",
+        "hora_fin_turno": "18:00:00",
+        "tipo_turno": "Turno Día (06:00 a 18:00)",
+        "hora_inicio_descanso": "12:00:00",
+        "hora_fin_descanso": "13:00:00",
+        "linea": "OMECO",
+        "hora_desde": "2026-08-28T15:45:44.072Z",
+        "hora_hasta": "2026-08-28T15:46:32.336Z",
+        "categoria_tm": "LOGISTICA",
+        "tiempo_muerto": "FALTA ABASTECIMIENTO",
+        "observaciones": "",
+        "ubicacion": null,
+        "tiempo_disponible_turno": 11,
+        "tiempo_parada": 48,
+        "turno_id": "tur-dia",
+        "origenes": [
+          {
+            "origen_id": "ori-logistica"
+          }
+        ],
+        "propuesta_manual": null,
+        "recibido_en_servidor": "2026-08-28T15:46:33.772Z",
+        "fecha_registro": "2026-08-28",
+        "hora_registro": "12:46:33",
+        "timestamp_registro": "2026-08-28T15:46:33.772Z"
+      }
+    ],
+    [
+      "a0218156-2b5b-4eac-b295-1cb7db57024c",
+      {
+        "evento_id": "a0218156-2b5b-4eac-b295-1cb7db57024c",
+        "tablet_id": "tab-sec-omeco",
+        "secadero_id": "sec-omeco",
+        "fecha_hora_inicio": "2026-08-28T16:59:13.948Z",
+        "fecha_hora_fin": "2026-08-28T16:59:21.679Z",
+        "duracion_segundos": 8,
+        "estado_evento": "cerrado",
+        "tipo_registro": "manual",
+        "origen_id": "ori-operativo",
+        "razon_id": "raz-evacuaci-n-de-paquetes",
+        "observacion": "",
+        "version": 2,
+        "sincronizado": false,
+        "timestamp_registro": "2026-08-28T16:59:13.948Z",
+        "fecha_registro": "2026-08-28",
+        "hora_registro": "13:59:13",
+        "hora_desde": "2026-08-28T16:59:13.948Z",
+        "linea": "OMECO",
+        "hora_inicio_turno": "06:00:00",
+        "hora_fin_turno": "18:00:00",
+        "tipo_turno": "Turno Día (06:00 a 18:00)",
+        "hora_inicio_descanso": "12:00:00",
+        "hora_fin_descanso": "13:00:00",
+        "tiempo_disponible_turno": 11,
+        "turno_id": "tur-dia",
+        "hora_hasta": "2026-08-28T16:59:21.679Z",
+        "tiempo_parada": 8,
+        "categoria_tm": "OPERATIVO",
+        "tiempo_muerto": "EVACUACIÓN DE PAQUETES",
+        "observaciones": "",
+        "ubicacion": null,
+        "origenes": [
+          {
+            "origen_id": "ori-operativo"
+          }
+        ],
+        "propuesta_manual": null,
+        "recibido_en_servidor": "2026-08-28T16:59:23.420Z"
+      }
+    ],
+    [
+      "46c8e03d-9d91-46e4-b6dd-51076e7b432e",
+      {
+        "evento_id": "46c8e03d-9d91-46e4-b6dd-51076e7b432e",
+        "inicio_evento_id": "a0218156-2b5b-4eac-b295-1cb7db57024c",
+        "tablet_id": "tab-sec-omeco",
+        "secadero_id": "sec-omeco",
+        "fecha_hora_inicio": "2026-08-28T16:59:13.948Z",
+        "fecha_hora_fin": "2026-08-28T16:59:21.679Z",
+        "duracion_segundos": 8,
+        "estado_evento": "cerrado",
+        "tipo_registro": "manual",
+        "origen_id": "ori-operativo",
+        "razon_id": "raz-evacuaci-n-de-paquetes",
+        "observacion": "",
+        "version": 1,
+        "sincronizado": false,
+        "hora_inicio_turno": "06:00:00",
+        "hora_fin_turno": "18:00:00",
+        "tipo_turno": "Turno Día (06:00 a 18:00)",
+        "hora_inicio_descanso": "12:00:00",
+        "hora_fin_descanso": "13:00:00",
+        "linea": "OMECO",
+        "hora_desde": "2026-08-28T16:59:13.948Z",
+        "hora_hasta": "2026-08-28T16:59:21.679Z",
+        "categoria_tm": "OPERATIVO",
+        "tiempo_muerto": "EVACUACIÓN DE PAQUETES",
+        "observaciones": "",
+        "ubicacion": null,
+        "tiempo_disponible_turno": 11,
+        "tiempo_parada": 8,
+        "turno_id": "tur-dia",
+        "origenes": [
+          {
+            "origen_id": "ori-operativo"
+          }
+        ],
+        "propuesta_manual": null,
+        "recibido_en_servidor": "2026-08-28T16:59:23.421Z",
+        "fecha_registro": "2026-08-28",
+        "hora_registro": "13:59:23",
+        "timestamp_registro": "2026-08-28T16:59:23.421Z"
+      }
+    ],
+    [
+      "4647c736-fcf1-4b81-8911-7794b9906531",
+      {
+        "evento_id": "4647c736-fcf1-4b81-8911-7794b9906531",
+        "tablet_id": "tab-sec-omeco",
+        "secadero_id": "sec-omeco",
+        "fecha_hora_inicio": "2026-08-28T17:24:41.309Z",
+        "fecha_hora_fin": "2026-08-28T17:24:47.391Z",
+        "duracion_segundos": 6,
+        "estado_evento": "cerrado",
+        "tipo_registro": "manual",
+        "origen_id": "ori-electrico",
+        "razon_id": "raz-motores-no-encienden",
+        "observacion": "",
+        "version": 2,
+        "sincronizado": false,
+        "timestamp_registro": "2026-08-28T17:24:41.309Z",
+        "fecha_registro": "2026-08-28",
+        "hora_registro": "14:24:41",
+        "hora_desde": "2026-08-28T17:24:41.309Z",
+        "linea": "OMECO",
+        "hora_inicio_turno": "06:00:00",
+        "hora_fin_turno": "18:00:00",
+        "tipo_turno": "Turno Día (06:00 a 18:00)",
+        "hora_inicio_descanso": "12:00:00",
+        "hora_fin_descanso": "13:00:00",
+        "tiempo_disponible_turno": 11,
+        "turno_id": "tur-dia",
+        "hora_hasta": "2026-08-28T17:24:47.391Z",
+        "tiempo_parada": 6,
+        "categoria_tm": "ELECTRICO",
+        "tiempo_muerto": "MOTORES NO ENCIENDEN",
+        "observaciones": "",
+        "ubicacion": null,
+        "origenes": [
+          {
+            "origen_id": "ori-electrico"
+          }
+        ],
+        "propuesta_manual": null,
+        "recibido_en_servidor": "2026-08-28T17:30:48.513Z"
+      }
+    ],
+    [
+      "03005f26-1ccb-4b40-8610-3ce9e38ac269",
+      {
+        "evento_id": "03005f26-1ccb-4b40-8610-3ce9e38ac269",
+        "inicio_evento_id": "4647c736-fcf1-4b81-8911-7794b9906531",
+        "tablet_id": "tab-sec-omeco",
+        "secadero_id": "sec-omeco",
+        "fecha_hora_inicio": "2026-08-28T17:24:41.309Z",
+        "fecha_hora_fin": "2026-08-28T17:24:47.391Z",
+        "duracion_segundos": 6,
+        "estado_evento": "cerrado",
+        "tipo_registro": "manual",
+        "origen_id": "ori-electrico",
+        "razon_id": "raz-motores-no-encienden",
+        "observacion": "",
+        "version": 1,
+        "sincronizado": false,
+        "hora_inicio_turno": "06:00:00",
+        "hora_fin_turno": "18:00:00",
+        "tipo_turno": "Turno Día (06:00 a 18:00)",
+        "hora_inicio_descanso": "12:00:00",
+        "hora_fin_descanso": "13:00:00",
+        "linea": "OMECO",
+        "hora_desde": "2026-08-28T17:24:41.309Z",
+        "hora_hasta": "2026-08-28T17:24:47.391Z",
+        "categoria_tm": "ELECTRICO",
+        "tiempo_muerto": "MOTORES NO ENCIENDEN",
+        "observaciones": "",
+        "ubicacion": null,
+        "tiempo_disponible_turno": 11,
+        "tiempo_parada": 6,
+        "turno_id": "tur-dia",
+        "origenes": [
+          {
+            "origen_id": "ori-electrico"
+          }
+        ],
+        "propuesta_manual": null,
+        "recibido_en_servidor": "2026-08-28T17:30:48.639Z",
+        "fecha_registro": "2026-08-28",
+        "hora_registro": "14:30:48",
+        "timestamp_registro": "2026-08-28T17:30:48.639Z"
+      }
+    ]
+  ],
+  "eventOrigins": [
+    [
+      "a98e3ca7-3eae-402e-8361-fbe93c5d2207",
+      [
+        {
+          "origen_id": "ori-electrico"
+        }
+      ]
+    ],
+    [
+      "6a32fb40-83ac-4dc9-8e85-47e413423b4c",
+      [
+        {
+          "origen_id": "ori-electrico"
+        }
+      ]
+    ],
+    [
+      "610e7d67-ca1f-49ae-a3bc-62f877162ef6",
+      [
+        {
+          "origen_id": "ori-mecanico"
+        }
+      ]
+    ],
+    [
+      "6b6c4b74-250e-4d15-9ebf-02ee11285b8f",
+      [
+        {
+          "origen_id": "ori-mecanico"
+        }
+      ]
+    ],
+    [
+      "22393428-9e66-4992-8a9c-685d25e3eb5f",
+      [
+        {
+          "origen_id": "ori-proceso"
+        }
+      ]
+    ],
+    [
+      "442c4f01-b58a-4820-a2b4-d032703c47ff",
+      [
+        {
+          "origen_id": "ori-proceso"
+        }
+      ]
+    ],
+    [
+      "5cdb187a-6fef-4aeb-8017-281ea9a7df8d",
+      [
+        {
+          "origen_id": "ori-logistica"
+        }
+      ]
+    ],
+    [
+      "14628b8c-9d79-4a3b-9479-c0d012bcc4e9",
+      [
+        {
+          "origen_id": "ori-logistica"
+        }
+      ]
+    ],
+    [
+      "2ec7cb06-6c57-4843-a549-bed6ad1e0309",
+      [
+        {
+          "origen_id": "ori-mecanico"
+        }
+      ]
+    ],
+    [
+      "d5e06c79-9c6c-4ab2-b2e1-b048de3780e4",
+      [
+        {
+          "origen_id": "ori-mecanico"
+        }
+      ]
+    ],
+    [
+      "f4c75d24-b248-44a2-ae44-9be53f120cb8",
+      [
+        {
+          "origen_id": "ori-operativo"
+        }
+      ]
+    ],
+    [
+      "3975c798-4d0e-4221-91ed-c5fc9738393f",
+      [
+        {
+          "origen_id": "ori-operativo"
+        }
+      ]
+    ],
+    [
+      "10710f04-0c22-4a72-8b88-0f28de3ba697",
+      [
+        {
+          "origen_id": "ori-electrico"
+        }
+      ]
+    ],
+    [
+      "21403143-2fed-4ed6-a2c6-2c16bf04a605",
+      [
+        {
+          "origen_id": "ori-electrico"
+        }
+      ]
+    ],
+    [
+      "12ead58c-c005-44ef-aad8-8651b226ce82",
+      [
+        {
+          "origen_id": "ori-proceso"
+        }
+      ]
+    ],
+    [
+      "c26bd6fc-9797-4679-a90d-b74cafc0c8b5",
+      [
+        {
+          "origen_id": "ori-proceso"
+        }
+      ]
+    ],
+    [
+      "0d3165ad-76cf-4309-bc2e-f2f33c5c2e3e",
+      [
+        {
+          "origen_id": "ori-externo"
+        }
+      ]
+    ],
+    [
+      "338ef7d4-df2d-4ffc-bfd9-d88408e751ae",
+      [
+        {
+          "origen_id": "ori-externo"
+        }
+      ]
+    ],
+    [
+      "71c31313-c321-41f2-aab2-fae61296f193",
+      [
+        {
+          "origen_id": "ori-mecanico"
+        }
+      ]
+    ],
+    [
+      "6d5b03af-3e8b-41b7-8cde-f6e44af912f8",
+      [
+        {
+          "origen_id": "ori-mecanico"
+        }
+      ]
+    ],
+    [
+      "73b288c1-a21c-4207-ac86-5eec73f6a064",
+      [
+        {
+          "origen_id": "ori-externo"
+        }
+      ]
+    ],
+    [
+      "6352d883-5b0b-4ae7-8b51-fc5e20bb8552",
+      [
+        {
+          "origen_id": "ori-externo"
+        }
+      ]
+    ],
+    [
+      "a009da9b-0d08-4950-86fd-ca6cf0010770",
+      [
+        {
+          "origen_id": "ori-logistica"
+        }
+      ]
+    ],
+    [
+      "4c28cf70-ad48-48e4-8d78-51fc317baf29",
+      [
+        {
+          "origen_id": "ori-logistica"
+        }
+      ]
+    ],
+    [
+      "d8b52c3a-2114-4231-b021-71ae4d825b9f",
+      [
+        {
+          "origen_id": "ori-mecanico"
+        }
+      ]
+    ],
+    [
+      "40d369f9-8c3d-49a3-a27b-338393b1d055",
+      [
+        {
+          "origen_id": "ori-mecanico"
+        }
+      ]
+    ],
+    [
+      "b3019785-b3a5-48e6-8be2-d60231ebdd9c",
+      [
+        {
+          "origen_id": "ori-mecanico"
+        }
+      ]
+    ],
+    [
+      "3c1940c5-fdd1-4984-87ff-59b283217cfe",
+      [
+        {
+          "origen_id": "ori-mecanico"
+        }
+      ]
+    ],
+    [
+      "27701314-34cd-4319-886c-d7c5fa99027d",
+      [
+        {
+          "origen_id": "ori-operativo"
+        }
+      ]
+    ],
+    [
+      "3deab3cb-ac83-4166-8f5b-97d5f4fcbe1f",
+      [
+        {
+          "origen_id": "ori-operativo"
+        }
+      ]
+    ],
+    [
+      "c65fbbd1-40f7-40ab-8ce2-f6bccff0ffce",
+      [
+        {
+          "origen_id": "ori-operativo"
+        }
+      ]
+    ],
+    [
+      "a11e4ff7-2a74-4b00-839c-d975fe6673dc",
+      [
+        {
+          "origen_id": "ori-operativo"
+        }
+      ]
+    ],
+    [
+      "55623461-7aa2-4c42-ab2c-31c536555654",
+      [
+        {
+          "origen_id": "ori-logistica"
+        }
+      ]
+    ],
+    [
+      "cc8e8641-c129-4941-89a2-52d5966fa155",
+      [
+        {
+          "origen_id": "ori-logistica"
+        }
+      ]
+    ],
+    [
+      "a0218156-2b5b-4eac-b295-1cb7db57024c",
+      [
+        {
+          "origen_id": "ori-operativo"
+        }
+      ]
+    ],
+    [
+      "46c8e03d-9d91-46e4-b6dd-51076e7b432e",
+      [
+        {
+          "origen_id": "ori-operativo"
+        }
+      ]
+    ],
+    [
+      "4647c736-fcf1-4b81-8911-7794b9906531",
+      [
+        {
+          "origen_id": "ori-electrico"
+        }
+      ]
+    ],
+    [
+      "03005f26-1ccb-4b40-8610-3ce9e38ac269",
+      [
+        {
+          "origen_id": "ori-electrico"
+        }
+      ]
+    ]
+  ],
+  "manualProposals": [
+    [
+      "5cdb187a-6fef-4aeb-8017-281ea9a7df8d:razon",
+      {
+        "propuesta_id": "5cdb187a-6fef-4aeb-8017-281ea9a7df8d:razon",
+        "evento_id": "5cdb187a-6fef-4aeb-8017-281ea9a7df8d",
+        "estado_revision": "rechazada",
+        "tipo": "razon",
+        "texto": "Prueba",
+        "comentario": "",
+        "revisada_en": "2026-08-28T15:46:40.195Z",
+        "maestro_destino_id": null
+      }
+    ],
+    [
+      "14628b8c-9d79-4a3b-9479-c0d012bcc4e9:razon",
+      {
+        "propuesta_id": "14628b8c-9d79-4a3b-9479-c0d012bcc4e9:razon",
+        "evento_id": "14628b8c-9d79-4a3b-9479-c0d012bcc4e9",
+        "estado_revision": "rechazada",
+        "tipo": "razon",
+        "texto": "Prueba",
+        "comentario": "",
+        "revisada_en": "2026-08-28T15:46:40.453Z",
+        "maestro_destino_id": null
+      }
+    ],
+    [
+      "71c31313-c321-41f2-aab2-fae61296f193:razon",
+      {
+        "propuesta_id": "71c31313-c321-41f2-aab2-fae61296f193:razon",
+        "evento_id": "71c31313-c321-41f2-aab2-fae61296f193",
+        "estado_revision": "rechazada",
+        "tipo": "razon",
+        "texto": "Prruueebbaa",
+        "comentario": "",
+        "revisada_en": "2026-08-28T15:46:41.275Z",
+        "maestro_destino_id": null
+      }
+    ],
+    [
+      "6d5b03af-3e8b-41b7-8cde-f6e44af912f8:razon",
+      {
+        "propuesta_id": "6d5b03af-3e8b-41b7-8cde-f6e44af912f8:razon",
+        "evento_id": "6d5b03af-3e8b-41b7-8cde-f6e44af912f8",
+        "estado_revision": "rechazada",
+        "tipo": "razon",
+        "texto": "Prruueebbaa",
+        "comentario": "",
+        "revisada_en": "2026-08-28T15:46:41.599Z",
+        "maestro_destino_id": null
+      }
+    ],
+    [
+      "c65fbbd1-40f7-40ab-8ce2-f6bccff0ffce:razon",
+      {
+        "propuesta_id": "c65fbbd1-40f7-40ab-8ce2-f6bccff0ffce:razon",
+        "evento_id": "c65fbbd1-40f7-40ab-8ce2-f6bccff0ffce",
+        "estado_revision": "rechazada",
+        "tipo": "razon",
+        "texto": "Poo",
+        "comentario": "",
+        "revisada_en": "2026-08-28T15:46:42.072Z",
+        "maestro_destino_id": null
+      }
+    ]
+  ],
+  "masterData": {
+    "secaderos": [
+      {
+        "secadero_id": "sec-omeco",
+        "codigo": "OMECO",
+        "nombre": "OMECO",
+        "activo": true
+      },
+      {
+        "secadero_id": "sec-benecke",
+        "codigo": "BENECKE",
+        "nombre": "BENECKE",
+        "activo": true
+      },
+      {
+        "secadero_id": "sec-raute",
+        "codigo": "RAUTE",
+        "nombre": "RAUTE",
+        "activo": true
+      }
+    ],
+    "tablets": [
+      {
+        "tablet_id": "tab-sec-omeco",
+        "secadero_id": "sec-omeco",
+        "nombre": "Tablet OMECO",
+        "ip_tablet": "192.168.1.42",
+        "activa": true
+      },
+      {
+        "tablet_id": "tab-sec-benecke",
+        "secadero_id": "sec-benecke",
+        "nombre": "Tablet BENECKE",
+        "ip_tablet": "192.168.10.52",
+        "activa": true
+      },
+      {
+        "tablet_id": "tab-sec-raute",
+        "secadero_id": "sec-raute",
+        "nombre": "Tablet RAUTE",
+        "ip_tablet": "192.168.10.53",
+        "activa": true
+      }
+    ],
+    "origenes": [
+      {
+        "origen_id": "ori-electrico",
+        "codigo": "ELECTRICO",
+        "nombre": "ELECTRICO",
+        "activa": true
+      },
+      {
+        "origen_id": "ori-mecanico",
+        "codigo": "MECANICO",
+        "nombre": "MECANICO",
+        "activa": true
+      },
+      {
+        "origen_id": "ori-externo",
+        "codigo": "EXTERNO",
+        "nombre": "EXTERNO",
+        "activa": true
+      },
+      {
+        "origen_id": "ori-logistica",
+        "codigo": "LOGISTICA",
+        "nombre": "LOGISTICA",
+        "activa": true
+      },
+      {
+        "origen_id": "ori-operativo",
+        "codigo": "OPERATIVO",
+        "nombre": "OPERATIVO",
+        "activa": true
+      },
+      {
+        "origen_id": "ori-proceso",
+        "codigo": "PROCESO",
+        "nombre": "PROCESO",
+        "activa": true
+      },
+      {
+        "origen_id": "ori-neumatico",
+        "codigo": "NEUMATICO",
+        "nombre": "NEUMATICO",
+        "activa": true
+      }
+    ],
+    "razones": [
+      {
+        "razon_id": "raz-cargador",
+        "codigo": "P001",
+        "nombre": "CARGADOR",
+        "activa": true,
+        "observacion_obligatoria": false,
+        "observaciones_predefinidas": null,
+        "mostrar_perfil": false,
+        "origen_ids": [
+          "ori-electrico",
+          "ori-mecanico"
+        ]
+      },
+      {
+        "razon_id": "raz-corte-de-energia",
+        "codigo": "P002",
+        "nombre": "CORTE DE ENERGIA",
+        "activa": true,
+        "observacion_obligatoria": false,
+        "observaciones_predefinidas": null,
+        "mostrar_perfil": false,
+        "origen_ids": [
+          "ori-externo"
+        ]
+      },
+      {
+        "razon_id": "raz-evacuaci-n-de-paquetes",
+        "codigo": "P003",
+        "nombre": "EVACUACIÓN DE PAQUETES",
+        "activa": true,
+        "observacion_obligatoria": false,
+        "observaciones_predefinidas": null,
+        "mostrar_perfil": false,
+        "origen_ids": [
+          "ori-logistica",
+          "ori-operativo",
+          "ori-proceso"
+        ]
+      },
+      {
+        "razon_id": "raz-falta-abastecimiento",
+        "codigo": "P004",
+        "nombre": "FALTA ABASTECIMIENTO",
+        "activa": true,
+        "observacion_obligatoria": false,
+        "observaciones_predefinidas": null,
+        "mostrar_perfil": false,
+        "origen_ids": [
+          "ori-logistica",
+          "ori-operativo"
+        ]
+      },
+      {
+        "razon_id": "raz-cadena",
+        "codigo": "P005",
+        "nombre": "CADENA",
+        "activa": true,
+        "observacion_obligatoria": false,
+        "observaciones_predefinidas": null,
+        "mostrar_perfil": false,
+        "origen_ids": [
+          "ori-mecanico"
+        ]
+      },
+      {
+        "razon_id": "raz-compresor",
+        "codigo": "P006",
+        "nombre": "COMPRESOR",
+        "activa": true,
+        "observacion_obligatoria": false,
+        "observaciones_predefinidas": null,
+        "mostrar_perfil": false,
+        "origen_ids": [
+          "ori-mecanico",
+          "ori-neumatico"
+        ]
+      },
+      {
+        "razon_id": "raz-mecanico",
+        "codigo": "P007",
+        "nombre": "MECANICO",
+        "activa": true,
+        "observacion_obligatoria": false,
+        "observaciones_predefinidas": null,
+        "mostrar_perfil": false,
+        "origen_ids": [
+          "ori-mecanico"
+        ]
+      },
+      {
+        "razon_id": "raz-rodillo-de-entrada",
+        "codigo": "P008",
+        "nombre": "RODILLO DE ENTRADA",
+        "activa": true,
+        "observacion_obligatoria": false,
+        "observaciones_predefinidas": null,
+        "mostrar_perfil": false,
+        "origen_ids": [
+          "ori-mecanico"
+        ]
+      },
+      {
+        "razon_id": "raz-varios",
+        "codigo": "P009",
+        "nombre": "Varios",
+        "activa": true,
+        "observacion_obligatoria": false,
+        "observaciones_predefinidas": null,
+        "mostrar_perfil": false,
+        "origen_ids": [
+          "ori-mecanico"
+        ]
+      },
+      {
+        "razon_id": "raz-falta-aire",
+        "codigo": "P010",
+        "nombre": "FALTA AIRE",
+        "activa": true,
+        "observacion_obligatoria": false,
+        "observaciones_predefinidas": null,
+        "mostrar_perfil": false,
+        "origen_ids": [
+          "ori-neumatico"
+        ]
+      },
+      {
+        "razon_id": "raz-caldera",
+        "codigo": "P011",
+        "nombre": "CALDERA",
+        "activa": true,
+        "observacion_obligatoria": false,
+        "observaciones_predefinidas": null,
+        "mostrar_perfil": false,
+        "origen_ids": [
+          "ori-operativo",
+          "ori-proceso"
+        ]
+      },
+      {
+        "razon_id": "raz-cambio-de-medida",
+        "codigo": "P012",
+        "nombre": "CAMBIO DE MEDIDA",
+        "activa": true,
+        "observacion_obligatoria": false,
+        "observaciones_predefinidas": null,
+        "mostrar_perfil": false,
+        "origen_ids": [
+          "ori-operativo",
+          "ori-proceso"
+        ]
+      },
+      {
+        "razon_id": "raz-capacitacion",
+        "codigo": "P013",
+        "nombre": "CAPACITACION",
+        "activa": true,
+        "observacion_obligatoria": false,
+        "observaciones_predefinidas": null,
+        "mostrar_perfil": false,
+        "origen_ids": [
+          "ori-operativo"
+        ]
+      },
+      {
+        "razon_id": "raz-parada-por-humedad",
+        "codigo": "P014",
+        "nombre": "PARADA POR HUMEDAD",
+        "activa": true,
+        "observacion_obligatoria": false,
+        "observaciones_predefinidas": null,
+        "mostrar_perfil": false,
+        "origen_ids": [
+          "ori-operativo",
+          "ori-proceso"
+        ]
+      },
+      {
+        "razon_id": "raz-parada-programada",
+        "codigo": "P015",
+        "nombre": "PARADA PROGRAMADA",
+        "activa": true,
+        "observacion_obligatoria": false,
+        "observaciones_predefinidas": null,
+        "mostrar_perfil": false,
+        "origen_ids": [
+          "ori-operativo",
+          "ori-proceso"
+        ]
+      },
+      {
+        "razon_id": "raz-recarga-del-secadero",
+        "codigo": "P016",
+        "nombre": "RECARGA DEL SECADERO",
+        "activa": true,
+        "observacion_obligatoria": false,
+        "observaciones_predefinidas": null,
+        "mostrar_perfil": false,
+        "origen_ids": [
+          "ori-logistica",
+          "ori-operativo",
+          "ori-proceso"
+        ]
+      },
+      {
+        "razon_id": "raz-secadero-trancado",
+        "codigo": "P017",
+        "nombre": "SECADERO TRANCADO",
+        "activa": true,
+        "observacion_obligatoria": true,
+        "observaciones_predefinidas": null,
+        "mostrar_perfil": true,
+        "origen_ids": [
+          "ori-operativo",
+          "ori-proceso"
+        ]
+      },
+      {
+        "razon_id": "raz-motores-no-encienden",
+        "codigo": "P018",
+        "nombre": "MOTORES NO ENCIENDEN",
+        "activa": true,
+        "observacion_obligatoria": false,
+        "observaciones_predefinidas": null,
+        "mostrar_perfil": false,
+        "origen_ids": [
+          "ori-electrico"
+        ]
+      },
+      {
+        "razon_id": "raz-problema-electrico",
+        "codigo": "P019",
+        "nombre": "PROBLEMA ELECTRICO",
+        "activa": true,
+        "observacion_obligatoria": false,
+        "observaciones_predefinidas": null,
+        "mostrar_perfil": false,
+        "origen_ids": [
+          "ori-electrico"
+        ]
+      },
+      {
+        "razon_id": "raz-tablero-de-control",
+        "codigo": "P020",
+        "nombre": "TABLERO DE CONTROL",
+        "activa": true,
+        "observacion_obligatoria": false,
+        "observaciones_predefinidas": null,
+        "mostrar_perfil": false,
+        "origen_ids": [
+          "ori-electrico"
+        ]
+      },
+      {
+        "razon_id": "raz-cinta-de-mesa-de-salida",
+        "codigo": "P021",
+        "nombre": "CINTA DE MESA DE SALIDA",
+        "activa": true,
+        "observacion_obligatoria": false,
+        "observaciones_predefinidas": null,
+        "mostrar_perfil": false,
+        "origen_ids": [
+          "ori-mecanico"
+        ]
+      },
+      {
+        "razon_id": "raz-mesa-de-entrada",
+        "codigo": "P022",
+        "nombre": "MESA DE ENTRADA",
+        "activa": true,
+        "observacion_obligatoria": false,
+        "observaciones_predefinidas": null,
+        "mostrar_perfil": false,
+        "origen_ids": [
+          "ori-mecanico"
+        ]
+      },
+      {
+        "razon_id": "raz-mesa-de-salida",
+        "codigo": "P023",
+        "nombre": "MESA DE SALIDA",
+        "activa": true,
+        "observacion_obligatoria": false,
+        "observaciones_predefinidas": null,
+        "mostrar_perfil": false,
+        "origen_ids": [
+          "ori-mecanico"
+        ]
+      },
+      {
+        "razon_id": "raz-polea",
+        "codigo": "P024",
+        "nombre": "POLEA",
+        "activa": true,
+        "observacion_obligatoria": false,
+        "observaciones_predefinidas": null,
+        "mostrar_perfil": false,
+        "origen_ids": [
+          "ori-mecanico"
+        ]
+      },
+      {
+        "razon_id": "raz-limpieza",
+        "codigo": "P025",
+        "nombre": "LIMPIEZA",
+        "activa": true,
+        "observacion_obligatoria": false,
+        "observaciones_predefinidas": null,
+        "mostrar_perfil": false,
+        "origen_ids": [
+          "ori-operativo"
+        ]
+      },
+      {
+        "razon_id": "raz-motor-principal",
+        "codigo": "P026",
+        "nombre": "MOTOR PRINCIPAL",
+        "activa": true,
+        "observacion_obligatoria": false,
+        "observaciones_predefinidas": null,
+        "mostrar_perfil": false,
+        "origen_ids": [
+          "ori-electrico"
+        ]
+      },
+      {
+        "razon_id": "raz-recargar-aceite",
+        "codigo": "P027",
+        "nombre": "RECARGAR ACEITE",
+        "activa": true,
+        "observacion_obligatoria": false,
+        "observaciones_predefinidas": null,
+        "mostrar_perfil": false,
+        "origen_ids": [
+          "ori-mecanico"
+        ]
+      },
+      {
+        "razon_id": "raz-ba-o",
+        "codigo": "P028",
+        "nombre": "BAÑO",
+        "activa": true,
+        "observacion_obligatoria": false,
+        "observaciones_predefinidas": null,
+        "mostrar_perfil": false,
+        "origen_ids": [
+          "ori-operativo"
+        ]
+      },
+      {
+        "razon_id": "raz-falta-personal",
+        "codigo": "P029",
+        "nombre": "FALTA PERSONAL",
+        "activa": true,
+        "observacion_obligatoria": false,
+        "observaciones_predefinidas": null,
+        "mostrar_perfil": false,
+        "origen_ids": [
+          "ori-operativo"
+        ]
+      },
+      {
+        "razon_id": "raz-falta-presion-vapor",
+        "codigo": "P030",
+        "nombre": "FALTA PRESION VAPOR",
+        "activa": true,
+        "observacion_obligatoria": false,
+        "observaciones_predefinidas": null,
+        "mostrar_perfil": false,
+        "origen_ids": [
+          "ori-operativo"
+        ]
+      },
+      {
+        "razon_id": "raz-sin-material",
+        "codigo": "P031",
+        "nombre": "SIN MATERIAL",
+        "activa": true,
+        "observacion_obligatoria": false,
+        "observaciones_predefinidas": null,
+        "mostrar_perfil": false,
+        "origen_ids": [
+          "ori-proceso"
+        ]
+      },
+      {
+        "razon_id": "raz-atascamiento",
+        "codigo": "P032",
+        "nombre": "ATASCAMIENTO",
+        "activa": true,
+        "observacion_obligatoria": true,
+        "observaciones_predefinidas": null,
+        "mostrar_perfil": true,
+        "origen_ids": [
+          "ori-operativo",
+          "ori-mecanico"
+        ]
+      }
+    ],
+    "turnos": [
+      {
+        "turno_id": "tur-dia",
+        "nombre": "Turno Día (06:00 a 18:00)",
+        "hora_inicio": "06:00:00",
+        "hora_fin": "18:00:00",
+        "horas_totales": 12,
+        "horas_descanso": 1,
+        "fecha_inicio_vigencia": "2026-08-26",
+        "activo": true
+      },
+      {
+        "turno_id": "tur-noche",
+        "nombre": "Turno Noche (18:00 a 06:00)",
+        "hora_inicio": "18:00:00",
+        "hora_fin": "06:00:00",
+        "horas_totales": 12,
+        "horas_descanso": 1,
+        "fecha_inicio_vigencia": "2026-08-26",
+        "activo": true
+      }
+    ]
+  }
+}
