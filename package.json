@@ -8,6 +8,8 @@
     "api:postgres": "node --env-file-if-exists=.env apps/api/src/server-postgres.mjs",
     "supervisor:dev": "npm run dev -w @coama/supervisor-web",
     "supervisor:build": "npm run build -w @coama/supervisor-web",
+    "tablet:dev": "npm run dev -w @coama/tablet",
+    "tablet:build": "npm run build -w @coama/tablet",
     "build:apk": "node scripts/build-apk.mjs",
     "validate:sync": "node scripts/validate-sync.mjs",
     "validate:master-data": "node scripts/validate-master-data.mjs",
