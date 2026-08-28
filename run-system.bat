@@ -8,19 +8,19 @@ echo ====================================================
 
 :: Puerto 8080 (API Backend)
 for /f "tokens=5" %%a in ('netstat -aon ^| findstr :8080 ^| findstr LISTENING') do (
-    echo Matando proceso en puerto 8080 (PID: %%a)...
+    echo Matando proceso en puerto 8080 - PID %%a...
     taskkill /f /pid %%a >nul 2>&1
 )
 
 :: Puerto 5173 (Supervisor Web)
 for /f "tokens=5" %%a in ('netstat -aon ^| findstr :5173 ^| findstr LISTENING') do (
-    echo Matando proceso en puerto 5173 (PID: %%a)...
+    echo Matando proceso en puerto 5173 - PID %%a...
     taskkill /f /pid %%a >nul 2>&1
 )
 
 :: Puerto 5174 (Tablet Web)
 for /f "tokens=5" %%a in ('netstat -aon ^| findstr :5174 ^| findstr LISTENING') do (
-    echo Matando proceso en puerto 5174 (PID: %%a)...
+    echo Matando proceso en puerto 5174 - PID %%a...
     taskkill /f /pid %%a >nul 2>&1
 )
 
