@@ -37,17 +37,17 @@ try {
   // 5. Copy and Version APK
   console.log("\n--- Step 4: Versioning and Copying APK ---");
   const sourceApkPath = path.join(ANDROID_DIR, "app/build/outputs/apk/debug/app-debug.apk");
-  const destApkVersionedPath = path.join(ROOT_DIR, `Lumo_Secaderos_Tablet_v${version}.apk`);
-  const destApkLatestPath = path.join(ROOT_DIR, "Lumo_Secaderos_Tablet.apk");
+  const destApkVersionedPath = path.join(ROOT_DIR, `Coama_secaderos_LUMO_v${version}.apk`);
+  const destApkLatestPath = path.join(ROOT_DIR, "Coama_secaderos_LUMO.apk");
 
   if (fs.existsSync(sourceApkPath)) {
     // Copy to versioned path
     fs.copyFileSync(sourceApkPath, destApkVersionedPath);
-    console.log(`[SUCCESS] Copied and versioned APK: Lumo_Secaderos_Tablet_v${version}.apk`);
+    console.log(`[SUCCESS] Copied and versioned APK: Coama_secaderos_LUMO_v${version}.apk`);
 
     // Copy to latest path
     fs.copyFileSync(sourceApkPath, destApkLatestPath);
-    console.log(`[SUCCESS] Updated main APK: Lumo_Secaderos_Tablet.apk`);
+    console.log(`[SUCCESS] Updated main APK: Coama_secaderos_LUMO.apk`);
   } else {
     throw new Error(`Compiled APK not found at: ${sourceApkPath}`);
   }

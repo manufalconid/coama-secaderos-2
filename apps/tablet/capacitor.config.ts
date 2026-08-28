@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.coama.secaderos',
-  appName: 'Lumo Secaderos',
+  appId: 'com.coama.secaderos.lumo',
+  appName: 'Coama secaderos - LUMO',
   webDir: 'dist',
   server: {
     cleartext: true

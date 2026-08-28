@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Coama secaderos - LUMO</string>
+    <string name="title_activity_main">Coama secaderos - LUMO</string>
+    <string name="package_name">com.coama.secaderos.lumo</string>
+    <string name="custom_url_scheme">com.coama.secaderos.lumo</string>
+</resources>
