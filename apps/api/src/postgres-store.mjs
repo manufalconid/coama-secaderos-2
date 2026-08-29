@@ -389,9 +389,23 @@ export class PgSyncStore {
 
       const wasClosed = current.rowCount > 0 && current.rows[0].estado_evento === "cerrado";
 
-      const status = current.rowCount > 0
-        ? (current.rows[0].version === event.version ? "no-change" : "updated")
-        : "inserted";
+      let status = "inserted";
+      if (current.rowCount > 0) {
+        const dbEvt = current.rows[0];
+        if (dbEvt.version === event.version) {
+          // Comparar si hay cambios reales en los datos de la parada
+          const hasChanges = 
+            dbEvt.razon_id !== (event.razon_id ?? null) ||
+            dbEvt.observacion !== (event.observacion ?? null) ||
+            dbEvt.ubicacion !== (event.ubicacion ?? null) ||
+            Date.parse(dbEvt.fecha_hora_inicio) !== Date.parse(event.fecha_hora_inicio) ||
+            (dbEvt.fecha_hora_fin ? Date.parse(dbEvt.fecha_hora_fin) : null) !== (event.fecha_hora_fin ? Date.parse(event.fecha_hora_fin) : null);
+
+          status = hasChanges ? "updated" : "no-change";
+        } else {
+          status = "updated";
+        }
+      }
       
       const masterData = await this.getMasterDataInternal(client);
       const populated = populateUnifiedFields({
@@ -872,24 +886,26 @@ function populateUnifiedFields(event, masterData) {
     linea = linea.replace("Secadero ", "").toUpperCase();
   }
 
-  let categoria_tm = event.categoria_tm;
-  if (!categoria_tm && Array.isArray(event.origenes) && event.origenes.length > 0) {
+  let categoria_tm = null;
+  if (Array.isArray(event.origenes) && event.origenes.length > 0) {
     const oNames = event.origenes.map(o => {
       if (o.origen_manual) return o.origen_manual;
       const m = masterData.origenes.find(x => x.origen_id === o.origen_id);
       return m ? m.nombre : o.origen_id;
     });
     categoria_tm = oNames.join(", ");
+  } else {
+    categoria_tm = event.categoria_tm;
   }
 
-  let tiempo_muerto = event.tiempo_muerto;
-  if (!tiempo_muerto) {
-    if (event.razon_manual) {
-      tiempo_muerto = event.razon_manual;
-    } else if (event.razon_id) {
-      const r = masterData.razones.find(x => x.razon_id === event.razon_id);
-      tiempo_muerto = r ? r.nombre : event.razon_id;
-    }
+  let tiempo_muerto = null;
+  if (event.razon_manual) {
+    tiempo_muerto = event.razon_manual;
+  } else if (event.razon_id) {
+    const r = masterData.razones.find(x => x.razon_id === event.razon_id);
+    tiempo_muerto = r ? r.nombre : event.razon_id;
+  } else {
+    tiempo_muerto = event.tiempo_muerto;
   }
 
   let activeTurno = null;

@@ -120,6 +120,28 @@ export class InMemorySyncStore {
       updated.origenes = this.eventOrigins.get(eventoId) ?? [];
     }
 
+    // Clear computed fields to force recalculation in populateUnifiedFields
+    delete updated.categoria_tm;
+    delete updated.tiempo_muerto;
+    delete updated.tiempo_parada;
+    delete updated.linea;
+    delete updated.hora_desde;
+    delete updated.hora_hasta;
+
+    const isInicioChanged = input.fecha_hora_inicio !== undefined && input.fecha_hora_inicio !== current.fecha_hora_inicio;
+    const isTurnoChanged = input.turno_id !== undefined && input.turno_id !== current.turno_id;
+    if (isInicioChanged || isTurnoChanged) {
+      delete updated.hora_inicio_turno;
+      delete updated.hora_fin_turno;
+      delete updated.tipo_turno;
+      delete updated.hora_inicio_descanso;
+      delete updated.hora_fin_descanso;
+      delete updated.tiempo_disponible_turno;
+      if (isInicioChanged && input.turno_id === undefined) {
+        delete updated.turno_id;
+      }
+    }
+
     const populated = populateUnifiedFields(updated, this.masterData);
     this.events.set(eventoId, populated);
     this.saveToDisk();
@@ -304,9 +326,23 @@ export class InMemorySyncStore {
         }
       }
 
-      const status = current
-        ? (current.version === event.version ? "no-change" : "updated")
-        : "inserted";
+      let status = "inserted";
+      if (current) {
+        if (current.version === event.version) {
+          // Comparar si hay cambios reales en los datos de la parada
+          const hasChanges = 
+            current.razon_id !== (event.razon_id ?? null) ||
+            current.observacion !== (event.observacion ?? null) ||
+            current.ubicacion !== (event.ubicacion ?? null) ||
+            Date.parse(current.fecha_hora_inicio) !== Date.parse(event.fecha_hora_inicio) ||
+            (current.fecha_hora_fin ? Date.parse(current.fecha_hora_fin) : null) !== (event.fecha_hora_fin ? Date.parse(event.fecha_hora_fin) : null);
+
+          status = hasChanges ? "updated" : "no-change";
+        } else {
+          status = "updated";
+        }
+      }
+
       const populated = populateUnifiedFields({
         ...event,
         turno_id: event.turno_id ?? (current ? current.turno_id : null),
@@ -486,24 +522,26 @@ function populateUnifiedFields(event, masterData) {
     linea = linea.replace(/^sec-/i, "").replace(/^Secadero\s+/i, "").toUpperCase().trim();
   }
 
-  let categoria_tm = event.categoria_tm;
-  if (!categoria_tm && Array.isArray(event.origenes) && event.origenes.length > 0) {
+  let categoria_tm = null;
+  if (Array.isArray(event.origenes) && event.origenes.length > 0) {
     const oNames = event.origenes.map(o => {
       if (o.origen_manual) return o.origen_manual;
       const m = masterData.origenes.find(x => x.origen_id === o.origen_id);
       return m ? m.nombre : o.origen_id;
     });
     categoria_tm = oNames.join(", ");
+  } else {
+    categoria_tm = event.categoria_tm;
   }
 
-  let tiempo_muerto = event.tiempo_muerto;
-  if (!tiempo_muerto) {
-    if (event.razon_manual) {
-      tiempo_muerto = event.razon_manual;
-    } else if (event.razon_id) {
-      const r = masterData.razones.find(x => x.razon_id === event.razon_id);
-      tiempo_muerto = r ? r.nombre : event.razon_id;
-    }
+  let tiempo_muerto = null;
+  if (event.razon_manual) {
+    tiempo_muerto = event.razon_manual;
+  } else if (event.razon_id) {
+    const r = masterData.razones.find(x => x.razon_id === event.razon_id);
+    tiempo_muerto = r ? r.nombre : event.razon_id;
+  } else {
+    tiempo_muerto = event.tiempo_muerto;
   }
 
   let activeTurno = null;
