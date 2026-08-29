@@ -97,8 +97,6 @@ export default function ConfirmationStage({
             </label>
             
             <div className="secadero-profile-wrapper">
-              <div className="secadero-bg-img" />
-              
               <div className="secadero-overlay-layout">
                 {/* Left: Entrada */}
                 <div className="secadero-side-zone">

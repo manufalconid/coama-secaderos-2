@@ -200,24 +200,25 @@ const server = http.createServer(async (req, res) => {
         for (const item of syncResult.accepted) {
           if (item.status === "inserted") {
             const fullEvent = body.events.find(e => e.evento_id === item.evento_id);
-            if (fullEvent && fullEvent.estado_evento === "abierto") {
+            if (fullEvent) {
               const masterData = await store.getMasterData();
               const secadero = masterData.secaderos.find(s => s.secadero_id === fullEvent.secadero_id);
               const secaderoName = secadero ? secadero.nombre : fullEvent.secadero_id;
+              const cleanLinea = (fullEvent.linea || secaderoName || "").toUpperCase().replace(/^SECADERO\s+/i, "");
 
-              const startTime = new Date(fullEvent.fecha_hora_inicio).toLocaleString("es-AR", {
-                timeZone: "America/Argentina/Buenos_Aires",
-                dateStyle: "short",
-                timeStyle: "short"
-              });
+              if (fullEvent.estado_evento === "abierto") {
+                const message = `🚨Detención ${cleanLinea}`;
+                notifyTelegram(message).catch(err => console.error("Error enviando notificacion a Telegram en segundo plano:", err));
+              } else if (fullEvent.estado_evento === "cerrado") {
+                const minutes = Math.round((fullEvent.duracion_segundos || 0) / 60);
+                const tMuerto = fullEvent.tiempo_muerto || "Sin motivo";
+                const cat = fullEvent.categoria_tm || "Sin categoría";
+                const obs = fullEvent.observacion || "Sin observaciones";
+                const ubi = fullEvent.ubicacion || "Sin ubicación";
 
-              const message = `🚨 <b>Nueva Parada Registrada</b>\n` +
-                `<b>Máquina:</b> ${secaderoName}\n` +
-                `<b>Inicio:</b> ${startTime} hs\n` +
-                `<b>Comentario:</b> ${fullEvent.observacion || "Sin observaciones."}\n\n` +
-                `🔗 <a href="${portalUrl}">Ir al Portal del Supervisor</a>`;
-
-              notifyTelegram(message).catch(err => console.error("Error enviando notificacion a Telegram en segundo plano:", err));
+                const message = `✅Fin de detención ${cleanLinea}. ${minutes} minutos perdidos por ${tMuerto}, ${cat}, ${obs}, ${ubi}`;
+                notifyTelegram(message).catch(err => console.error("Error enviando notificacion a Telegram en segundo plano:", err));
+              }
             }
           }
         }

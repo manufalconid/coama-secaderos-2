@@ -1953,14 +1953,14 @@
         "tablet_id": "tab-sec-omeco",
         "secadero_id": "sec-omeco",
         "fecha_hora_inicio": "2026-08-29T00:42:48.984Z",
-        "fecha_hora_fin": null,
-        "duracion_segundos": null,
-        "estado_evento": "abierto",
+        "fecha_hora_fin": "2026-08-29T02:15:03.435Z",
+        "duracion_segundos": 5534,
+        "estado_evento": "cerrado",
         "tipo_registro": "manual",
         "origen_id": null,
         "razon_id": null,
         "observacion": "",
-        "version": 1,
+        "version": 2,
         "sincronizado": false,
         "timestamp_registro": "2026-08-29T00:42:48.984Z",
         "fecha_registro": "2026-08-28",
@@ -1979,7 +1979,139 @@
         "recibido_en_servidor": "2026-08-29T00:42:51.104Z",
         "hora_hasta": null,
         "observaciones": "",
-        "ubicacion": null
+        "ubicacion": null,
+        "modificado_en": "2026-08-29T02:15:05.354Z"
+      }
+    ],
+    [
+      "b0cd1806-e894-4afa-8c00-d42e33c13eca",
+      {
+        "evento_id": "b0cd1806-e894-4afa-8c00-d42e33c13eca",
+        "inicio_evento_id": "bae6c1fa-7411-4bdc-94e4-7b70e1fc9284",
+        "tablet_id": "tab-sec-omeco",
+        "secadero_id": "sec-omeco",
+        "fecha_hora_inicio": "2026-08-29T00:42:48.984Z",
+        "fecha_hora_fin": "2026-08-29T02:14:54.366Z",
+        "duracion_segundos": 5525,
+        "estado_evento": "cerrado",
+        "tipo_registro": "manual",
+        "origen_id": "ori-proceso",
+        "razon_id": "raz-secadero-trancado",
+        "observacion": "",
+        "version": 1,
+        "sincronizado": false,
+        "hora_inicio_turno": "18:00:00",
+        "hora_fin_turno": "06:00:00",
+        "tipo_turno": "Turno Noche (18:00 a 06:00)",
+        "hora_inicio_descanso": "00:00:00",
+        "hora_fin_descanso": "01:00:00",
+        "linea": "OMECO",
+        "hora_desde": "2026-08-29T00:42:48.984Z",
+        "hora_hasta": "2026-08-29T02:14:54.366Z",
+        "categoria_tm": "PROCESO",
+        "tiempo_muerto": "SECADERO TRANCADO",
+        "observaciones": "",
+        "ubicacion": "N6P13",
+        "tiempo_disponible_turno": 11,
+        "tiempo_parada": 5525,
+        "turno_id": "tur-noche",
+        "origenes": [
+          {
+            "origen_id": "ori-proceso"
+          }
+        ],
+        "propuesta_manual": null,
+        "recibido_en_servidor": "2026-08-29T02:14:56.443Z",
+        "fecha_registro": "2026-08-28",
+        "hora_registro": "23:14:56",
+        "timestamp_registro": "2026-08-29T02:14:56.443Z"
+      }
+    ],
+    [
+      "6632ca71-33cc-44ff-85c5-80e798abe662",
+      {
+        "evento_id": "6632ca71-33cc-44ff-85c5-80e798abe662",
+        "tablet_id": "tab-sec-omeco",
+        "secadero_id": "sec-omeco",
+        "fecha_hora_inicio": "2026-08-29T02:15:03.435Z",
+        "fecha_hora_fin": "2026-08-29T02:15:18.171Z",
+        "duracion_segundos": 15,
+        "estado_evento": "cerrado",
+        "tipo_registro": "manual",
+        "origen_id": "ori-mecanico",
+        "razon_id": "raz-polea",
+        "observacion": "",
+        "version": 2,
+        "sincronizado": false,
+        "timestamp_registro": "2026-08-29T02:15:03.435Z",
+        "fecha_registro": "2026-08-28",
+        "hora_registro": "23:15:03",
+        "hora_desde": "2026-08-29T02:15:03.435Z",
+        "linea": "OMECO",
+        "hora_inicio_turno": "18:00:00",
+        "hora_fin_turno": "06:00:00",
+        "tipo_turno": "Turno Noche (18:00 a 06:00)",
+        "hora_inicio_descanso": "00:00:00",
+        "hora_fin_descanso": "01:00:00",
+        "tiempo_disponible_turno": 11,
+        "turno_id": "tur-noche",
+        "hora_hasta": "2026-08-29T02:15:18.171Z",
+        "tiempo_parada": 15,
+        "categoria_tm": "MECANICO",
+        "tiempo_muerto": "POLEA",
+        "observaciones": "",
+        "ubicacion": null,
+        "origenes": [
+          {
+            "origen_id": "ori-mecanico"
+          }
+        ],
+        "propuesta_manual": null,
+        "recibido_en_servidor": "2026-08-29T02:15:20.229Z"
+      }
+    ],
+    [
+      "0f956960-3477-41fd-b87d-2e9f86bb1340",
+      {
+        "evento_id": "0f956960-3477-41fd-b87d-2e9f86bb1340",
+        "inicio_evento_id": "6632ca71-33cc-44ff-85c5-80e798abe662",
+        "tablet_id": "tab-sec-omeco",
+        "secadero_id": "sec-omeco",
+        "fecha_hora_inicio": "2026-08-29T02:15:03.435Z",
+        "fecha_hora_fin": "2026-08-29T02:15:18.171Z",
+        "duracion_segundos": 15,
+        "estado_evento": "cerrado",
+        "tipo_registro": "manual",
+        "origen_id": "ori-mecanico",
+        "razon_id": "raz-polea",
+        "observacion": "",
+        "version": 1,
+        "sincronizado": false,
+        "hora_inicio_turno": "18:00:00",
+        "hora_fin_turno": "06:00:00",
+        "tipo_turno": "Turno Noche (18:00 a 06:00)",
+        "hora_inicio_descanso": "00:00:00",
+        "hora_fin_descanso": "01:00:00",
+        "linea": "OMECO",
+        "hora_desde": "2026-08-29T02:15:03.435Z",
+        "hora_hasta": "2026-08-29T02:15:18.171Z",
+        "categoria_tm": "MECANICO",
+        "tiempo_muerto": "POLEA",
+        "observaciones": "",
+        "ubicacion": null,
+        "tiempo_disponible_turno": 11,
+        "tiempo_parada": 15,
+        "turno_id": "tur-noche",
+        "origenes": [
+          {
+            "origen_id": "ori-mecanico"
+          }
+        ],
+        "propuesta_manual": null,
+        "recibido_en_servidor": "2026-08-29T02:15:20.230Z",
+        "fecha_registro": "2026-08-28",
+        "hora_registro": "23:15:20",
+        "timestamp_registro": "2026-08-29T02:15:20.230Z"
       }
     ]
   ],
@@ -2339,6 +2471,30 @@
     [
       "bae6c1fa-7411-4bdc-94e4-7b70e1fc9284",
       []
+    ],
+    [
+      "b0cd1806-e894-4afa-8c00-d42e33c13eca",
+      [
+        {
+          "origen_id": "ori-proceso"
+        }
+      ]
+    ],
+    [
+      "6632ca71-33cc-44ff-85c5-80e798abe662",
+      [
+        {
+          "origen_id": "ori-mecanico"
+        }
+      ]
+    ],
+    [
+      "0f956960-3477-41fd-b87d-2e9f86bb1340",
+      [
+        {
+          "origen_id": "ori-mecanico"
+        }
+      ]
     ]
   ],
   "manualProposals": [
