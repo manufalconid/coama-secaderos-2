@@ -200,11 +200,15 @@ const server = http.createServer(async (req, res) => {
       if (syncResult.accepted && syncResult.accepted.length > 0) {
         for (const item of syncResult.accepted) {
           const fullEvent = await store.getEvento(item.evento_id);
-          if (fullEvent) {
-            const masterData = await store.getMasterData();
-            const secadero = masterData.secaderos.find(s => s.secadero_id === fullEvent.secadero_id);
-            const secaderoName = secadero ? secadero.nombre : fullEvent.secadero_id;
-            const cleanLinea = (fullEvent.linea || secaderoName || "").toUpperCase().replace(/^SECADERO\s+/i, "");
+            if (fullEvent) {
+              if (fullEvent.inicio_evento_id) {
+                console.log(`[ SYNC ] Ignorando evento de fin redundante (${fullEvent.evento_id}) para alertas y Google Sheets.`);
+                continue;
+              }
+              const masterData = await store.getMasterData();
+              const secadero = masterData.secaderos.find(s => s.secadero_id === fullEvent.secadero_id);
+              const secaderoName = secadero ? secadero.nombre : fullEvent.secadero_id;
+              const cleanLinea = (fullEvent.linea || secaderoName || "").toUpperCase().replace(/^SECADERO\s+/i, "");
 
             if (item.status === "inserted") {
               // Si es nuevo, siempre tiene al menos el inicio ("abierto")

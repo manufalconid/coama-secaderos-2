@@ -43,7 +43,8 @@ La planilla de Google Sheets utilizada tiene el ID `1ClFiLfrXfx1N_EehFHvXahuBvc3
 *   **Evitar Alertas Duplicadas**: 
     1. Cuando las tablets reintentan sincronizar eventos repetidos o con la misma versión que ya está consolidada en la base de datos, el backend devuelve un estado `"no-change"`.
     2. Cuando un evento ya estaba cerrado en la base de datos (es decir, `wasClosed = true` en el Store) y llega una sincronización o corrección posterior con versión superior (`status: "updated"`), el servidor evita duplicar la notificación de Telegram (`✅Fin de detención`) y la inserción en la pestaña de `registros_procesados` validando que `!wasClosed`.
-*   **Filtrado en API**: En `POST /sync/events`, el servidor solo procesa el envío a Google Sheets y notificaciones de Telegram para estados `"inserted"` o `"updated"`. El estado `"no-change"` o las actualizaciones de eventos que ya estaban cerrados se filtran de forma segura para evitar alertas redundantes.
+    3. **Ignorar eventos duplicados de fin (finEvent)**: La tablet crea y envía dos objetos separados al cerrar un evento: el evento original actualizado a cerrado y un nuevo evento (`finEvent`) con un ID de evento diferente y la propiedad `inicio_evento_id` apuntando al evento original. El servidor ignora/salta en tiempo real cualquier evento recibido que contenga `inicio_evento_id` para evitar segundas alertas redundantes de Telegram e inserciones duplicadas de filas en Google Sheets.
+*   **Filtrado en API**: En `POST /sync/events`, el servidor solo procesa el envío a Google Sheets y notificaciones de Telegram para estados `"inserted"` o `"updated"`. El estado `"no-change"`, las actualizaciones de paradas ya cerradas, o eventos redundantes de fin (`inicio_evento_id` presente) se filtran de forma segura para evitar alertas y escrituras redundantes.
 
 ---
 
