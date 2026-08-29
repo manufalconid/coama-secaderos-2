@@ -387,7 +387,9 @@ export class PgSyncStore {
         throw new Error("La version recibida es menor que la version consolidada.");
       }
 
-      const status = current.rowCount > 0 ? "updated" : "inserted";
+      const status = current.rowCount > 0
+        ? (current.rows[0].version === event.version ? "no-change" : "updated")
+        : "inserted";
       
       const masterData = await this.getMasterDataInternal(client);
       const populated = populateUnifiedFields({
@@ -511,6 +513,21 @@ export class PgSyncStore {
         origenes: originsMap.get(evt.evento_id) ?? []
       }));
       return mergeEvents(rawEvents);
+    } finally {
+      client.release();
+    }
+  }
+
+  async getEvento(eventoId) {
+    const client = await this.pool.connect();
+    try {
+      const eventRes = await client.query("select * from eventos_tiempo_muerto where evento_id = $1", [eventoId]);
+      if (eventRes.rowCount === 0) return null;
+      const originsRes = await client.query("select origen_id, origen_manual from evento_origenes where evento_id = $1", [eventoId]);
+      return {
+        ...eventRes.rows[0],
+        origenes: originsRes.rows
+      };
     } finally {
       client.release();
     }

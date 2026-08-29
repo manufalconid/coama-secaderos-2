@@ -1,7 +1,29 @@
-import React from "react";
-import { Download } from "lucide-react";
+import React, { useState } from "react";
+import { Download, Database } from "lucide-react";
 
 export default function AnalisisView({ eventos, masterData, showToast }) {
+  const [isExporting, setIsExporting] = useState(false);
+
+  async function exportToSheets() {
+    setIsExporting(true);
+    showToast("Iniciando exportación a Google Sheets...");
+    try {
+      const res = await fetch("/api/admin/sheets/sync", {
+        method: "POST"
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showToast("✅ Google Sheets sincronizado con éxito.");
+      } else {
+        showToast(`❌ Error: ${data.error || "Fallo en la exportación"}`);
+      }
+    } catch (err) {
+      console.error(err);
+      showToast("❌ Error de red al conectar con el servidor.");
+    } finally {
+      setIsExporting(false);
+    }
+  }
   function getTurnoForTime(fechaHoraInicio, turnos) {
     if (!fechaHoraInicio) return null;
     const date = new Date(fechaHoraInicio);
@@ -154,9 +176,14 @@ export default function AnalisisView({ eventos, masterData, showToast }) {
           <h1>Análisis BI & Exportación ERP</h1>
           <p>Dashboard de Looker Studio e integración con ERP COAMA</p>
         </div>
-        <button className="btn-primary" onClick={downloadCsv}>
-          Descargar CSV ERP <Download size={14} />
-        </button>
+        <div style={{ display: "flex", gap: "10px" }}>
+          <button className="btn-secondary" onClick={exportToSheets} disabled={isExporting}>
+            {isExporting ? "Sincronizando..." : "Exportar a Google Sheets"} <Database size={14} />
+          </button>
+          <button className="btn-primary" onClick={downloadCsv}>
+            Descargar CSV ERP <Download size={14} />
+          </button>
+        </div>
       </div>
 
       <div className="clean-card" style={{ height: "75vh", minHeight: "680px", padding: 0, overflow: "hidden", border: "1px solid var(--border-subtle)" }}>

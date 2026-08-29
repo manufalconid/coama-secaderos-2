@@ -2,7 +2,7 @@ import http from "node:http";
 import { InMemorySyncStore } from "./store.mjs";
 import { PgSyncStore } from "./postgres-store.mjs";
 import { exportParametros, importParametros } from "./parametros-handler.mjs";
-import { syncRawEventToSheets, syncProcessedEventToSheets } from "./sheets-sync.mjs";
+import { syncRawEventToSheets, syncProcessedEventToSheets, exportAllToSheets } from "./sheets-sync.mjs";
 
 
 const host = process.env.API_HOST ?? "0.0.0.0";
@@ -199,21 +199,25 @@ const server = http.createServer(async (req, res) => {
 
       if (syncResult.accepted && syncResult.accepted.length > 0) {
         for (const item of syncResult.accepted) {
-          if (item.status === "inserted") {
-            const fullEvent = body.events.find(e => e.evento_id === item.evento_id);
-            if (fullEvent) {
-              const masterData = await store.getMasterData();
-              const secadero = masterData.secaderos.find(s => s.secadero_id === fullEvent.secadero_id);
-              const secaderoName = secadero ? secadero.nombre : fullEvent.secadero_id;
-              const cleanLinea = (fullEvent.linea || secaderoName || "").toUpperCase().replace(/^SECADERO\s+/i, "");
+          const fullEvent = await store.getEvento(item.evento_id);
+          if (fullEvent) {
+            const masterData = await store.getMasterData();
+            const secadero = masterData.secaderos.find(s => s.secadero_id === fullEvent.secadero_id);
+            const secaderoName = secadero ? secadero.nombre : fullEvent.secadero_id;
+            const cleanLinea = (fullEvent.linea || secaderoName || "").toUpperCase().replace(/^SECADERO\s+/i, "");
 
-              // Sincronización con Google Sheets (aditiva)
-              syncRawEventToSheets(fullEvent).catch(err => console.error("Error sincronizando evento crudo a Google Sheets:", err));
+            if (item.status === "inserted") {
+              // Si es nuevo, siempre tiene al menos el inicio ("abierto")
+              syncRawEventToSheets(fullEvent, "abierto").catch(err => console.error("Error sincronizando evento crudo (abierto) a Google Sheets:", err));
 
               if (fullEvent.estado_evento === "abierto") {
                 const message = `🚨Detención ${cleanLinea}`;
                 notifyTelegram(message).catch(err => console.error("Error enviando notificacion a Telegram en segundo plano:", err));
               } else if (fullEvent.estado_evento === "cerrado") {
+                // Si ya llega directamente cerrado, enviamos fin a crudos y a procesados
+                syncRawEventToSheets(fullEvent, "cerrado").catch(err => console.error("Error sincronizando evento crudo (cerrado) a Google Sheets:", err));
+                syncProcessedEventToSheets(fullEvent).catch(err => console.error("Error sincronizando evento procesado a Google Sheets:", err));
+
                 const minutes = Math.round((fullEvent.duracion_segundos || 0) / 60);
                 const tMuerto = fullEvent.tiempo_muerto || "Sin motivo";
                 const cat = fullEvent.categoria_tm || "Sin categoría";
@@ -222,8 +226,21 @@ const server = http.createServer(async (req, res) => {
 
                 const message = `✅Fin de detención ${cleanLinea}. ${minutes} minutos perdidos por ${tMuerto}, ${cat}, ${obs}, ${ubi}`;
                 notifyTelegram(message).catch(err => console.error("Error enviando notificacion a Telegram en segundo plano:", err));
-
+              }
+            } else if (item.status === "updated") {
+              // Si es una actualización y pasa a cerrado, enviamos el fin
+              if (fullEvent.estado_evento === "cerrado") {
+                syncRawEventToSheets(fullEvent, "cerrado").catch(err => console.error("Error sincronizando evento crudo (cerrado) a Google Sheets:", err));
                 syncProcessedEventToSheets(fullEvent).catch(err => console.error("Error sincronizando evento procesado a Google Sheets:", err));
+
+                const minutes = Math.round((fullEvent.duracion_segundos || 0) / 60);
+                const tMuerto = fullEvent.tiempo_muerto || "Sin motivo";
+                const cat = fullEvent.categoria_tm || "Sin categoría";
+                const obs = fullEvent.observacion || "Sin observaciones";
+                const ubi = fullEvent.ubicacion || "Sin ubicación";
+
+                const message = `✅Fin de detención ${cleanLinea}. ${minutes} minutos perdidos por ${tMuerto}, ${cat}, ${obs}, ${ubi}`;
+                notifyTelegram(message).catch(err => console.error("Error enviando notificacion a Telegram en segundo plano:", err));
               }
             }
           }
@@ -393,6 +410,19 @@ async function handleAdminRoute(req, res, url) {
         return sendJson(res, 200, importResult);
       } catch (err) {
         return sendJson(res, 400, { error: err.message });
+      }
+    }
+  }
+
+  if (resource === "sheets" && id === "sync") {
+    if (req.method === "POST") {
+      try {
+        const events = await store.listEventos();
+        const masterData = await store.getMasterData();
+        await exportAllToSheets(events, masterData);
+        return sendJson(res, 200, { success: true, message: "Sincronización completa con Google Sheets realizada con éxito." });
+      } catch (err) {
+        return sendJson(res, 500, { error: err.message });
       }
     }
   }

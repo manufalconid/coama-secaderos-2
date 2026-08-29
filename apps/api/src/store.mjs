@@ -80,6 +80,15 @@ export class InMemorySyncStore {
     return mergeEvents(rawEvents);
   }
 
+  getEvento(eventoId) {
+    const raw = this.events.get(eventoId);
+    if (!raw) return null;
+    return {
+      ...raw,
+      origenes: this.eventOrigins.get(eventoId) || []
+    };
+  }
+
   saveEvento(eventoId, input) {
     const current = this.events.get(eventoId);
     if (!current) {
@@ -293,7 +302,9 @@ export class InMemorySyncStore {
         }
       }
 
-      const status = current ? "updated" : "inserted";
+      const status = current
+        ? (current.version === event.version ? "no-change" : "updated")
+        : "inserted";
       const populated = populateUnifiedFields({
         ...event,
         turno_id: event.turno_id ?? (current ? current.turno_id : null),
