@@ -284,6 +284,8 @@ export class InMemorySyncStore {
         continue;
       }
 
+      const wasClosed = !!(current && current.estado_evento === "cerrado");
+
       // Evitar traslapes: auto-cerrar cualquier otra parada abierta para el mismo secadero
       if (event.estado_evento === "abierto") {
         for (const [id, existing] of this.events.entries()) {
@@ -338,7 +340,8 @@ export class InMemorySyncStore {
       accepted.push({
         evento_id: event.evento_id,
         status,
-        version: event.version
+        version: event.version,
+        wasClosed
       });
     }
 

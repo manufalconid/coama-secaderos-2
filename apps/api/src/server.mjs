@@ -228,8 +228,8 @@ const server = http.createServer(async (req, res) => {
                 notifyTelegram(message).catch(err => console.error("Error enviando notificacion a Telegram en segundo plano:", err));
               }
             } else if (item.status === "updated") {
-              // Si es una actualización y pasa a cerrado, enviamos el fin
-              if (fullEvent.estado_evento === "cerrado") {
+              // Si es una actualización y pasa a cerrado, y NO estaba cerrado previamente, enviamos el fin
+              if (fullEvent.estado_evento === "cerrado" && !item.wasClosed) {
                 syncRawEventToSheets(fullEvent, "cerrado").catch(err => console.error("Error sincronizando evento crudo (cerrado) a Google Sheets:", err));
                 syncProcessedEventToSheets(fullEvent).catch(err => console.error("Error sincronizando evento procesado a Google Sheets:", err));
 

@@ -379,13 +379,15 @@ export class PgSyncStore {
       await client.query("begin");
 
       const current = await client.query(
-        "select version, turno_id from eventos_tiempo_muerto where evento_id = $1 for update",
+        "select version, turno_id, estado_evento from eventos_tiempo_muerto where evento_id = $1 for update",
         [event.evento_id]
       );
 
       if (current.rowCount > 0 && current.rows[0].version > event.version) {
         throw new Error("La version recibida es menor que la version consolidada.");
       }
+
+      const wasClosed = current.rowCount > 0 && current.rows[0].estado_evento === "cerrado";
 
       const status = current.rowCount > 0
         ? (current.rows[0].version === event.version ? "no-change" : "updated")
@@ -426,7 +428,8 @@ export class PgSyncStore {
       return {
         evento_id: event.evento_id,
         status,
-        version: event.version
+        version: event.version,
+        wasClosed
       };
     } catch (error) {
       await client.query("rollback");
