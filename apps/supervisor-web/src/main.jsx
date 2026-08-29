@@ -329,6 +329,10 @@ function App() {
     } catch (err) {
       console.error(err);
       showToast("❌ Error de comunicación con el servidor.");
+    } finally {
+      if (e.target) {
+        e.target.value = "";
+      }
     }
   }
 

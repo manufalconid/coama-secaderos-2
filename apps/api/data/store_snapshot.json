@@ -1676,6 +1676,275 @@
         "hora_registro": "14:30:48",
         "timestamp_registro": "2026-08-28T17:30:48.639Z"
       }
+    ],
+    [
+      "db62749e-4636-42ff-b739-949bb1ef68bc",
+      {
+        "evento_id": "db62749e-4636-42ff-b739-949bb1ef68bc",
+        "tablet_id": "tab-sec-omeco",
+        "secadero_id": "sec-omeco",
+        "fecha_hora_inicio": "2026-08-28T17:41:03.460Z",
+        "fecha_hora_fin": "2026-08-28T17:41:40.129Z",
+        "duracion_segundos": 37,
+        "estado_evento": "cerrado",
+        "tipo_registro": "manual",
+        "origen_id": "ori-externo",
+        "razon_id": "raz-corte-de-energia",
+        "observacion": "",
+        "version": 2,
+        "sincronizado": false,
+        "timestamp_registro": "2026-08-28T17:41:03.460Z",
+        "fecha_registro": "2026-08-28",
+        "hora_registro": "14:41:03",
+        "hora_desde": "2026-08-28T17:41:03.460Z",
+        "linea": "OMECO",
+        "hora_inicio_turno": "06:00:00",
+        "hora_fin_turno": "18:00:00",
+        "tipo_turno": "Turno Día (06:00 a 18:00)",
+        "hora_inicio_descanso": "12:00:00",
+        "hora_fin_descanso": "13:00:00",
+        "tiempo_disponible_turno": 11,
+        "turno_id": "tur-dia",
+        "hora_hasta": "2026-08-28T17:41:40.129Z",
+        "tiempo_parada": 37,
+        "categoria_tm": "EXTERNO",
+        "tiempo_muerto": "CORTE DE ENERGIA",
+        "observaciones": "",
+        "ubicacion": null,
+        "origenes": [
+          {
+            "origen_id": "ori-externo"
+          }
+        ],
+        "propuesta_manual": null,
+        "recibido_en_servidor": "2026-08-28T21:04:10.489Z"
+      }
+    ],
+    [
+      "d25d2790-e067-4981-9771-6cd7ec3652dc",
+      {
+        "evento_id": "d25d2790-e067-4981-9771-6cd7ec3652dc",
+        "inicio_evento_id": "db62749e-4636-42ff-b739-949bb1ef68bc",
+        "tablet_id": "tab-sec-omeco",
+        "secadero_id": "sec-omeco",
+        "fecha_hora_inicio": "2026-08-28T17:41:03.460Z",
+        "fecha_hora_fin": "2026-08-28T17:41:40.129Z",
+        "duracion_segundos": 37,
+        "estado_evento": "cerrado",
+        "tipo_registro": "manual",
+        "origen_id": "ori-externo",
+        "razon_id": "raz-corte-de-energia",
+        "observacion": "",
+        "version": 1,
+        "sincronizado": false,
+        "hora_inicio_turno": "06:00:00",
+        "hora_fin_turno": "18:00:00",
+        "tipo_turno": "Turno Día (06:00 a 18:00)",
+        "hora_inicio_descanso": "12:00:00",
+        "hora_fin_descanso": "13:00:00",
+        "linea": "OMECO",
+        "hora_desde": "2026-08-28T17:41:03.460Z",
+        "hora_hasta": "2026-08-28T17:41:40.129Z",
+        "categoria_tm": "EXTERNO",
+        "tiempo_muerto": "CORTE DE ENERGIA",
+        "observaciones": "",
+        "ubicacion": null,
+        "tiempo_disponible_turno": 11,
+        "tiempo_parada": 37,
+        "turno_id": "tur-dia",
+        "origenes": [
+          {
+            "origen_id": "ori-externo"
+          }
+        ],
+        "propuesta_manual": null,
+        "recibido_en_servidor": "2026-08-28T21:04:10.607Z",
+        "fecha_registro": "2026-08-28",
+        "hora_registro": "18:04:10",
+        "timestamp_registro": "2026-08-28T21:04:10.607Z"
+      }
+    ],
+    [
+      "5fe6bfa2-3cce-488c-982c-f53164b3af34",
+      {
+        "evento_id": "5fe6bfa2-3cce-488c-982c-f53164b3af34",
+        "tablet_id": "tab-sec-omeco",
+        "secadero_id": "sec-omeco",
+        "fecha_hora_inicio": "2026-08-28T21:05:41.534Z",
+        "fecha_hora_fin": "2026-08-28T21:06:01.374Z",
+        "duracion_segundos": 20,
+        "estado_evento": "cerrado",
+        "tipo_registro": "manual",
+        "origen_id": "ori-proceso",
+        "razon_id": "raz-secadero-trancado",
+        "observacion": "",
+        "version": 2,
+        "sincronizado": false,
+        "timestamp_registro": "2026-08-28T21:05:41.534Z",
+        "fecha_registro": "2026-08-28",
+        "hora_registro": "18:05:41",
+        "hora_desde": "2026-08-28T21:05:41.534Z",
+        "linea": "OMECO",
+        "hora_inicio_turno": "18:00:00",
+        "hora_fin_turno": "06:00:00",
+        "tipo_turno": "Turno Noche (18:00 a 06:00)",
+        "hora_inicio_descanso": "00:00:00",
+        "hora_fin_descanso": "01:00:00",
+        "tiempo_disponible_turno": 11,
+        "turno_id": "tur-noche",
+        "hora_hasta": "2026-08-28T21:06:01.374Z",
+        "tiempo_parada": 20,
+        "categoria_tm": "PROCESO",
+        "tiempo_muerto": "SECADERO TRANCADO",
+        "observaciones": "",
+        "ubicacion": "N6P13",
+        "origenes": [
+          {
+            "origen_id": "ori-proceso"
+          }
+        ],
+        "propuesta_manual": null,
+        "recibido_en_servidor": "2026-08-28T21:06:02.890Z"
+      }
+    ],
+    [
+      "f798ccf6-8672-4e15-917b-40c3b2b6e9a2",
+      {
+        "evento_id": "f798ccf6-8672-4e15-917b-40c3b2b6e9a2",
+        "inicio_evento_id": "5fe6bfa2-3cce-488c-982c-f53164b3af34",
+        "tablet_id": "tab-sec-omeco",
+        "secadero_id": "sec-omeco",
+        "fecha_hora_inicio": "2026-08-28T21:05:41.534Z",
+        "fecha_hora_fin": "2026-08-28T21:06:01.374Z",
+        "duracion_segundos": 20,
+        "estado_evento": "cerrado",
+        "tipo_registro": "manual",
+        "origen_id": "ori-proceso",
+        "razon_id": "raz-secadero-trancado",
+        "observacion": "",
+        "version": 1,
+        "sincronizado": false,
+        "hora_inicio_turno": "18:00:00",
+        "hora_fin_turno": "06:00:00",
+        "tipo_turno": "Turno Noche (18:00 a 06:00)",
+        "hora_inicio_descanso": "00:00:00",
+        "hora_fin_descanso": "01:00:00",
+        "linea": "OMECO",
+        "hora_desde": "2026-08-28T21:05:41.534Z",
+        "hora_hasta": "2026-08-28T21:06:01.374Z",
+        "categoria_tm": "PROCESO",
+        "tiempo_muerto": "SECADERO TRANCADO",
+        "observaciones": "",
+        "ubicacion": "N6P13",
+        "tiempo_disponible_turno": 11,
+        "tiempo_parada": 20,
+        "turno_id": "tur-noche",
+        "origenes": [
+          {
+            "origen_id": "ori-proceso"
+          }
+        ],
+        "propuesta_manual": null,
+        "recibido_en_servidor": "2026-08-28T21:06:02.894Z",
+        "fecha_registro": "2026-08-28",
+        "hora_registro": "18:06:02",
+        "timestamp_registro": "2026-08-28T21:06:02.894Z"
+      }
+    ],
+    [
+      "f0e9287b-34d2-459e-9ee9-f0ab7d9b7ed6",
+      {
+        "evento_id": "f0e9287b-34d2-459e-9ee9-f0ab7d9b7ed6",
+        "tablet_id": "tab-sec-omeco",
+        "secadero_id": "sec-omeco",
+        "fecha_hora_inicio": "2026-08-28T21:06:10.102Z",
+        "fecha_hora_fin": "2026-08-28T21:06:25.591Z",
+        "duracion_segundos": 15,
+        "estado_evento": "cerrado",
+        "tipo_registro": "manual",
+        "origen_id": "ori-electrico",
+        "razon_id": null,
+        "observacion": "[Sugerido] Popop.",
+        "version": 2,
+        "sincronizado": false,
+        "timestamp_registro": "2026-08-28T21:06:10.102Z",
+        "fecha_registro": "2026-08-28",
+        "hora_registro": "18:06:10",
+        "hora_desde": "2026-08-28T21:06:10.102Z",
+        "linea": "OMECO",
+        "hora_inicio_turno": "18:00:00",
+        "hora_fin_turno": "06:00:00",
+        "tipo_turno": "Turno Noche (18:00 a 06:00)",
+        "hora_inicio_descanso": "00:00:00",
+        "hora_fin_descanso": "01:00:00",
+        "tiempo_disponible_turno": 11,
+        "turno_id": "tur-noche",
+        "hora_hasta": "2026-08-28T21:06:25.591Z",
+        "tiempo_parada": 15,
+        "categoria_tm": "ELECTRICO",
+        "tiempo_muerto": "Popop",
+        "observaciones": "[Sugerido] Popop.",
+        "ubicacion": null,
+        "origenes": [
+          {
+            "origen_id": "ori-electrico"
+          }
+        ],
+        "propuesta_manual": {
+          "tipo": "razon",
+          "texto": "Popop",
+          "comentario": ""
+        },
+        "recibido_en_servidor": "2026-08-28T21:06:27.082Z"
+      }
+    ],
+    [
+      "1e43de23-0939-46b1-a92e-419728d65dc0",
+      {
+        "evento_id": "1e43de23-0939-46b1-a92e-419728d65dc0",
+        "inicio_evento_id": "f0e9287b-34d2-459e-9ee9-f0ab7d9b7ed6",
+        "tablet_id": "tab-sec-omeco",
+        "secadero_id": "sec-omeco",
+        "fecha_hora_inicio": "2026-08-28T21:06:10.102Z",
+        "fecha_hora_fin": "2026-08-28T21:06:25.591Z",
+        "duracion_segundos": 15,
+        "estado_evento": "cerrado",
+        "tipo_registro": "manual",
+        "origen_id": "ori-electrico",
+        "razon_id": null,
+        "observacion": "[Sugerido] Popop.",
+        "version": 1,
+        "sincronizado": false,
+        "hora_inicio_turno": "18:00:00",
+        "hora_fin_turno": "06:00:00",
+        "tipo_turno": "Turno Noche (18:00 a 06:00)",
+        "hora_inicio_descanso": "00:00:00",
+        "hora_fin_descanso": "01:00:00",
+        "linea": "OMECO",
+        "hora_desde": "2026-08-28T21:06:10.102Z",
+        "hora_hasta": "2026-08-28T21:06:25.591Z",
+        "categoria_tm": "ELECTRICO",
+        "tiempo_muerto": "Popop",
+        "observaciones": "[Sugerido] Popop.",
+        "ubicacion": null,
+        "tiempo_disponible_turno": 11,
+        "tiempo_parada": 15,
+        "turno_id": "tur-noche",
+        "origenes": [
+          {
+            "origen_id": "ori-electrico"
+          }
+        ],
+        "propuesta_manual": {
+          "tipo": "razon",
+          "texto": "Popop",
+          "comentario": ""
+        },
+        "recibido_en_servidor": "2026-08-28T21:06:27.084Z",
+        "fecha_registro": "2026-08-28",
+        "hora_registro": "18:06:27",
+        "timestamp_registro": "2026-08-28T21:06:27.084Z"
+      }
     ]
   ],
   "eventOrigins": [
@@ -1982,6 +2251,54 @@
           "origen_id": "ori-electrico"
         }
       ]
+    ],
+    [
+      "db62749e-4636-42ff-b739-949bb1ef68bc",
+      [
+        {
+          "origen_id": "ori-externo"
+        }
+      ]
+    ],
+    [
+      "d25d2790-e067-4981-9771-6cd7ec3652dc",
+      [
+        {
+          "origen_id": "ori-externo"
+        }
+      ]
+    ],
+    [
+      "5fe6bfa2-3cce-488c-982c-f53164b3af34",
+      [
+        {
+          "origen_id": "ori-proceso"
+        }
+      ]
+    ],
+    [
+      "f798ccf6-8672-4e15-917b-40c3b2b6e9a2",
+      [
+        {
+          "origen_id": "ori-proceso"
+        }
+      ]
+    ],
+    [
+      "f0e9287b-34d2-459e-9ee9-f0ab7d9b7ed6",
+      [
+        {
+          "origen_id": "ori-electrico"
+        }
+      ]
+    ],
+    [
+      "1e43de23-0939-46b1-a92e-419728d65dc0",
+      [
+        {
+          "origen_id": "ori-electrico"
+        }
+      ]
     ]
   ],
   "manualProposals": [
@@ -2047,6 +2364,19 @@
         "texto": "Poo",
         "comentario": "",
         "revisada_en": "2026-08-28T15:46:42.072Z",
+        "maestro_destino_id": null
+      }
+    ],
+    [
+      "f0e9287b-34d2-459e-9ee9-f0ab7d9b7ed6:razon",
+      {
+        "propuesta_id": "f0e9287b-34d2-459e-9ee9-f0ab7d9b7ed6:razon",
+        "evento_id": "f0e9287b-34d2-459e-9ee9-f0ab7d9b7ed6",
+        "estado_revision": "rechazada",
+        "tipo": "razon",
+        "texto": "Popop",
+        "comentario": "",
+        "revisada_en": "2026-08-28T21:06:38.709Z",
         "maestro_destino_id": null
       }
     ]

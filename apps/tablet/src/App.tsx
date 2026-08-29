@@ -6,7 +6,7 @@ import {
   X,
   Save
 } from "lucide-react";
-import { dbService, StoppageEvent } from "./db";
+import { dbService, type StoppageEvent } from "./db";
 
 // Import modular components
 import MachineConfirmStage from "./components/Stages/MachineConfirmStage";

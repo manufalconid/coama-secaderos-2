@@ -1,5 +1,5 @@
 import React from "react";
-import { Send, Tablet, Download, XCheck } from "lucide-react";
+import { Send, Tablet, Download } from "lucide-react";
 
 export default function EventosView({
   eventos,

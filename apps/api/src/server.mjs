@@ -6,8 +6,24 @@ import { exportParametros, importParametros } from "./parametros-handler.mjs";
 
 const host = process.env.API_HOST ?? "0.0.0.0";
 const port = Number(process.env.API_PORT ?? 8080);
-const storeMode = process.env.API_STORE ?? "memory";
-const store = createStore(storeMode);
+let storeMode = process.env.API_STORE ?? "memory";
+let store;
+
+if (storeMode === "postgres") {
+  try {
+    const pgStore = new PgSyncStore();
+    // Probamos la conexión
+    await pgStore.pool.query("SELECT 1");
+    store = pgStore;
+    console.log("[ OK ] Conectado a la base de datos PostgreSQL.");
+  } catch (err) {
+    console.warn(`[ ADVERTENCIA ] No se pudo conectar a PostgreSQL (${err.message}). Cayendo en modo en memoria (storeMode = memory)...`);
+    storeMode = "memory";
+    store = new InMemorySyncStore(undefined, { seedProposals: true, persist: true });
+  }
+} else {
+  store = new InMemorySyncStore(undefined, { seedProposals: true, persist: true });
+}
 const tabletConnections = new Map(); // tablet_id -> { lastSeen: ISOString, ip: string }
 
 const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN;

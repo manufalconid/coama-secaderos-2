@@ -1,8 +1,8 @@
 # COAMA Secaderos - Contexto vivo del proyecto
 
-Ultima actualizacion: 2026-08-27
+Ultima actualizacion: 2026-08-28
 Responsable de actualizacion: Antigravity / Manu
-Estado general: primer incremento tecnico completado, depurado y alineado en puertos (8080)
+Estado general: primer incremento técnico completado, robustez de importación/exportación de parámetros y fallback de base de datos activo.
 
 
 Este archivo es el punto de entrada rapido para continuar el proyecto desde Codex, Antigravity u otro entorno. Debe mantenerse corto, actual y accionable. La documentacion detallada sigue viviendo en `README.md`, `Prompt_Maestro_Proyecto_COAMA.md` y `docs/`.
@@ -109,6 +109,10 @@ Implementado:
   - `npm run validate:sync:postgres`
 - Unificación y alineación del puerto API a 8080 en toda la infraestructura de desarrollo, proxies y diagnóstico.
 - Configuración automática de tablet_id en la persistencia local de la tablet al consultar el catálogo.
+- Carga y descarga de la planilla Excel de parámetros completamente robusta, implementada sin pérdida de registros históricos en PostgreSQL y en memoria (vía Upsert y soft-delete/deactivación de parámetros ausentes).
+- Detección automática y fallback elegante a modo memoria en el backend si el servidor PostgreSQL no está disponible.
+- Solución al problema de reinicio del input de archivos en la carga de la planilla de parámetros en el portal frontend (Vite).
+- Compilación automatizada y exitosa del instalador APK para Android (`Coama_secaderos_LUMO_v1.0.5.apk`) con incremento de versión a `1.0.5` y solución de advertencias de empaquetado en Capacitor/Vite.
 
 Pendiente:
 
