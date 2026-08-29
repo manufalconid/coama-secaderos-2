@@ -120,6 +120,21 @@ async function ensureSheetExists(title, headers) {
   }
 }
 
+async function getExistingRows(title) {
+  const sheets = getSheetsClient();
+  if (!sheets) return [];
+  try {
+    const res = await sheets.spreadsheets.values.get({
+      spreadsheetId: sheetId,
+      range: `${title}!A:Z`
+    });
+    return res.data.values || [];
+  } catch (err) {
+    console.error(`[ GOOGLE SHEETS ] Error al obtener filas de ${title}:`, err);
+    return [];
+  }
+}
+
 export async function syncRawEventToSheets(e, forceState = null) {
   const title = "registros_crudos_tablet";
   const headers = [
@@ -138,36 +153,57 @@ export async function syncRawEventToSheets(e, forceState = null) {
   const state = forceState || e.estado_evento || "abierto";
   const isCerrado = state === "cerrado";
 
-  try {
-    const row = [
-      e.evento_id || "",
-      e.tablet_id || "",
-      e.secadero_id || "",
-      e.fecha_registro || "",
-      e.linea || "",
-      e.fecha_hora_inicio || "",
-      e.hora_registro || "",
-      isCerrado ? (e.fecha_hora_fin || "") : "",
-      isCerrado ? (e.duracion_segundos !== null && e.duracion_segundos !== undefined ? formatDecimal((Number(e.duracion_segundos) / 60).toFixed(1)) : "") : "",
-      state,
-      e.tipo_registro || "",
-      e.categoria_tm || "",
-      e.tiempo_muerto || "",
-      e.observacion || "",
-      e.ubicacion || "",
-      e.version !== null && e.version !== undefined ? e.version : "",
-      e.tipo_turno || ""
-    ];
+  const row = [
+    e.evento_id || "",
+    e.tablet_id || "",
+    e.secadero_id || "",
+    e.fecha_registro || "",
+    e.linea || "",
+    e.fecha_hora_inicio || "",
+    e.hora_registro || "",
+    isCerrado ? (e.fecha_hora_fin || "") : "",
+    isCerrado ? (e.duracion_segundos !== null && e.duracion_segundos !== undefined ? formatDecimal((Number(e.duracion_segundos) / 60).toFixed(1)) : "") : "",
+    state,
+    e.tipo_registro || "",
+    e.categoria_tm || "",
+    e.tiempo_muerto || "",
+    e.observacion || "",
+    e.ubicacion || "",
+    e.version !== null && e.version !== undefined ? e.version : "",
+    e.tipo_turno || ""
+  ];
 
-    await sheets.spreadsheets.values.append({
-      spreadsheetId: sheetId,
-      range: `${title}!A:A`,
-      valueInputOption: "RAW",
-      requestBody: {
-        values: [row]
+  try {
+    const existing = await getExistingRows(title);
+    let foundIndex = -1;
+    // Buscar coincidencia por clave única: evento_id + estado_evento
+    for (let i = 1; i < existing.length; i++) {
+      if (existing[i][0] === e.evento_id && existing[i][9] === state) {
+        foundIndex = i;
+        break;
       }
-    });
-    console.log(`[ GOOGLE SHEETS ] Evento crudo guardado aditivamente (${state}): ${e.evento_id}`);
+    }
+
+    if (foundIndex !== -1) {
+      const hasChanged = row.some((val, idx) => String(val) !== String(existing[foundIndex][idx] ?? ""));
+      if (hasChanged) {
+        await sheets.spreadsheets.values.update({
+          spreadsheetId: sheetId,
+          range: `${title}!A${foundIndex + 1}:Q${foundIndex + 1}`,
+          valueInputOption: "RAW",
+          requestBody: { values: [row] }
+        });
+        console.log(`[ GOOGLE SHEETS ] Evento crudo actualizado (${state}): ${e.evento_id}`);
+      }
+    } else {
+      await sheets.spreadsheets.values.append({
+        spreadsheetId: sheetId,
+        range: `${title}!A:A`,
+        valueInputOption: "RAW",
+        requestBody: { values: [row] }
+      });
+      console.log(`[ GOOGLE SHEETS ] Evento crudo insertado (${state}): ${e.evento_id}`);
+    }
   } catch (err) {
     console.error("[ GOOGLE SHEETS ] Error al sincronizar evento crudo:", err);
   }
@@ -176,7 +212,7 @@ export async function syncRawEventToSheets(e, forceState = null) {
 export async function syncProcessedEventToSheets(e) {
   const title = "registros_procesados";
   const headers = [
-    "fecha_de_registro", "linea", "turno_hora_desde", "turno_hora_hasta",
+    "evento_id", "fecha_de_registro", "linea", "turno_hora_desde", "turno_hora_hasta",
     "tiempo_de_descanso", "tiempo_de_turno_en_horas_programadas",
     "categoria", "tiempo_muerto", "observacion", "ubicacion",
     "tiempo_muerto_hora_desde", "tiempo_muerto_hora_hasta",
@@ -195,6 +231,7 @@ export async function syncProcessedEventToSheets(e) {
     const durHr = (durSec / 3600).toFixed(2);
 
     const row = [
+      e.evento_id || "",
       e.fecha_registro || "",
       e.linea || "",
       e.hora_inicio_turno || "",
@@ -211,15 +248,36 @@ export async function syncProcessedEventToSheets(e) {
       e.tiempo_parada != null ? formatDecimal(durMin) : ""
     ];
 
-    await sheets.spreadsheets.values.append({
-      spreadsheetId: sheetId,
-      range: `${title}!A:A`,
-      valueInputOption: "RAW",
-      requestBody: {
-        values: [row]
+    const existing = await getExistingRows(title);
+    let foundIndex = -1;
+    // Buscar coincidencia por clave única: evento_id
+    for (let i = 1; i < existing.length; i++) {
+      if (existing[i][0] === e.evento_id) {
+        foundIndex = i;
+        break;
       }
-    });
-    console.log(`[ GOOGLE SHEETS ] Evento procesado guardado aditivamente: ${e.evento_id}`);
+    }
+
+    if (foundIndex !== -1) {
+      const hasChanged = row.some((val, idx) => String(val) !== String(existing[foundIndex][idx] ?? ""));
+      if (hasChanged) {
+        await sheets.spreadsheets.values.update({
+          spreadsheetId: sheetId,
+          range: `${title}!A${foundIndex + 1}:O${foundIndex + 1}`,
+          valueInputOption: "RAW",
+          requestBody: { values: [row] }
+        });
+        console.log(`[ GOOGLE SHEETS ] Evento procesado actualizado: ${e.evento_id}`);
+      }
+    } else {
+      await sheets.spreadsheets.values.append({
+        spreadsheetId: sheetId,
+        range: `${title}!A:A`,
+        valueInputOption: "RAW",
+        requestBody: { values: [row] }
+      });
+      console.log(`[ GOOGLE SHEETS ] Evento procesado insertado: ${e.evento_id}`);
+    }
   } catch (err) {
     console.error("[ GOOGLE SHEETS ] Error al sincronizar evento procesado:", err);
   }
@@ -236,34 +294,64 @@ export async function syncTurnosToSheets(turnos) {
   if (!ok) return;
 
   try {
-    const rows = turnos.map(t => [
-      t.fecha || "",
-      t.linea || "",
-      t.turno_id || "",
-      t.nombre || "",
-      t.hora_inicio || "",
-      t.hora_fin || "",
-      formatDecimal(t.horas_totales),
-      formatDecimal(t.horas_descanso),
-      formatDecimal(t.horas_programadas)
-    ]);
+    const existing = await getExistingRows(title);
+    const existingMap = new Map(); // key = `${fecha}_${linea}_${turno_id}` -> { rowIndex, values }
+    for (let i = 1; i < existing.length; i++) {
+      const key = `${existing[i][0]}_${existing[i][1]}_${existing[i][2]}`;
+      existingMap.set(key, { rowIndex: i, values: existing[i] });
+    }
 
-    // Limpiar tabla actual para sobrescribir completamente
-    await sheets.spreadsheets.values.clear({
-      spreadsheetId: sheetId,
-      range: `${title}!A:Z`
-    });
+    const updates = [];
+    const newRows = [];
 
-    // Escribir cabeceras y registros nuevos
-    await sheets.spreadsheets.values.update({
-      spreadsheetId: sheetId,
-      range: `${title}!A1`,
-      valueInputOption: "RAW",
-      requestBody: {
-        values: [headers, ...rows]
+    for (const t of turnos) {
+      const row = [
+        t.fecha || "",
+        t.linea || "",
+        t.turno_id || "",
+        t.nombre || "",
+        t.hora_inicio || "",
+        t.hora_fin || "",
+        formatDecimal(t.horas_totales),
+        formatDecimal(t.horas_descanso),
+        formatDecimal(t.horas_programadas)
+      ];
+
+      const key = `${t.fecha}_${t.linea}_${t.turno_id}`;
+      const found = existingMap.get(key);
+      if (found) {
+        const hasChanged = row.some((val, idx) => String(val) !== String(found.values[idx] ?? ""));
+        if (hasChanged) {
+          updates.push({
+            range: `${title}!A${found.rowIndex + 1}:I${found.rowIndex + 1}`,
+            values: [row]
+          });
+        }
+      } else {
+        newRows.push(row);
       }
-    });
-    console.log(`[ GOOGLE SHEETS ] Tabla de turnos actualizada con ${turnos.length} registros diarios.`);
+    }
+
+    if (updates.length > 0) {
+      await sheets.spreadsheets.values.batchUpdate({
+        spreadsheetId: sheetId,
+        requestBody: {
+          valueInputOption: "RAW",
+          data: updates
+        }
+      });
+      console.log(`[ GOOGLE SHEETS ] Turnos: ${updates.length} filas actualizadas en lote.`);
+    }
+
+    if (newRows.length > 0) {
+      await sheets.spreadsheets.values.append({
+        spreadsheetId: sheetId,
+        range: `${title}!A:A`,
+        valueInputOption: "RAW",
+        requestBody: { values: newRows }
+      });
+      console.log(`[ GOOGLE SHEETS ] Turnos: ${newRows.length} nuevas filas añadidas.`);
+    }
   } catch (err) {
     console.error("[ GOOGLE SHEETS ] Error al sincronizar turnos:", err);
   }
@@ -273,7 +361,7 @@ export async function exportAllToSheets(events, masterData) {
   const sheets = getSheetsClient();
   if (!sheets) throw new Error("Google Sheets credentials not configured.");
 
-  // 1. Reescribir registros crudos
+  // 1. Reescribir registros crudos incrementalmente
   const titleCrudos = "registros_crudos_tablet";
   const headersCrudos = [
     "evento_id", "tablet_id", "secadero_id", "fecha_registro", "linea", 
@@ -283,7 +371,16 @@ export async function exportAllToSheets(events, masterData) {
   ];
   await ensureSheetExists(titleCrudos, headersCrudos);
 
-  const crudosRows = [];
+  const existingCrudos = await getExistingRows(titleCrudos);
+  const crudosMap = new Map(); // key = `${evento_id}_${estado_evento}` -> { rowIndex, values }
+  for (let i = 1; i < existingCrudos.length; i++) {
+    const key = `${existingCrudos[i][0]}_${existingCrudos[i][9]}`;
+    crudosMap.set(key, { rowIndex: i, values: existingCrudos[i] });
+  }
+
+  const crudosUpdates = [];
+  const crudosNewRows = [];
+
   const sortedEvents = [...events].sort((a, b) => {
     const dateA = new Date(a.fecha_hora_inicio || a.inicio || 0);
     const dateB = new Date(b.fecha_hora_inicio || b.inicio || 0);
@@ -292,7 +389,7 @@ export async function exportAllToSheets(events, masterData) {
 
   for (const e of sortedEvents) {
     // Fila 1: Inicio (abierto)
-    crudosRows.push([
+    const rowAbierto = [
       e.evento_id || "",
       e.tablet_id || "",
       e.secadero_id || "",
@@ -310,11 +407,25 @@ export async function exportAllToSheets(events, masterData) {
       e.ubicacion || "",
       e.version !== null && e.version !== undefined ? e.version : "",
       e.tipo_turno || ""
-    ]);
+    ];
+
+    const keyAbierto = `${e.evento_id}_abierto`;
+    const foundAbierto = crudosMap.get(keyAbierto);
+    if (foundAbierto) {
+      const hasChanged = rowAbierto.some((val, idx) => String(val) !== String(foundAbierto.values[idx] ?? ""));
+      if (hasChanged) {
+        crudosUpdates.push({
+          range: `${titleCrudos}!A${foundAbierto.rowIndex + 1}:Q${foundAbierto.rowIndex + 1}`,
+          values: [rowAbierto]
+        });
+      }
+    } else {
+      crudosNewRows.push(rowAbierto);
+    }
 
     // Fila 2: Fin (cerrado) si corresponde
     if (e.estado_evento === "cerrado") {
-      crudosRows.push([
+      const rowCerrado = [
         e.evento_id || "",
         e.tablet_id || "",
         e.secadero_id || "",
@@ -332,28 +443,48 @@ export async function exportAllToSheets(events, masterData) {
         e.ubicacion || "",
         e.version !== null && e.version !== undefined ? e.version : "",
         e.tipo_turno || ""
-      ]);
+      ];
+
+      const keyCerrado = `${e.evento_id}_cerrado`;
+      const foundCerrado = crudosMap.get(keyCerrado);
+      if (foundCerrado) {
+        const hasChanged = rowCerrado.some((val, idx) => String(val) !== String(foundCerrado.values[idx] ?? ""));
+        if (hasChanged) {
+          crudosUpdates.push({
+            range: `${titleCrudos}!A${foundCerrado.rowIndex + 1}:Q${foundCerrado.rowIndex + 1}`,
+            values: [rowCerrado]
+          });
+        }
+      } else {
+        crudosNewRows.push(rowCerrado);
+      }
     }
   }
 
-  await sheets.spreadsheets.values.clear({
-    spreadsheetId: sheetId,
-    range: `${titleCrudos}!A:Z`
-  });
-  await sheets.spreadsheets.values.update({
-    spreadsheetId: sheetId,
-    range: `${titleCrudos}!A1`,
-    valueInputOption: "RAW",
-    requestBody: {
-      values: [headersCrudos, ...crudosRows]
-    }
-  });
-  console.log(`[ GOOGLE SHEETS ] Pestaña ${titleCrudos} reescrita con ${crudosRows.length} registros crudos.`);
+  if (crudosUpdates.length > 0) {
+    await sheets.spreadsheets.values.batchUpdate({
+      spreadsheetId: sheetId,
+      requestBody: {
+        valueInputOption: "RAW",
+        data: crudosUpdates
+      }
+    });
+    console.log(`[ GOOGLE SHEETS ] Crudos: ${crudosUpdates.length} filas actualizadas.`);
+  }
+  if (crudosNewRows.length > 0) {
+    await sheets.spreadsheets.values.append({
+      spreadsheetId: sheetId,
+      range: `${titleCrudos}!A:A`,
+      valueInputOption: "RAW",
+      requestBody: { values: crudosNewRows }
+    });
+    console.log(`[ GOOGLE SHEETS ] Crudos: ${crudosNewRows.length} nuevas filas añadidas.`);
+  }
 
-  // 2. Reescribir registros procesados
+  // 2. Reescribir registros procesados incrementalmente
   const titleProcesados = "registros_procesados";
   const headersProcesados = [
-    "fecha_de_registro", "linea", "turno_hora_desde", "turno_hora_hasta",
+    "evento_id", "fecha_de_registro", "linea", "turno_hora_desde", "turno_hora_hasta",
     "tiempo_de_descanso", "tiempo_de_turno_en_horas_programadas",
     "categoria", "tiempo_muerto", "observacion", "ubicacion",
     "tiempo_muerto_hora_desde", "tiempo_muerto_hora_hasta",
@@ -361,7 +492,15 @@ export async function exportAllToSheets(events, masterData) {
   ];
   await ensureSheetExists(titleProcesados, headersProcesados);
 
-  const procesadosRows = [];
+  const existingProcesados = await getExistingRows(titleProcesados);
+  const procesadosMap = new Map(); // key = `evento_id` -> { rowIndex, values }
+  for (let i = 1; i < existingProcesados.length; i++) {
+    procesadosMap.set(existingProcesados[i][0], { rowIndex: i, values: existingProcesados[i] });
+  }
+
+  const procesadosUpdates = [];
+  const procesadosNewRows = [];
+
   for (const e of sortedEvents) {
     if (e.estado_evento !== "cerrado") continue;
 
@@ -369,7 +508,8 @@ export async function exportAllToSheets(events, masterData) {
     const durMin = (durSec / 60).toFixed(1);
     const durHr = (durSec / 3600).toFixed(2);
 
-    procesadosRows.push([
+    const row = [
+      e.evento_id || "",
       e.fecha_registro || "",
       e.linea || "",
       e.hora_inicio_turno || "",
@@ -384,24 +524,43 @@ export async function exportAllToSheets(events, masterData) {
       e.hora_hasta || "",
       e.tiempo_parada != null ? formatDecimal(durHr) : "",
       e.tiempo_parada != null ? formatDecimal(durMin) : ""
-    ]);
+    ];
+
+    const found = procesadosMap.get(e.evento_id);
+    if (found) {
+      const hasChanged = row.some((val, idx) => String(val) !== String(found.values[idx] ?? ""));
+      if (hasChanged) {
+        procesadosUpdates.push({
+          range: `${titleProcesados}!A${found.rowIndex + 1}:O${found.rowIndex + 1}`,
+          values: [row]
+        });
+      }
+    } else {
+      procesadosNewRows.push(row);
+    }
   }
 
-  await sheets.spreadsheets.values.clear({
-    spreadsheetId: sheetId,
-    range: `${titleProcesados}!A:Z`
-  });
-  await sheets.spreadsheets.values.update({
-    spreadsheetId: sheetId,
-    range: `${titleProcesados}!A1`,
-    valueInputOption: "RAW",
-    requestBody: {
-      values: [headersProcesados, ...procesadosRows]
-    }
-  });
-  console.log(`[ GOOGLE SHEETS ] Pestaña ${titleProcesados} reescrita con ${procesadosRows.length} registros procesados.`);
+  if (procesadosUpdates.length > 0) {
+    await sheets.spreadsheets.values.batchUpdate({
+      spreadsheetId: sheetId,
+      requestBody: {
+        valueInputOption: "RAW",
+        data: procesadosUpdates
+      }
+    });
+    console.log(`[ GOOGLE SHEETS ] Procesados: ${procesadosUpdates.length} filas actualizadas.`);
+  }
+  if (procesadosNewRows.length > 0) {
+    await sheets.spreadsheets.values.append({
+      spreadsheetId: sheetId,
+      range: `${titleProcesados}!A:A`,
+      valueInputOption: "RAW",
+      requestBody: { values: procesadosNewRows }
+    });
+    console.log(`[ GOOGLE SHEETS ] Procesados: ${procesadosNewRows.length} nuevas filas añadidas.`);
+  }
 
-  // 3. Reescribir turnos diarios
+  // 3. Reescribir turnos diarios incrementalmente
   const dailyTurnos = deriveDailyTurnos(sortedEvents, masterData);
   await syncTurnosToSheets(dailyTurnos);
 }
