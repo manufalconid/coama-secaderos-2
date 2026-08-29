@@ -1,4 +1,5 @@
 import XLSX from "xlsx";
+import { syncTurnosToSheets } from "./sheets-sync.mjs";
 
 export async function exportParametros(store) {
   // 1. Obtener los datos maestros actuales
@@ -452,6 +453,9 @@ export async function importParametros(store, buffer) {
     }
     console.log("[ OK ] Parametros importados (Upsert) y guardados en memoria sin borrar historiales.");
   }
+
+  // Sincronizar tabla de turnos con Google Sheets
+  syncTurnosToSheets(turnosParsed).catch(err => console.error("Error sincronizando turnos a Google Sheets:", err));
 
   return { success: true, message: "Parámetros actualizados correctamente." };
 }

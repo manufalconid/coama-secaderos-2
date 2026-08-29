@@ -2,6 +2,7 @@ import http from "node:http";
 import { InMemorySyncStore } from "./store.mjs";
 import { PgSyncStore } from "./postgres-store.mjs";
 import { exportParametros, importParametros } from "./parametros-handler.mjs";
+import { syncRawEventToSheets, syncProcessedEventToSheets } from "./sheets-sync.mjs";
 
 
 const host = process.env.API_HOST ?? "0.0.0.0";
@@ -206,6 +207,9 @@ const server = http.createServer(async (req, res) => {
               const secaderoName = secadero ? secadero.nombre : fullEvent.secadero_id;
               const cleanLinea = (fullEvent.linea || secaderoName || "").toUpperCase().replace(/^SECADERO\s+/i, "");
 
+              // Sincronización con Google Sheets (aditiva)
+              syncRawEventToSheets(fullEvent).catch(err => console.error("Error sincronizando evento crudo a Google Sheets:", err));
+
               if (fullEvent.estado_evento === "abierto") {
                 const message = `🚨Detención ${cleanLinea}`;
                 notifyTelegram(message).catch(err => console.error("Error enviando notificacion a Telegram en segundo plano:", err));
@@ -218,6 +222,8 @@ const server = http.createServer(async (req, res) => {
 
                 const message = `✅Fin de detención ${cleanLinea}. ${minutes} minutos perdidos por ${tMuerto}, ${cat}, ${obs}, ${ubi}`;
                 notifyTelegram(message).catch(err => console.error("Error enviando notificacion a Telegram en segundo plano:", err));
+
+                syncProcessedEventToSheets(fullEvent).catch(err => console.error("Error sincronizando evento procesado a Google Sheets:", err));
               }
             }
           }
