@@ -30,6 +30,7 @@ La planilla de Google Sheets utilizada tiene el ID `1ClFiLfrXfx1N_EehFHvXahuBvc3
 
 ### B. registros_procesados
 *   **Comportamiento**: Contiene únicamente las paradas cerradas y consolidadas.
+*   **Columnas**: Comienza con `evento_id` (para permitir la detección de cambios e incrementalidad de filas), seguido del resto de las columnas del reporte de paradas.
 *   **Decimales**: Todos los campos de horas y minutos utilizan la coma (`,`) como separador decimal.
 
 ### C. turnos
