@@ -3600,15 +3600,15 @@
         "evento_id": "86293b4b-1b3c-473a-be53-3f08b5421ffc",
         "tablet_id": "tab-sec-omeco",
         "secadero_id": "sec-omeco",
-        "fecha_hora_inicio": "2026-08-29T15:38:56.353Z",
-        "fecha_hora_fin": "2026-08-29T15:41:45.413Z",
-        "duracion_segundos": 169,
+        "fecha_hora_inicio": "2026-08-29T15:38:00.000Z",
+        "fecha_hora_fin": "2026-08-29T15:41:00.000Z",
+        "duracion_segundos": 180,
         "estado_evento": "cerrado",
         "tipo_registro": "manual",
         "origen_id": "ori-proceso",
-        "razon_id": "raz-secadero-trancado",
+        "razon_id": "raz-ba-o",
         "observacion": "",
-        "version": 2,
+        "version": 3,
         "sincronizado": false,
         "timestamp_registro": "2026-08-29T15:38:56.353Z",
         "fecha_registro": "2026-08-29",
@@ -3627,14 +3627,15 @@
         "categoria_tm": "PROCESO",
         "tiempo_muerto": "SECADERO TRANCADO",
         "observaciones": "",
-        "ubicacion": "N2P1",
+        "ubicacion": null,
         "origenes": [
           {
-            "origen_id": "ori-proceso"
+            "origen_id": "ori-electrico"
           }
         ],
         "propuesta_manual": null,
-        "recibido_en_servidor": "2026-08-29T15:41:47.858Z"
+        "recibido_en_servidor": "2026-08-29T15:41:47.858Z",
+        "modificado_en": "2026-08-29T17:09:43.345Z"
       }
     ],
     [
@@ -4339,7 +4340,7 @@
       "86293b4b-1b3c-473a-be53-3f08b5421ffc",
       [
         {
-          "origen_id": "ori-proceso"
+          "origen_id": "ori-electrico"
         }
       ]
     ],

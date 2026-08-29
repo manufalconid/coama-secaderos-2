@@ -232,19 +232,24 @@ const server = http.createServer(async (req, res) => {
                 notifyTelegram(message).catch(err => console.error("Error enviando notificacion a Telegram en segundo plano:", err));
               }
             } else if (item.status === "updated") {
-              // Si es una actualización y pasa a cerrado, y NO estaba cerrado previamente, enviamos el fin
-              if (fullEvent.estado_evento === "cerrado" && !item.wasClosed) {
+              // Sincronizar siempre los cambios a Google Sheets (crudos y procesados)
+              if (fullEvent.estado_evento === "abierto") {
+                syncRawEventToSheets(fullEvent, "abierto").catch(err => console.error("Error sincronizando evento crudo (abierto) a Google Sheets:", err));
+              } else if (fullEvent.estado_evento === "cerrado") {
                 syncRawEventToSheets(fullEvent, "cerrado").catch(err => console.error("Error sincronizando evento crudo (cerrado) a Google Sheets:", err));
                 syncProcessedEventToSheets(fullEvent).catch(err => console.error("Error sincronizando evento procesado a Google Sheets:", err));
 
-                const minutes = Math.round((fullEvent.duracion_segundos || 0) / 60);
-                const tMuerto = fullEvent.tiempo_muerto || "Sin motivo";
-                const cat = fullEvent.categoria_tm || "Sin categoría";
-                const obs = fullEvent.observacion || "Sin observaciones";
-                const ubi = fullEvent.ubicacion || "Sin ubicación";
+                // Solo enviar Telegram si no estaba cerrado previamente
+                if (!item.wasClosed) {
+                  const minutes = Math.round((fullEvent.duracion_segundos || 0) / 60);
+                  const tMuerto = fullEvent.tiempo_muerto || "Sin motivo";
+                  const cat = fullEvent.categoria_tm || "Sin categoría";
+                  const obs = fullEvent.observacion || "Sin observaciones";
+                  const ubi = fullEvent.ubicacion || "Sin ubicación";
 
-                const message = `✅Fin de detención ${cleanLinea}. ${minutes} minutos perdidos por ${tMuerto}, ${cat}, ${obs}, ${ubi}`;
-                notifyTelegram(message).catch(err => console.error("Error enviando notificacion a Telegram en segundo plano:", err));
+                  const message = `✅Fin de detención ${cleanLinea}. ${minutes} minutos perdidos por ${tMuerto}, ${cat}, ${obs}, ${ubi}`;
+                  notifyTelegram(message).catch(err => console.error("Error enviando notificacion a Telegram en segundo plano:", err));
+                }
               }
             }
           }
@@ -387,7 +392,16 @@ async function handleAdminRoute(req, res, url) {
       return sendJson(res, 200, await store.listEventos());
     }
     if (req.method === "PATCH" && id) {
-      return sendJson(res, 200, await store.saveEvento(id, await readJson(req)));
+      const updatedEvent = await store.saveEvento(id, await readJson(req));
+      if (updatedEvent) {
+        if (updatedEvent.estado_evento === "abierto") {
+          syncRawEventToSheets(updatedEvent, "abierto").catch(err => console.error("Error al sincronizar evento editado (abierto) a Google Sheets:", err));
+        } else if (updatedEvent.estado_evento === "cerrado") {
+          syncRawEventToSheets(updatedEvent, "cerrado").catch(err => console.error("Error al sincronizar evento editado (cerrado) a Google Sheets:", err));
+          syncProcessedEventToSheets(updatedEvent).catch(err => console.error("Error al sincronizar evento editado (procesado) a Google Sheets:", err));
+        }
+      }
+      return sendJson(res, 200, updatedEvent);
     }
   }
 
