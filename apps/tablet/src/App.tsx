@@ -617,14 +617,20 @@ export default function App() {
   }
 
   function handleSelectOrigen(id: string) {
-    setFormOrigenId(id);
-    setCurrentStage("STAGE_RAZON");
+    if (formOrigenId === id) {
+      setCurrentStage("STAGE_RAZON");
+    } else {
+      setFormOrigenId(id);
+    }
   }
 
   function handleSelectReason(id: string) {
-    setFormRazonId(id);
-    setSuggestedReasonName("");
-    setCurrentStage("STAGE_CONFIRMATION");
+    if (formRazonId === id) {
+      setSuggestedReasonName("");
+      setCurrentStage("STAGE_CONFIRMATION");
+    } else {
+      setFormRazonId(id);
+    }
   }
 
   function handleSaveSuggestedReason(e: React.FormEvent) {
@@ -960,6 +966,7 @@ export default function App() {
         {currentStage === "STAGE_ORIGEN" && (
           <OrigenStage
             origenes={masterData.origenes}
+            selectedOrigenId={formOrigenId}
             handleSelectOrigen={handleSelectOrigen}
             handleResetDeclarationFlow={handleResetDeclarationFlow}
           />
@@ -968,6 +975,7 @@ export default function App() {
         {currentStage === "STAGE_RAZON" && (
           <RazonStage
             filteredReasons={filteredReasons}
+            selectedReasonId={formRazonId}
             handleSelectReason={handleSelectReason}
             onSuggestCustom={() => setCurrentStage("STAGE_SUGGEST_RAZON")}
             onGoBack={() => setCurrentStage("STAGE_ORIGEN")}

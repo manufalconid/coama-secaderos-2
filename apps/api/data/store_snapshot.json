@@ -1945,6 +1945,42 @@
         "hora_registro": "18:06:27",
         "timestamp_registro": "2026-08-28T21:06:27.084Z"
       }
+    ],
+    [
+      "bae6c1fa-7411-4bdc-94e4-7b70e1fc9284",
+      {
+        "evento_id": "bae6c1fa-7411-4bdc-94e4-7b70e1fc9284",
+        "tablet_id": "tab-sec-omeco",
+        "secadero_id": "sec-omeco",
+        "fecha_hora_inicio": "2026-08-29T00:42:48.984Z",
+        "fecha_hora_fin": null,
+        "duracion_segundos": null,
+        "estado_evento": "abierto",
+        "tipo_registro": "manual",
+        "origen_id": null,
+        "razon_id": null,
+        "observacion": "",
+        "version": 1,
+        "sincronizado": false,
+        "timestamp_registro": "2026-08-29T00:42:48.984Z",
+        "fecha_registro": "2026-08-28",
+        "hora_registro": "21:42:48",
+        "hora_desde": "2026-08-29T00:42:48.984Z",
+        "linea": "OMECO",
+        "hora_inicio_turno": "18:00:00",
+        "hora_fin_turno": "06:00:00",
+        "tipo_turno": "Turno Noche (18:00 a 06:00)",
+        "hora_inicio_descanso": "00:00:00",
+        "hora_fin_descanso": "01:00:00",
+        "tiempo_disponible_turno": 11,
+        "turno_id": "tur-noche",
+        "origenes": [],
+        "propuesta_manual": null,
+        "recibido_en_servidor": "2026-08-29T00:42:51.104Z",
+        "hora_hasta": null,
+        "observaciones": "",
+        "ubicacion": null
+      }
     ]
   ],
   "eventOrigins": [
@@ -2299,6 +2335,10 @@
           "origen_id": "ori-electrico"
         }
       ]
+    ],
+    [
+      "bae6c1fa-7411-4bdc-94e4-7b70e1fc9284",
+      []
     ]
   ],
   "manualProposals": [

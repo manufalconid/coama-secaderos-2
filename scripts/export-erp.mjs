@@ -56,25 +56,20 @@ async function run() {
 
   // Columnas exactas solicitadas por el usuario
   const headers = [
-    "Fecha de registro",
-    "Hora de registro",
-    "Timestamp de registro",
-    "HORA INICIO DE TURNO",
-    "HORA FIN DE TURNO",
-    "TipoTurno",
-    "HORA INICIO DESCANSO",
-    "HORA FIN DESCANSO",
-    "Linea",
-    "Horadesde",
-    "Horahasta",
-    "Categoría TM",
-    "Tiempo Muerto",
-    "Observaciones",
-    "Ubicacion",
-    "Tiempo DISPONIBLE DEL TURNO",
-    "Tiempo DE PARADA (Seg)",
-    "Tiempo DE PARADA (Min)",
-    "Tiempo DE PARADA (Horas)"
+    "fecha_de_registro",
+    "linea",
+    "turno_hora_desde",
+    "turno_hora_hasta",
+    "tiempo_de_descanso",
+    "tiempo_de_turno_en_horas_programadas",
+    "categoria",
+    "tiempo_muerto",
+    "observacion",
+    "ubicacion",
+    "tiempo_muerto_hora_desde",
+    "tiempo_muerto_hora_hasta",
+    "tiempo_muerto_en_horas",
+    "tiempo_muerto_en_minutos"
   ];
 
   const rows = [headers.join(";")];
@@ -89,24 +84,19 @@ async function run() {
 
     const row = [
       ev.fecha_registro || "",
-      ev.hora_registro || "",
-      ev.timestamp_registro || "",
+      ev.linea || "",
       ev.hora_inicio_turno || "",
       ev.hora_fin_turno || "",
-      ev.tipo_turno || "",
-      ev.hora_inicio_descanso || "",
-      ev.hora_fin_descanso || "",
-      ev.linea || "",
-      ev.hora_desde || "",
-      ev.hora_hasta || "",
+      ev.tiempo_de_descanso != null ? ev.tiempo_de_descanso.toString() : "1.00",
+      ev.tiempo_disponible_turno != null ? ev.tiempo_disponible_turno.toString() : "11.00",
       ev.categoria_tm || "",
       ev.tiempo_muerto || "",
       ev.observaciones || "",
       ev.ubicacion || "",
-      ev.tiempo_disponible_turno != null ? ev.tiempo_disponible_turno.toString() : "",
-      ev.tiempo_parada != null ? ev.tiempo_parada.toString() : "",
-      ev.tiempo_parada != null ? durMin : "",
-      ev.tiempo_parada != null ? durHr : ""
+      ev.hora_desde || "",
+      ev.hora_hasta || "",
+      ev.tiempo_parada != null ? durHr : "",
+      ev.tiempo_parada != null ? durMin : ""
     ];
 
     // Escapar comillas y formatear
@@ -233,6 +223,7 @@ function populateUnifiedFields(event, masterData) {
   const hora_fin_descanso = event.hora_fin_descanso || (activeTurno && activeTurno.turno_id === "tur-dia" ? "13:00:00" : (activeTurno && activeTurno.turno_id === "tur-noche" ? "01:00:00" : null));
 
   const tiempo_disponible_turno = event.tiempo_disponible_turno != null ? event.tiempo_disponible_turno : (activeTurno ? Number(activeTurno.horas_totales) - Number(activeTurno.horas_descanso) : 11.00);
+  const tiempo_de_descanso = activeTurno ? Number(activeTurno.horas_descanso) : 1.00;
   const turno_id = event.turno_id || (activeTurno ? activeTurno.turno_id : null);
 
   return {
@@ -253,6 +244,7 @@ function populateUnifiedFields(event, masterData) {
     observaciones,
     ubicacion: event.ubicacion || null,
     tiempo_disponible_turno,
+    tiempo_de_descanso,
     tiempo_parada,
     turno_id
   };

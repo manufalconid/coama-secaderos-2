@@ -34,20 +34,20 @@ export default function AnalisisView({ eventos, masterData, showToast }) {
   function downloadCsv() {
     const delimiter = ";";
     const header = [
-      "Fecha",
-      "Hora",
-      "Turno",
-      "Lin",
-      "Horadesde",
-      "Horahasta",
-      "Categoria",
-      "Tiempo Muer",
-      "Observacion",
-      "Tiempo total sum",
-      "Tiempo en hor",
-      "Cant Hor",
-      "Cant. Horas descan",
-      "Factor de U"
+      "fecha_de_registro",
+      "linea",
+      "turno_hora_desde",
+      "turno_hora_hasta",
+      "tiempo_de_descanso",
+      "tiempo_de_turno_en_horas_programadas",
+      "categoria",
+      "tiempo_muerto",
+      "observacion",
+      "ubicacion",
+      "tiempo_muerto_hora_desde",
+      "tiempo_muerto_hora_hasta",
+      "tiempo_muerto_en_horas",
+      "tiempo_muerto_en_minutos"
     ].join(delimiter) + "\n";
 
     const body = eventos.map(e => {
@@ -60,9 +60,7 @@ export default function AnalisisView({ eventos, masterData, showToast }) {
       const day = String(startDateObj.getDate()).padStart(2, "0");
       const month = String(startDateObj.getMonth() + 1).padStart(2, "0");
       const year = startDateObj.getFullYear();
-      const fechaFormatted = `${day}/${month}/${year}`;
-
-      const horaDefault = "00:00:00";
+      const fechaFormatted = `${year}-${month}-${day}`;
 
       let shiftObj = null;
       if (e.turno_id && masterData.turnos) {
@@ -71,21 +69,29 @@ export default function AnalisisView({ eventos, masterData, showToast }) {
       if (!shiftObj) {
         shiftObj = getTurnoForTime(start, masterData.turnos);
       }
-      const turnoNombre = shiftObj ? shiftObj.nombre : "T1 06 hs - 18 hs";
-      const cantHoras = shiftObj ? shiftObj.horas_totales : 12.00;
-      const cantDescanso = shiftObj ? shiftObj.horas_descanso : 0.00;
+      const horaInicioTurno = shiftObj ? shiftObj.hora_inicio : "06:00:00";
+      const horaFinTurno = shiftObj ? shiftObj.hora_fin : "18:00:00";
+      const cantDescanso = shiftObj ? Number(shiftObj.horas_descanso) : 1.00;
+      const cantHoras = shiftObj ? Number(shiftObj.horas_totales) : 12.00;
+      const tiempoTurnoProgramado = cantHoras - cantDescanso;
 
       const secObj = masterData.secaderos ? masterData.secaderos.find(s => s.secadero_id === e.secadero_id) : null;
-      const lineaNombre = e.linea || (secObj ? secObj.nombre : (e.secadero_id === "sec-omeco" ? "OMECO" : (e.secadero_id === "sec-benecke" ? "BENECKE" : (e.secadero_id === "sec-raute" ? "RAUTE" : e.secadero_id || "BENECKE"))));
+      let lineaNombre = e.linea || (secObj ? secObj.nombre : e.secadero_id || "");
+      if (lineaNombre) {
+        lineaNombre = lineaNombre.replace("Secadero ", "").toUpperCase();
+      }
 
-      const horaDesde = startDateObj.toTimeString().slice(0, 8);
-      const horaHasta = end ? new Date(end).toTimeString().slice(0, 8) : "";
+      const horaDesde = start;
+      const horaHasta = end || "";
 
       let catNombre = "";
       if (Array.isArray(e.origenes) && e.origenes.length > 0) {
-        const firstOrigId = e.origenes[0].origen_id;
-        const origObj = masterData.origenes.find(o => o.origen_id === firstOrigId);
-        catNombre = origObj ? origObj.nombre : (e.origenes[0].origen_manual || firstOrigId);
+        const oNames = e.origenes.map(o => {
+          if (o.origen_manual) return o.origen_manual;
+          const origObj = masterData.origenes.find(x => x.origen_id === o.origen_id);
+          return origObj ? origObj.nombre : o.origen_id;
+        });
+        catNombre = oNames.join(", ");
       } else if (e.origen) {
         catNombre = e.origen;
       }
@@ -94,39 +100,43 @@ export default function AnalisisView({ eventos, masterData, showToast }) {
       const razonObj = masterData.razones.find(r => r.razon_id === e.razon_id);
       const tiempoMuertoNombre = razonObj ? razonObj.nombre : (e.razon_manual || e.causa || "PARADA");
 
-      const obsText = e.observacion ? e.observacion.replace(/\[Sugerido\].*?\.\s*/, "") : "";
-      const observacionVal = obsText.trim() ? obsText.trim() : "-.-";
+      const obsText = e.observacion || e.observaciones || "";
+      const observacionVal = obsText.replace(/\[Sugerido\].*?\.\s*/, "").trim();
+      const ubicacionVal = e.ubicacion || "";
 
-      const durSeconds = e.duracion_segundos || 0;
-      const durMinutes = Math.round(durSeconds / 60);
-      const durHours = Number((durMinutes / 60).toFixed(2));
+      const durSeconds = e.duracion_segundos || e.tiempo_parada || 0;
+      const durMinutes = (durSeconds / 60).toFixed(1);
+      const durHours = (durSeconds / 3600).toFixed(2);
 
-      const divisor = cantHoras - cantDescanso;
-      const factorU = divisor > 0 
-        ? Number((((divisor - durHours) / divisor) * 100).toFixed(2)) 
-        : 100.00;
-
-      const durHoursStr = String(durHours).replace(".", ",");
-      const cantHorasStr = String(cantHoras).replace(".", ",");
       const cantDescansoStr = String(cantDescanso).replace(".", ",");
-      const factorUStr = String(factorU).replace(".", ",");
+      const tiempoTurnoProgramadoStr = String(tiempoTurnoProgramado).replace(".", ",");
+      const durHoursStr = String(durHours).replace(".", ",");
+      const durMinutesStr = String(durMinutes).replace(".", ",");
 
-      return [
+      const row = [
         fechaFormatted,
-        horaDefault,
-        turnoNombre,
         lineaNombre,
-        horaDesde,
-        horaHasta,
+        horaInicioTurno,
+        horaFinTurno,
+        cantDescansoStr,
+        tiempoTurnoProgramadoStr,
         catNombre.toUpperCase(),
         tiempoMuertoNombre.toUpperCase(),
-        observacionVal.toUpperCase(),
-        durMinutes,
+        observacionVal ? observacionVal.toUpperCase() : "-.-",
+        ubicacionVal ? ubicacionVal.toUpperCase() : "",
+        horaDesde,
+        horaHasta,
         durHoursStr,
-        cantHorasStr,
-        cantDescansoStr,
-        factorUStr
-      ].join(delimiter);
+        durMinutesStr
+      ];
+
+      return row.map(val => {
+        const str = String(val).replace(/;/g, ",").replace(/\r?\n/g, " ");
+        if (str.includes('"')) {
+          return `"${str.replace(/"/g, '""')}"`;
+        }
+        return str;
+      }).join(delimiter);
     }).filter(Boolean).join("\n");
 
     const blob = new Blob([header + body], { type: "text/csv;charset=utf-8;" });

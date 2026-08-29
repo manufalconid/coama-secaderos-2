@@ -756,14 +756,15 @@ button, input, select, textarea {
 .reasons-list-container {
   flex: 1;
   width: 100%;
-  max-width: 700px;
+  max-width: 900px;
   margin: 10px auto;
   overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
   padding: 4px 8px 4px 4px;
   box-sizing: border-box;
+  align-content: start;
 }
 
 /* Scrollable views scrollbar styling */
@@ -787,17 +788,17 @@ button, input, select, textarea {
 
 .reason-list-item {
   width: 100%;
-  min-height: 72px;
+  min-height: 56px;
   background: var(--bg-card);
   border: 1px solid var(--border-subtle);
   border-radius: 16px;
   color: var(--text-main);
-  padding: 16px 24px;
+  padding: 12px 20px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  gap: 16px;
+  gap: 14px;
   text-align: left;
   transition: all 0.15s var(--ease-apple);
 }
@@ -806,6 +807,13 @@ button, input, select, textarea {
   transform: scale(0.98);
   background: var(--bg-card-hover);
   border-color: var(--brand-lumo);
+}
+
+.reason-list-item.selected {
+  background: rgba(245, 158, 11, 0.08);
+  border-color: var(--brand-lumo);
+  color: var(--brand-lumo-gold);
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.05);
 }
 
 .reason-item-code {

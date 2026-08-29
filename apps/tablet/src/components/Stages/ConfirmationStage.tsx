@@ -38,6 +38,26 @@ export default function ConfirmationStage({
   const isUbicacionRequired = selectedReasonObj?.mostrar_perfil;
   const isSaveDisabled = !!(isObsRequired && (isUbicacionRequired ? !formUbicacion : !formObservacion));
 
+  const handleSelectUbicacion = (val: string) => {
+    if (formUbicacion === val) {
+      if (!isSaveDisabled) {
+        handleConfirmSaveStoppage();
+      }
+    } else {
+      setFormUbicacion(val);
+    }
+  };
+
+  const handleSelectObservation = (obs: string) => {
+    if (formObservacion === obs) {
+      if (!isSaveDisabled) {
+        handleConfirmSaveStoppage();
+      }
+    } else {
+      setFormObservacion(obs);
+    }
+  };
+
   return (
     <div className="stage-container">
       <div className="stage-title-block">
@@ -85,7 +105,7 @@ export default function ConfirmationStage({
                   <button
                     type="button"
                     className={`secadero-zone-btn ${formUbicacion === "ENTRADA" ? "selected" : ""}`}
-                    onClick={() => setFormUbicacion("ENTRADA")}
+                    onClick={() => handleSelectUbicacion("ENTRADA")}
                   >
                     ENTRADA
                   </button>
@@ -110,7 +130,7 @@ export default function ConfirmationStage({
                               key={`${lvl}-${door}`}
                               type="button"
                               className={`secadero-cell ${isSelected ? "selected" : ""}`}
-                              onClick={() => setFormUbicacion(val)}
+                              onClick={() => handleSelectUbicacion(val)}
                               title={val}
                             />
                           );
@@ -138,7 +158,7 @@ export default function ConfirmationStage({
                   <button
                     type="button"
                     className={`secadero-zone-btn ${formUbicacion === "SALIDA" ? "selected" : ""}`}
-                    onClick={() => setFormUbicacion("SALIDA")}
+                    onClick={() => handleSelectUbicacion("SALIDA")}
                   >
                     SALIDA
                   </button>
@@ -175,7 +195,7 @@ export default function ConfirmationStage({
                     key={obs}
                     type="button"
                     className={`choice-card ${isSelected ? "selected" : ""}`}
-                    onClick={() => setFormObservacion(obs)}
+                    onClick={() => handleSelectObservation(obs)}
                     style={{
                       padding: "14px",
                       fontSize: "15px",
