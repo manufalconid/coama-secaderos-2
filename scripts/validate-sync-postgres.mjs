@@ -85,6 +85,18 @@ async function applySqlFile(path) {
 }
 
 async function applyMigrations(path) {
+  try {
+    const check = await pool.query(
+      "select 1 from information_schema.tables where table_name = 'eventos_tiempo_muerto'"
+    );
+    if (check.rowCount > 0) {
+      console.log("Esquema de base de datos ya inicializado por Docker.");
+      return;
+    }
+  } catch {
+    // Si la tabla no existe, continuar con las migraciones
+  }
+
   const entries = await readdir(path);
   const migrations = entries
     .filter(entry => entry.endsWith(".sql"))

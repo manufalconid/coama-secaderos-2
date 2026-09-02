@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: coama-postgres
+    environment:
+      POSTGRES_DB: coama_tiempos_muertos
+      POSTGRES_USER: coama
+      POSTGRES_PASSWORD: coama_dev_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - coama_postgres_data:/var/lib/postgresql/data
+      - ./database/migrations:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U coama -d coama_tiempos_muertos"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  coama_postgres_data:

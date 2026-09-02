@@ -123,7 +123,7 @@ Pendiente:
 - Correccion/anulacion completa con auditoria.
 - Exportador ERP definitivo.
 - Sincronizacion real a Google Sheets.
-- Backups, restauracion y documentacion de despliegue en planta.
+- Backups, restauracion y documentacion de despliegue en planta (Relevamiento de servidor inicial completado en `docs/technical/relevamiento-servidor-planta.md`).
 - Matriz completa de pruebas para piloto.
 
 ## Comandos utiles
