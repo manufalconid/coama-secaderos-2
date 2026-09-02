@@ -1,5 +1,5 @@
 import http from "node:http";
-import { InMemorySyncStore } from "./store.mjs";
+import { InMemorySyncStore, populateUnifiedFields } from "./store.mjs";
 import { PgSyncStore } from "./postgres-store.mjs";
 import { exportParametros, importParametros } from "./parametros-handler.mjs";
 import { syncRawEventToSheets, syncProcessedEventToSheets, exportAllToSheets } from "./sheets-sync.mjs";
@@ -261,6 +261,84 @@ const server = http.createServer(async (req, res) => {
 
     if (req.method === "GET" && url.pathname === "/debug/snapshot") {
       return sendJson(res, 200, await store.snapshot());
+    }
+
+    if (req.method === "GET" && (url.pathname === "/export/erp" || url.pathname === "/api/export/erp")) {
+      const snapshot = await store.snapshot();
+      const masterData = await store.getMasterData();
+      const events = snapshot.events || [];
+      const closedEvents = events
+        .filter(e => e.estado_evento === "cerrado" && !e.inicio_evento_id)
+        .sort((a, b) => new Date(a.fecha_hora_inicio || a.hora_desde || 0) - new Date(b.fecha_hora_inicio || b.hora_desde || 0));
+
+      const headers = [
+        "fecha_de_registro",
+        "linea",
+        "turno_hora_desde",
+        "turno_hora_hasta",
+        "tiempo_de_turno_en_horas_programadas",
+        "categoria",
+        "tiempo_muerto",
+        "observacion",
+        "ubicacion",
+        "tiempo_muerto_hora_desde",
+        "tiempo_muerto_hora_hasta",
+        "tiempo_muerto_en_horas",
+        "tiempo_muerto_en_minutos"
+      ];
+
+      const rows = [headers.join(";")];
+      for (const rawEv of closedEvents) {
+        const ev = populateUnifiedFields(rawEv, masterData);
+        const durSec = ev.tiempo_parada != null ? Number(ev.tiempo_parada) : (ev.duracion_segundos != null ? Number(ev.duracion_segundos) : 0);
+        const durHrFixed = (durSec / 3600).toFixed(2);
+        const durMinFixed = (durSec / 60).toFixed(1);
+        const durHr = durHrFixed === "0.00" ? "0" : durHrFixed.replace(".", ",");
+        const durMin = durMinFixed === "0.0" ? "0" : durMinFixed.replace(".", ",");
+
+        let obsText = (ev.observaciones || ev.observacion || "").replace(/\[Sugerido\].*?\.\s*/i, "").trim();
+        if (obsText) {
+          obsText = obsText.replace(/;/g, ",").replace(/\r?\n/g, " ").trim();
+        }
+        const observacionVal = obsText ? obsText.toUpperCase() : "-.-";
+
+        const horasProg = ev.horas_totales_turno ?? 12;
+        const horasProgStr = Number.isInteger(Number(horasProg)) ? Number(horasProg).toString() : Number(horasProg).toFixed(1).replace(".", ",");
+
+        const row = [
+          ev.fecha_registro || "",
+          (ev.linea || "").toUpperCase(),
+          ev.hora_inicio_turno || "06:00:00",
+          ev.hora_fin_turno || "18:00:00",
+          horasProgStr,
+          (ev.categoria_tm || "OPERATIVO").toUpperCase(),
+          (ev.tiempo_muerto || "PARADA").toUpperCase(),
+          observacionVal,
+          ev.ubicacion ? ev.ubicacion.toUpperCase() : "",
+          ev.hora_desde || "",
+          ev.hora_hasta || "",
+          durHr,
+          durMin
+        ];
+
+        const escapedRow = row.map(val => {
+          const str = String(val ?? "").replace(/;/g, ",").replace(/\r?\n/g, " ");
+          if (str.includes('"')) {
+            return `"${str.replace(/"/g, '""')}"`;
+          }
+          return str;
+        });
+
+        rows.push(escapedRow.join(";"));
+      }
+
+      const csvContent = "\ufeff" + rows.join("\r\n");
+      res.writeHead(200, {
+        "Content-Type": "text/csv; charset=utf-8",
+        "Content-Disposition": 'attachment; filename="COAMA_Exportacion_ERP.csv"',
+        "Access-Control-Allow-Origin": "*"
+      });
+      return res.end(csvContent);
     }
 
     return sendJson(res, 404, { error: "Ruta no encontrada." });

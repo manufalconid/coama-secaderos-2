@@ -46,21 +46,22 @@ async function run() {
   }
 
   // 3. Formatear y filtrar los datos
-  // Exportaremos todas las paradas CERRADAS ordenadas por fecha.
-  const closedEvents = events.filter(e => e.estado_evento === "cerrado");
+  // Exportaremos todas las paradas CERRADAS y descartamos finEvent duplicados (inicio_evento_id)
+  const closedEvents = events
+    .filter(e => e.estado_evento === "cerrado" && !e.inicio_evento_id)
+    .sort((a, b) => new Date(a.fecha_hora_inicio || a.hora_desde || 0) - new Date(b.fecha_hora_inicio || b.hora_desde || 0));
 
   if (closedEvents.length === 0) {
     console.log("\n[ INFO ] No hay paradas CERRADAS listas para exportar al ERP.");
     return;
   }
 
-  // Columnas exactas solicitadas por el usuario
+  // Columnas exactas solicitadas por el ERP (13 columnas)
   const headers = [
     "fecha_de_registro",
     "linea",
     "turno_hora_desde",
     "turno_hora_hasta",
-    "tiempo_de_descanso",
     "tiempo_de_turno_en_horas_programadas",
     "categoria",
     "tiempo_muerto",
@@ -78,30 +79,44 @@ async function run() {
     // Populate event using helper to make sure all columns are filled
     const ev = populateUnifiedFields(rawEv, masterData);
 
-    const durSec = ev.tiempo_parada != null ? Number(ev.tiempo_parada) : 0;
-    const durMin = (durSec / 60).toFixed(1);
-    const durHr = (durSec / 3600).toFixed(2);
+    const durSec = ev.tiempo_parada != null ? Number(ev.tiempo_parada) : (ev.duracion_segundos != null ? Number(ev.duracion_segundos) : 0);
+    
+    // Formato decimal con coma para Microsoft Excel en español / ERP
+    const durHrFixed = (durSec / 3600).toFixed(2);
+    const durMinFixed = (durSec / 60).toFixed(1);
+    const durHr = durHrFixed === "0.00" ? "0" : durHrFixed.replace(".", ",");
+    const durMin = durMinFixed === "0.0" ? "0" : durMinFixed.replace(".", ",");
+
+    // Limpieza de observación según especificación
+    let obsText = (ev.observaciones || ev.observacion || "").replace(/\[Sugerido\].*?\.\s*/i, "").trim();
+    if (obsText) {
+      obsText = obsText.replace(/;/g, ",").replace(/\r?\n/g, " ").trim();
+    }
+    const observacionVal = obsText ? obsText.toUpperCase() : "-.-";
+
+    // Horas programadas según maestro de turnos (ej. 12)
+    const horasProg = ev.horas_totales_turno ?? 12;
+    const horasProgStr = Number.isInteger(Number(horasProg)) ? Number(horasProg).toString() : Number(horasProg).toFixed(1).replace(".", ",");
 
     const row = [
       ev.fecha_registro || "",
-      ev.linea || "",
-      ev.hora_inicio_turno || "",
-      ev.hora_fin_turno || "",
-      ev.tiempo_de_descanso != null ? ev.tiempo_de_descanso.toString() : "1.00",
-      ev.tiempo_disponible_turno != null ? ev.tiempo_disponible_turno.toString() : "11.00",
-      ev.categoria_tm || "",
-      ev.tiempo_muerto || "",
-      ev.observaciones || "",
-      ev.ubicacion || "",
+      (ev.linea || "").toUpperCase(),
+      ev.hora_inicio_turno || "06:00:00",
+      ev.hora_fin_turno || "18:00:00",
+      horasProgStr,
+      (ev.categoria_tm || "OPERATIVO").toUpperCase(),
+      (ev.tiempo_muerto || "PARADA").toUpperCase(),
+      observacionVal,
+      ev.ubicacion ? ev.ubicacion.toUpperCase() : "",
       ev.hora_desde || "",
       ev.hora_hasta || "",
-      ev.tiempo_parada != null ? durHr : "",
-      ev.tiempo_parada != null ? durMin : ""
+      durHr,
+      durMin
     ];
 
     // Escapar comillas y formatear
     const escapedRow = row.map(val => {
-      const str = String(val).replace(/;/g, ",").replace(/\r?\n/g, " "); // Limpiar ; y saltos de línea
+      const str = String(val ?? "").replace(/;/g, ",").replace(/\r?\n/g, " ");
       if (str.includes('"')) {
         return `"${str.replace(/"/g, '""')}"`;
       }
@@ -111,20 +126,24 @@ async function run() {
     rows.push(escapedRow.join(";"));
   }
 
-  // Generar nombre de archivo con fecha de hoy en Argentina
-  const todayStr = new Date().toLocaleDateString("es-AR", { timeZone: "America/Argentina/Buenos_Aires" })
-    .split("/")
-    .reverse()
-    .join("-"); // YYYY-MM-DD
+  // Generar nombre de archivo con fecha de hoy en Argentina (YYYY-MM-DD)
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const d = String(now.getDate()).padStart(2, "0");
+  const todayStr = `${y}-${m}-${d}`;
 
   const filename = `LUMO_SECADEROS_PARADAS_${todayStr}.csv`;
   const outputPath = path.join(outputDir, filename);
+  const generalPath = path.join(outputDir, "COAMA_Exportacion_ERP.csv");
 
-  fs.writeFileSync(outputPath, "\ufeff" + rows.join("\r\n"), "utf8"); // \ufeff añade BOM UTF-8 y saltos de carro CRLF para Excel
+  const content = "\ufeff" + rows.join("\r\n"); // \ufeff añade BOM UTF-8 y CRLF para Excel
+  fs.writeFileSync(outputPath, content, "utf8");
+  fs.writeFileSync(generalPath, content, "utf8");
   console.log(`\n[ OK ] Exportacion generada correctamente:`);
-  console.log(`       Nombre: ${filename}`);
+  console.log(`       Nombre: ${filename} y COAMA_Exportacion_ERP.csv`);
   console.log(`       Ruta:   ${outputPath}`);
-  console.log(`       Total de paradas exportadas: ${closedEvents.length}`);
+  console.log(`       Total de paradas unicas exportadas: ${closedEvents.length}`);
 }
 
 function populateUnifiedFields(event, masterData) {
@@ -224,6 +243,7 @@ function populateUnifiedFields(event, masterData) {
 
   const tiempo_disponible_turno = event.tiempo_disponible_turno != null ? event.tiempo_disponible_turno : (activeTurno ? Number(activeTurno.horas_totales) - Number(activeTurno.horas_descanso) : 11.00);
   const tiempo_de_descanso = activeTurno ? Number(activeTurno.horas_descanso) : 1.00;
+  const horas_totales_turno = activeTurno ? Number(activeTurno.horas_totales) : 12;
   const turno_id = event.turno_id || (activeTurno ? activeTurno.turno_id : null);
 
   return {
@@ -234,6 +254,7 @@ function populateUnifiedFields(event, masterData) {
     hora_inicio_turno,
     hora_fin_turno,
     tipo_turno,
+    horas_totales_turno,
     hora_inicio_descanso,
     hora_fin_descanso,
     linea,

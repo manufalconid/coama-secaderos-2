@@ -593,6 +593,7 @@ function populateUnifiedFields(event, masterData) {
   const hora_fin_descanso = event.hora_fin_descanso || (activeTurno && activeTurno.turno_id === "tur-dia" ? "13:00:00" : (activeTurno && activeTurno.turno_id === "tur-noche" ? "01:00:00" : null));
 
   const tiempo_disponible_turno = event.tiempo_disponible_turno != null ? event.tiempo_disponible_turno : (activeTurno ? Number(activeTurno.horas_totales) - Number(activeTurno.horas_descanso) : 11.00);
+  const horas_totales_turno = activeTurno ? Number(activeTurno.horas_totales) : 12;
   const turno_id = event.turno_id || (activeTurno ? activeTurno.turno_id : null);
 
   return {
@@ -603,6 +604,7 @@ function populateUnifiedFields(event, masterData) {
     hora_inicio_turno,
     hora_fin_turno,
     tipo_turno,
+    horas_totales_turno,
     hora_inicio_descanso,
     hora_fin_descanso,
     linea,

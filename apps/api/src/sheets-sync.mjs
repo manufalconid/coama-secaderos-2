@@ -213,7 +213,7 @@ export async function syncProcessedEventToSheets(e) {
   const title = "registros_procesados";
   const headers = [
     "evento_id", "fecha_de_registro", "linea", "turno_hora_desde", "turno_hora_hasta",
-    "tiempo_de_descanso", "tiempo_de_turno_en_horas_programadas",
+    "tiempo_de_turno_en_horas_programadas",
     "categoria", "tiempo_muerto", "observacion", "ubicacion",
     "tiempo_muerto_hora_desde", "tiempo_muerto_hora_hasta",
     "tiempo_muerto_en_horas", "tiempo_muerto_en_minutos"
@@ -226,26 +226,36 @@ export async function syncProcessedEventToSheets(e) {
   if (!ok) return;
 
   try {
-    const durSec = e.tiempo_parada != null ? Number(e.tiempo_parada) : 0;
-    const durMin = (durSec / 60).toFixed(1);
-    const durHr = (durSec / 3600).toFixed(2);
+    const durSec = e.tiempo_parada != null ? Number(e.tiempo_parada) : (e.duracion_segundos != null ? Number(e.duracion_segundos) : 0);
+    const durHrFixed = (durSec / 3600).toFixed(2);
+    const durMinFixed = (durSec / 60).toFixed(1);
+    const durHr = durHrFixed === "0.00" ? "0" : durHrFixed.replace(".", ",");
+    const durMin = durMinFixed === "0.0" ? "0" : durMinFixed.replace(".", ",");
+
+    let obsText = (e.observacion || e.observaciones || "").replace(/\[Sugerido\].*?\.\s*/i, "").trim();
+    if (obsText) {
+      obsText = obsText.replace(/;/g, ",").replace(/\r?\n/g, " ").trim();
+    }
+    const observacionVal = obsText ? obsText.toUpperCase() : "-.-";
+
+    const horasProg = e.horas_totales_turno ?? 12;
+    const horasProgStr = Number.isInteger(Number(horasProg)) ? Number(horasProg).toString() : Number(horasProg).toFixed(1).replace(".", ",");
 
     const row = [
       e.evento_id || "",
       e.fecha_registro || "",
-      e.linea || "",
-      e.hora_inicio_turno || "",
-      e.hora_fin_turno || "",
-      formatDecimal(e.tiempo_de_descanso != null ? e.tiempo_de_descanso : "1.00"),
-      formatDecimal(e.tiempo_disponible_turno != null ? e.tiempo_disponible_turno : "11.00"),
-      e.categoria_tm || "",
-      e.tiempo_muerto || "",
-      e.observacion || e.observaciones || "",
-      e.ubicacion || "",
+      (e.linea || "").toUpperCase(),
+      e.hora_inicio_turno || "06:00:00",
+      e.hora_fin_turno || "18:00:00",
+      horasProgStr,
+      (e.categoria_tm || "OPERATIVO").toUpperCase(),
+      (e.tiempo_muerto || "PARADA").toUpperCase(),
+      observacionVal,
+      e.ubicacion ? e.ubicacion.toUpperCase() : "",
       e.hora_desde || "",
       e.hora_hasta || "",
-      e.tiempo_parada != null ? formatDecimal(durHr) : "",
-      e.tiempo_parada != null ? formatDecimal(durMin) : ""
+      durHr,
+      durMin
     ];
 
     const existing = await getExistingRows(title);
@@ -263,7 +273,7 @@ export async function syncProcessedEventToSheets(e) {
       if (hasChanged) {
         await sheets.spreadsheets.values.update({
           spreadsheetId: sheetId,
-          range: `${title}!A${foundIndex + 1}:O${foundIndex + 1}`,
+          range: `${title}!A${foundIndex + 1}:N${foundIndex + 1}`,
           valueInputOption: "RAW",
           requestBody: { values: [row] }
         });
@@ -485,7 +495,7 @@ export async function exportAllToSheets(events, masterData) {
   const titleProcesados = "registros_procesados";
   const headersProcesados = [
     "evento_id", "fecha_de_registro", "linea", "turno_hora_desde", "turno_hora_hasta",
-    "tiempo_de_descanso", "tiempo_de_turno_en_horas_programadas",
+    "tiempo_de_turno_en_horas_programadas",
     "categoria", "tiempo_muerto", "observacion", "ubicacion",
     "tiempo_muerto_hora_desde", "tiempo_muerto_hora_hasta",
     "tiempo_muerto_en_horas", "tiempo_muerto_en_minutos"
@@ -502,28 +512,38 @@ export async function exportAllToSheets(events, masterData) {
   const procesadosNewRows = [];
 
   for (const e of sortedEvents) {
-    if (e.estado_evento !== "cerrado") continue;
+    if (e.estado_evento !== "cerrado" || e.inicio_evento_id) continue;
 
-    const durSec = e.tiempo_parada != null ? Number(e.tiempo_parada) : 0;
-    const durMin = (durSec / 60).toFixed(1);
-    const durHr = (durSec / 3600).toFixed(2);
+    const durSec = e.tiempo_parada != null ? Number(e.tiempo_parada) : (e.duracion_segundos != null ? Number(e.duracion_segundos) : 0);
+    const durHrFixed = (durSec / 3600).toFixed(2);
+    const durMinFixed = (durSec / 60).toFixed(1);
+    const durHr = durHrFixed === "0.00" ? "0" : durHrFixed.replace(".", ",");
+    const durMin = durMinFixed === "0.0" ? "0" : durMinFixed.replace(".", ",");
+
+    let obsText = (e.observacion || e.observaciones || "").replace(/\[Sugerido\].*?\.\s*/i, "").trim();
+    if (obsText) {
+      obsText = obsText.replace(/;/g, ",").replace(/\r?\n/g, " ").trim();
+    }
+    const observacionVal = obsText ? obsText.toUpperCase() : "-.-";
+
+    const horasProg = e.horas_totales_turno ?? 12;
+    const horasProgStr = Number.isInteger(Number(horasProg)) ? Number(horasProg).toString() : Number(horasProg).toFixed(1).replace(".", ",");
 
     const row = [
       e.evento_id || "",
       e.fecha_registro || "",
-      e.linea || "",
-      e.hora_inicio_turno || "",
-      e.hora_fin_turno || "",
-      formatDecimal(e.tiempo_de_descanso != null ? e.tiempo_de_descanso : "1.00"),
-      formatDecimal(e.tiempo_disponible_turno != null ? e.tiempo_disponible_turno : "11.00"),
-      e.categoria_tm || "",
-      e.tiempo_muerto || "",
-      e.observacion || e.observaciones || "",
-      e.ubicacion || "",
+      (e.linea || "").toUpperCase(),
+      e.hora_inicio_turno || "06:00:00",
+      e.hora_fin_turno || "18:00:00",
+      horasProgStr,
+      (e.categoria_tm || "OPERATIVO").toUpperCase(),
+      (e.tiempo_muerto || "PARADA").toUpperCase(),
+      observacionVal,
+      e.ubicacion ? e.ubicacion.toUpperCase() : "",
       e.hora_desde || "",
       e.hora_hasta || "",
-      e.tiempo_parada != null ? formatDecimal(durHr) : "",
-      e.tiempo_parada != null ? formatDecimal(durMin) : ""
+      durHr,
+      durMin
     ];
 
     const found = procesadosMap.get(e.evento_id);
@@ -531,7 +551,7 @@ export async function exportAllToSheets(events, masterData) {
       const hasChanged = row.some((val, idx) => String(val) !== String(found.values[idx] ?? ""));
       if (hasChanged) {
         procesadosUpdates.push({
-          range: `${titleProcesados}!A${found.rowIndex + 1}:O${found.rowIndex + 1}`,
+          range: `${titleProcesados}!A${found.rowIndex + 1}:N${found.rowIndex + 1}`,
           values: [row]
         });
       }

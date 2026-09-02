@@ -60,7 +60,6 @@ export default function AnalisisView({ eventos, masterData, showToast }) {
       "linea",
       "turno_hora_desde",
       "turno_hora_hasta",
-      "tiempo_de_descanso",
       "tiempo_de_turno_en_horas_programadas",
       "categoria",
       "tiempo_muerto",
@@ -70,15 +69,19 @@ export default function AnalisisView({ eventos, masterData, showToast }) {
       "tiempo_muerto_hora_hasta",
       "tiempo_muerto_en_horas",
       "tiempo_muerto_en_minutos"
-    ].join(delimiter) + "\n";
+    ].join(delimiter) + "\r\n";
 
-    const body = eventos.map(e => {
+    // Filtrar paradas cerradas y descartar eventos redundantes (inicio_evento_id)
+    const closedEvents = (eventos || [])
+      .filter(e => (!e.estado_evento || e.estado_evento === "cerrado") && !e.inicio_evento_id && (e.fecha_hora_inicio || e.inicio))
+      .sort((a, b) => new Date(a.fecha_hora_inicio || a.inicio || 0) - new Date(b.fecha_hora_inicio || b.inicio || 0));
+
+    const body = closedEvents.map(e => {
       const start = e.fecha_hora_inicio || e.inicio || "";
       const end = e.fecha_hora_fin || e.fin || "";
       if (!start) return "";
 
       const startDateObj = new Date(start);
-      
       const day = String(startDateObj.getDate()).padStart(2, "0");
       const month = String(startDateObj.getMonth() + 1).padStart(2, "0");
       const year = startDateObj.getFullYear();
@@ -93,14 +96,13 @@ export default function AnalisisView({ eventos, masterData, showToast }) {
       }
       const horaInicioTurno = shiftObj ? shiftObj.hora_inicio : "06:00:00";
       const horaFinTurno = shiftObj ? shiftObj.hora_fin : "18:00:00";
-      const cantDescanso = shiftObj ? Number(shiftObj.horas_descanso) : 1.00;
-      const cantHoras = shiftObj ? Number(shiftObj.horas_totales) : 12.00;
-      const tiempoTurnoProgramado = cantHoras - cantDescanso;
+      const horasProgramadasNum = shiftObj ? Number(shiftObj.horas_totales) : 12;
+      const horasProgramadasStr = Number.isInteger(horasProgramadasNum) ? String(horasProgramadasNum) : horasProgramadasNum.toFixed(1).replace(".", ",");
 
       const secObj = masterData.secaderos ? masterData.secaderos.find(s => s.secadero_id === e.secadero_id) : null;
       let lineaNombre = e.linea || (secObj ? secObj.nombre : e.secadero_id || "");
       if (lineaNombre) {
-        lineaNombre = lineaNombre.replace("Secadero ", "").toUpperCase();
+        lineaNombre = lineaNombre.replace(/^Secadero\s+/i, "").toUpperCase();
       }
 
       const horaDesde = start;
@@ -116,36 +118,37 @@ export default function AnalisisView({ eventos, masterData, showToast }) {
         catNombre = oNames.join(", ");
       } else if (e.origen) {
         catNombre = e.origen;
+      } else if (e.categoria_tm) {
+        catNombre = e.categoria_tm;
       }
-      if (!catNombre) catNombre = "PROBLEMAS OPERATIVOS";
+      if (!catNombre) catNombre = "OPERATIVO";
 
       const razonObj = masterData.razones.find(r => r.razon_id === e.razon_id);
-      const tiempoMuertoNombre = razonObj ? razonObj.nombre : (e.razon_manual || e.causa || "PARADA");
+      const tiempoMuertoNombre = razonObj ? razonObj.nombre : (e.razon_manual || e.causa || e.tiempo_muerto || "PARADA");
 
-      const obsText = e.observacion || e.observaciones || "";
-      const observacionVal = obsText.replace(/\[Sugerido\].*?\.\s*/, "").trim();
-      const ubicacionVal = e.ubicacion || "";
+      let obsText = (e.observacion || e.observaciones || "").replace(/\[Sugerido\].*?\.\s*/i, "").trim();
+      if (obsText) {
+        obsText = obsText.replace(/;/g, ",").replace(/\r?\n/g, " ").trim();
+      }
+      const observacionVal = obsText ? obsText.toUpperCase() : "-.-";
+      const ubicacionVal = e.ubicacion ? e.ubicacion.toUpperCase() : "";
 
       const durSeconds = e.duracion_segundos || e.tiempo_parada || 0;
-      const durMinutes = (durSeconds / 60).toFixed(1);
-      const durHours = (durSeconds / 3600).toFixed(2);
-
-      const cantDescansoStr = String(cantDescanso).replace(".", ",");
-      const tiempoTurnoProgramadoStr = String(tiempoTurnoProgramado).replace(".", ",");
-      const durHoursStr = String(durHours).replace(".", ",");
-      const durMinutesStr = String(durMinutes).replace(".", ",");
+      const durHrFixed = (durSeconds / 3600).toFixed(2);
+      const durMinFixed = (durSeconds / 60).toFixed(1);
+      const durHoursStr = durHrFixed === "0.00" ? "0" : durHrFixed.replace(".", ",");
+      const durMinutesStr = durMinFixed === "0.0" ? "0" : durMinFixed.replace(".", ",");
 
       const row = [
         fechaFormatted,
         lineaNombre,
         horaInicioTurno,
         horaFinTurno,
-        cantDescansoStr,
-        tiempoTurnoProgramadoStr,
+        horasProgramadasStr,
         catNombre.toUpperCase(),
         tiempoMuertoNombre.toUpperCase(),
-        observacionVal ? observacionVal.toUpperCase() : "-.-",
-        ubicacionVal ? ubicacionVal.toUpperCase() : "",
+        observacionVal,
+        ubicacionVal,
         horaDesde,
         horaHasta,
         durHoursStr,
@@ -153,20 +156,20 @@ export default function AnalisisView({ eventos, masterData, showToast }) {
       ];
 
       return row.map(val => {
-        const str = String(val).replace(/;/g, ",").replace(/\r?\n/g, " ");
+        const str = String(val ?? "").replace(/;/g, ",").replace(/\r?\n/g, " ");
         if (str.includes('"')) {
           return `"${str.replace(/"/g, '""')}"`;
         }
         return str;
       }).join(delimiter);
-    }).filter(Boolean).join("\n");
+    }).filter(Boolean).join("\r\n");
 
-    const blob = new Blob([header + body], { type: "text/csv;charset=utf-8;" });
+    const blob = new Blob(["\ufeff" + header + body], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
     link.download = `COAMA_Exportacion_ERP.csv`;
     link.click();
-    showToast("CSV descargado para ERP COAMA.");
+    showToast("CSV descargado para ERP COAMA (13 columnas).");
   }
 
   return (
