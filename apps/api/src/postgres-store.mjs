@@ -25,22 +25,22 @@ export class PgSyncStore {
     try {
       const [razonesRes, origenesRes, secaderosRes, tabletsRes, razonOrigenesRes, turnosRes] = await Promise.all([
         client.query(
-          "select razon_id, codigo, nombre, activa, observacion_obligatoria, observaciones_predefinidas, mostrar_perfil from razones_parada order by nombre"
+          "select razon_id, codigo, nombre, activa, observacion_obligatoria, observaciones_predefinidas, mostrar_perfil from razones_parada where activa = true order by nombre"
         ),
         client.query(
-          "select origen_id, codigo, nombre, activo as activa from origenes_parada order by nombre"
+          "select origen_id, codigo, nombre, activo as activa from origenes_parada where activo = true order by nombre"
         ),
         client.query(
-          "select secadero_id, codigo, nombre, activo from secaderos order by codigo"
+          "select secadero_id, codigo, nombre, activo from secaderos where activo = true order by codigo"
         ),
         client.query(
-          "select tablet_id, secadero_id, nombre, activa, ip_tablet from tablets order by nombre"
+          "select tablet_id, secadero_id, nombre, activa, ip_tablet from tablets where activa = true order by nombre"
         ),
         client.query(
           "select razon_id, origen_id from razon_origenes"
         ),
         client.query(
-          "select turno_id, nombre, hora_inicio, hora_fin, horas_totales, horas_descanso, activo, fecha_inicio_vigencia from turnos order by fecha_inicio_vigencia desc, nombre"
+          "select turno_id, nombre, hora_inicio, hora_fin, horas_totales, horas_descanso, activo, fecha_inicio_vigencia from turnos where activo = true order by fecha_inicio_vigencia desc, nombre"
         )
       ]);
 
@@ -456,22 +456,22 @@ export class PgSyncStore {
   async getMasterDataInternal(client) {
     const [razonesRes, origenesRes, secaderosRes, tabletsRes, razonOrigenesRes, turnosRes] = await Promise.all([
       client.query(
-        "select razon_id, codigo, nombre, activa, observacion_obligatoria, observaciones_predefinidas, mostrar_perfil from razones_parada order by nombre"
+        "select razon_id, codigo, nombre, activa, observacion_obligatoria, observaciones_predefinidas, mostrar_perfil from razones_parada where activa = true order by nombre"
       ),
       client.query(
-        "select origen_id, codigo, nombre, activo as activa from origenes_parada order by nombre"
+        "select origen_id, codigo, nombre, activo as activa from origenes_parada where activo = true order by nombre"
       ),
       client.query(
-        "select secadero_id, codigo, nombre, activo from secaderos order by codigo"
+        "select secadero_id, codigo, nombre, activo from secaderos where activo = true order by codigo"
       ),
       client.query(
-        "select tablet_id, secadero_id, nombre, activa, ip_tablet from tablets order by nombre"
+        "select tablet_id, secadero_id, nombre, activa, ip_tablet from tablets where activa = true order by nombre"
       ),
       client.query(
         "select razon_id, origen_id from razon_origenes"
       ),
       client.query(
-        "select turno_id, nombre, hora_inicio, hora_fin, horas_totales, horas_descanso, activo, fecha_inicio_vigencia from turnos order by fecha_inicio_vigencia desc, nombre"
+        "select turno_id, nombre, hora_inicio, hora_fin, horas_totales, horas_descanso, activo, fecha_inicio_vigencia from turnos where activo = true order by fecha_inicio_vigencia desc, nombre"
       )
     ]);
 
@@ -956,7 +956,7 @@ function populateUnifiedFields(event, masterData) {
   const hora_inicio_descanso = event.hora_inicio_descanso || (activeTurno && activeTurno.turno_id === "tur-dia" ? "12:00:00" : (activeTurno && activeTurno.turno_id === "tur-noche" ? "00:00:00" : null));
   const hora_fin_descanso = event.hora_fin_descanso || (activeTurno && activeTurno.turno_id === "tur-dia" ? "13:00:00" : (activeTurno && activeTurno.turno_id === "tur-noche" ? "01:00:00" : null));
 
-  const tiempo_disponible_turno = event.tiempo_disponible_turno != null ? event.tiempo_disponible_turno : (activeTurno ? Number(activeTurno.horas_totales) - Number(activeTurno.horas_descanso) : 11.00);
+  const tiempo_disponible_turno = event.tiempo_disponible_turno != null ? event.tiempo_disponible_turno : (activeTurno ? Number(activeTurno.horas_totales) : 12.00);
   const horas_totales_turno = activeTurno ? Number(activeTurno.horas_totales) : 12;
   const turno_id = event.turno_id || (activeTurno ? activeTurno.turno_id : null);
 

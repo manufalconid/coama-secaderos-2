@@ -6,57 +6,57 @@ echo ====================================================
 echo  Cerrando servicios anteriores en puertos 8080, 5173 y 5174...
 echo ====================================================
 
-:: Puerto 8080 (API Backend)
-for /f "tokens=5" %%a in ('netstat -aon ^| findstr :8080 ^| findstr LISTENING') do (
-    echo Matando proceso en puerto 8080 - PID %%a...
-    taskkill /f /pid %%a >nul 2>&1
-)
-
-:: Puerto 5173 (Supervisor Web)
-for /f "tokens=5" %%a in ('netstat -aon ^| findstr :5173 ^| findstr LISTENING') do (
-    echo Matando proceso en puerto 5173 - PID %%a...
-    taskkill /f /pid %%a >nul 2>&1
-)
-
-:: Puerto 5174 (Tablet Web)
-for /f "tokens=5" %%a in ('netstat -aon ^| findstr :5174 ^| findstr LISTENING') do (
-    echo Matando proceso en puerto 5174 - PID %%a...
-    taskkill /f /pid %%a >nul 2>&1
-)
+powershell -NoProfile -Command "Get-NetTCPConnection -LocalPort 8080, 5173, 5174 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique | ForEach-Object { Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue }"
 
 echo.
 echo ====================================================
-echo  Iniciando los servicios en segundo plano...
+echo  Iniciando servicios con consolas ocultas...
 echo ====================================================
 
-:: Lanzar API Backend
+:: Lanzar API Backend (Puerto 8080) totalmente oculto
 echo 1. Iniciando servidor API Backend (Puerto 8080)...
-start /min "Coama API Backend" cmd /c "npm run api:postgres"
+powershell -NoProfile -Command "Start-Process -FilePath 'cmd.exe' -ArgumentList '/c npm run api:postgres' -WindowStyle Hidden"
 
-:: Esperar 2 segundos
-timeout /t 2 /nobreak > nul
-
-:: Lanzar Portal Web Supervisor
+:: Lanzar Portal Web Supervisor (Puerto 5173) totalmente oculto
 echo 2. Iniciando Portal Web del Supervisor (Puerto 5173)...
-start /min "Coama Supervisor Web" cmd /c "npm run supervisor:dev"
+powershell -NoProfile -Command "Start-Process -FilePath 'cmd.exe' -ArgumentList '/c npm run supervisor:dev' -WindowStyle Hidden"
 
-:: Lanzar Consola de Tablet
+:: Lanzar Consola Web de Tablet (Puerto 5174) totalmente oculto
 echo 3. Iniciando Consola Web de Tablet (Puerto 5174)...
-start /min "Coama Tablet Web" cmd /c "npm run tablet:dev"
+powershell -NoProfile -Command "Start-Process -FilePath 'cmd.exe' -ArgumentList '/c npm run tablet:dev' -WindowStyle Hidden"
 
-:: Esperar 2 segundos para que Vite levante
-timeout /t 2 /nobreak > nul
+echo.
+echo ====================================================
+echo  Esperando a que los servicios estén listos...
+echo ====================================================
 
+:: Bucle de espera dinámica (espera hasta 20 segundos a que el puerto 5173 esté activo)
+for /l %%i in (1,1,20) do (
+    netstat -an | findstr :5173 | findstr LISTENING >nul
+    if not errorlevel 1 (
+        echo ¡Servidor web detectado en línea en el puerto 5173!
+        goto LAUNCH_BROWSER
+    )
+    echo  Esperando servicio... (intento %%i de 20)
+    ping 127.0.0.1 -n 2 >nul
+)
+
+:LAUNCH_BROWSER
 echo.
 echo ====================================================
 echo  Abriendo el portal del supervisor en el navegador...
 echo ====================================================
-start http://127.0.0.1:5173
+:: Pausa de 1 segundo para asegurar renderizado final
+ping 127.0.0.1 -n 2 >nul
 
-echo.
-echo Â¡Sistema listo y lanzado!
-echo Puedes cerrar esta ventana sin detener los servicios en segundo plano.
-echo Para cerrarlos definitivamente en el futuro, vuelve a correr este archivo.
-echo.
-pause
+start chrome --app=http://127.0.0.1:5173 --start-maximized >nul 2>&1
+if errorlevel 1 start msedge --app=http://127.0.0.1:5173 --start-maximized >nul 2>&1
+if errorlevel 1 start http://127.0.0.1:5173 >nul 2>&1
+
+:: Ventana emergente de 2 segundos informando que todo está corriendo para Lumo
+powershell -NoProfile -Command "(New-Object -ComObject WScript.Shell).Popup('¡Todo está corriendo correctamente para Lumo Secaderos!' + [char]10 + [char]10 + 'Detalle de lo que se abrió:' + [char]10 + '  • API Backend (Puerto 8080) - Consola oculta' + [char]10 + '  • Portal Web Supervisor (Puerto 5173) - Consola oculta' + [char]10 + '  • Consola Web Tablet (Puerto 5174) - Consola oculta' + [char]10 + '  • Navegador Web (Portal del Supervisor)', 2, 'Lumo Secaderos - Sistema Activo', 64)"
+
+exit
+
+
 

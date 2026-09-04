@@ -131,16 +131,22 @@ export default function ParametrosView({
                       <div style={{ marginTop: "4px" }}>{selected.observacion_obligatoria ? "SÍ" : "NO"}</div>
                     </div>
                     <div>
-                      <strong style={{ color: "var(--text-dim)", fontSize: "11px", textTransform: "uppercase" }}>¿Mostrar Perfil?:</strong>
-                      <div style={{ marginTop: "4px" }}>{selected.mostrar_perfil ? "SÍ" : "NO"}</div>
+                      <strong style={{ color: "var(--text-dim)", fontSize: "11px", textTransform: "uppercase" }}>¿Ubicación Obligatoria?:</strong>
+                      <div style={{ marginTop: "4px" }}>{(selected.ubicacion_obligatoria ?? selected.mostrar_perfil) ? "SÍ" : "NO"}</div>
+                    </div>
+                    <div>
+                      <strong style={{ color: "var(--text-dim)", fontSize: "11px", textTransform: "uppercase" }}>¿Perfil Completo?:</strong>
+                      <div style={{ marginTop: "4px" }}>{(selected.mostrar_perfil_completo ?? selected.mostrar_perfil) ? "SÍ" : "NO"}</div>
+                    </div>
+                    <div>
+                      <strong style={{ color: "var(--text-dim)", fontSize: "11px", textTransform: "uppercase" }}>¿Perfil Niveles?:</strong>
+                      <div style={{ marginTop: "4px" }}>{selected.mostrar_perfil_niveles ? "SÍ" : "NO"}</div>
                     </div>
                   </div>
-                  {!selected.mostrar_perfil && selected.observacion_obligatoria && (
-                    <div>
-                      <strong style={{ color: "var(--text-dim)", fontSize: "11px", textTransform: "uppercase" }}>Observaciones Predefinidas:</strong>
-                      <div style={{ marginTop: "4px" }}>{selected.observaciones_predefinidas || "--"}</div>
-                    </div>
-                  )}
+                  <div>
+                    <strong style={{ color: "var(--text-dim)", fontSize: "11px", textTransform: "uppercase" }}>Observaciones Predefinidas:</strong>
+                    <div style={{ marginTop: "4px" }}>{selected.observaciones_predefinidas || "--"}</div>
+                  </div>
                 </>
               )}
 

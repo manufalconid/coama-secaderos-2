@@ -2,14 +2,14 @@ import XLSX from "xlsx";
 import { exportAllToSheets } from "./sheets-sync.mjs";
 
 export async function exportParametros(store) {
-  // 1. Obtener los datos maestros actuales
+  // 1. Obtener los datos maestros actuales (solo elementos activos)
   const masterData = await store.getMasterData();
 
-  const tablets = masterData?.tablets || [];
-  const secaderos = masterData?.secaderos || [];
-  const razones = masterData?.razones || [];
-  const origenes = masterData?.origenes || [];
-  const turnos = masterData?.turnos || [];
+  const tablets = (masterData?.tablets || []).filter(t => t.activa !== false);
+  const secaderos = (masterData?.secaderos || []).filter(s => s.activo !== false);
+  const razones = (masterData?.razones || []).filter(r => r.activa !== false);
+  const origenes = (masterData?.origenes || []).filter(o => o.activa !== false && o.activo !== false);
+  const turnos = (masterData?.turnos || []).filter(t => t.activo !== false);
 
   // 2. Crear las hojas del Excel
   // Hoja 1: Tablets y Secaderos
@@ -34,7 +34,9 @@ export async function exportParametros(store) {
     "Codigo",
     "Observaciones Predefinidas",
     "Observacion Obligatoria",
-    "Mostrar Perfil Secadero"
+    "Ubicacion Obligatoria",
+    "Mostrar Perfil Secadero completo",
+    "Mostrar Perfil Secadero niveles"
   ];
   const paradasRows = [paradasHeaders];
   for (const r of razones) {
@@ -47,7 +49,9 @@ export async function exportParametros(store) {
       r.codigo || "",
       r.observaciones_predefinidas || "",
       r.observacion_obligatoria ? "SI" : "NO",
-      r.mostrar_perfil ? "SI" : "NO"
+      r.ubicacion_obligatoria ? "SI" : "NO",
+      (r.mostrar_perfil_completo ?? r.mostrar_perfil) ? "SI" : "NO",
+      r.mostrar_perfil_niveles ? "SI" : "NO"
     ]);
   }
 
@@ -137,12 +141,10 @@ export async function importParametros(store, buffer) {
       ip_tablet: ipVal || null,
       activa: activaVal === "SI" || activaVal === "TRUE"
     });
-  }
-
-  // Parsear Catálogo de Paradas
+  }  // Parsear Catálogo de Paradas
   const origenesParsed = new Map();
-  const razonesParsed = [];
-  const linksParsed = [];
+  const razonesParsedMap = new Map();
+  const linksMap = new Map();
 
   for (const row of paradasData) {
     const origNamesRaw = (row["Categoria (Origen)"] || "").toString().trim();
@@ -150,7 +152,10 @@ export async function importParametros(store, buffer) {
     const codigo = (row["Codigo"] || "").toString().trim();
     const obsPre = (row["Observaciones Predefinidas"] || "").toString().trim();
     const obligVal = (row["Observacion Obligatoria"] || "").toString().trim().toUpperCase();
-    const perfilVal = (row["Mostrar Perfil Secadero"] || "").toString().trim().toUpperCase();
+    const ubicacionObligVal = (row["Ubicacion Obligatoria"] || "").toString().trim().toUpperCase();
+    const perfilCompletoVal = (row["Mostrar Perfil Secadero completo"] || "").toString().trim().toUpperCase();
+    const perfilNivelesVal = (row["Mostrar Perfil Secadero niveles"] || "").toString().trim().toUpperCase();
+    const perfilLegacyVal = (row["Mostrar Perfil Secadero"] || "").toString().trim().toUpperCase();
 
     if (!razonName) continue;
 
@@ -171,23 +176,49 @@ export async function importParametros(store, buffer) {
         });
       }
       mappedOrigenIds.push(origId);
-      linksParsed.push({ razon_id: razonId, origen_id: origId });
+      linksMap.set(`${razonId}:${origId}`, { razon_id: razonId, origen_id: origId });
     }
 
-    razonesParsed.push({
-      razon_id: razonId,
-      codigo: codigo || null,
-      nombre: razonName,
-      activa: true,
-      observacion_obligatoria: obligVal === "SI" || obligVal === "TRUE",
-      observaciones_predefinidas: obsPre || null,
-      mostrar_perfil: perfilVal === "SI" || perfilVal === "TRUE",
-      origen_ids: mappedOrigenIds
-    });
+    const isPerfilCompleto = perfilCompletoVal === "SI" || perfilCompletoVal === "TRUE" || (perfilCompletoVal === "" && (perfilLegacyVal === "SI" || perfilLegacyVal === "TRUE"));
+    const isPerfilNiveles = perfilNivelesVal === "SI" || perfilNivelesVal === "TRUE";
+    const isUbicacionOblig = ubicacionObligVal === "SI" || ubicacionObligVal === "TRUE" || ((isPerfilCompleto || isPerfilNiveles) && ubicacionObligVal === "");
+
+    if (razonesParsedMap.has(razonId)) {
+      const existing = razonesParsedMap.get(razonId);
+      mappedOrigenIds.forEach(id => {
+        if (!existing.origen_ids.includes(id)) {
+          existing.origen_ids.push(id);
+        }
+      });
+      if (codigo && !existing.codigo) existing.codigo = codigo;
+      if (obsPre && !existing.observaciones_predefinidas) existing.observaciones_predefinidas = obsPre;
+      if (obligVal === "SI" || obligVal === "TRUE") existing.observacion_obligatoria = true;
+      if (isUbicacionOblig) existing.ubicacion_obligatoria = true;
+      if (isPerfilCompleto) existing.mostrar_perfil_completo = true;
+      if (isPerfilNiveles) existing.mostrar_perfil_niveles = true;
+      existing.mostrar_perfil = existing.mostrar_perfil_completo || existing.mostrar_perfil_niveles;
+    } else {
+      razonesParsedMap.set(razonId, {
+        razon_id: razonId,
+        codigo: codigo || null,
+        nombre: razonName,
+        activa: true,
+        observacion_obligatoria: obligVal === "SI" || obligVal === "TRUE",
+        ubicacion_obligatoria: isUbicacionOblig,
+        observaciones_predefinidas: obsPre || null,
+        mostrar_perfil: isPerfilCompleto || isPerfilNiveles,
+        mostrar_perfil_completo: isPerfilCompleto,
+        mostrar_perfil_niveles: isPerfilNiveles,
+        origen_ids: mappedOrigenIds
+      });
+    }
   }
 
+  const razonesParsed = Array.from(razonesParsedMap.values());
+  const linksParsed = Array.from(linksMap.values());
+
   // Parsear Turnos
-  const turnosParsed = [];
+  const turnosParsedMap = new Map();
   for (const row of turnosData) {
     const turnoId = (row["Turno ID"] || "").toString().trim().toLowerCase();
     const name = (row["Nombre"] || "").toString().trim();
@@ -200,7 +231,8 @@ export async function importParametros(store, buffer) {
 
     if (!turnoId || !name || !start || !end) continue;
 
-    turnosParsed.push({
+    const key = `${turnoId}:${vig || "2026-08-26"}`;
+    turnosParsedMap.set(key, {
       turno_id: turnoId,
       nombre: name,
       hora_inicio: start,
@@ -211,6 +243,7 @@ export async function importParametros(store, buffer) {
       activo: act !== "NO" && act !== "FALSE"
     });
   }
+  const turnosParsed = Array.from(turnosParsedMap.values());
 
   // 2. Persistir en la base de datos según el modo del store
   if (store.pool) {
@@ -340,10 +373,10 @@ export async function importParametros(store, buffer) {
           importedRazonIds
         );
       }
-      // Insertar las nuevas relaciones de mapeo
+      // Insertar las nuevas relaciones de mapeo (ON CONFLICT DO NOTHING)
       for (const l of linksParsed) {
         await client.query(
-          "insert into razon_origenes (razon_id, origen_id) values ($1, $2)",
+          "insert into razon_origenes (razon_id, origen_id) values ($1, $2) on conflict (razon_id, origen_id) do nothing",
           [l.razon_id, l.origen_id]
         );
       }
@@ -391,67 +424,17 @@ export async function importParametros(store, buffer) {
       client.release();
     }
   } else {
-    // Modo Memoria - Upsert y soft-delete para consistencia
-    // 1. Secaderos
-    const existingSecaderos = store.masterData.secaderos || [];
-    const newSecaderosMap = new Map(secaderosParsed);
-    for (const s of existingSecaderos) {
-      if (!newSecaderosMap.has(s.secadero_id)) {
-        s.activo = false;
-        newSecaderosMap.set(s.secadero_id, s);
-      }
-    }
-    store.masterData.secaderos = Array.from(newSecaderosMap.values());
-
-    // 2. Tablets
-    const existingTablets = store.masterData.tablets || [];
-    const newTabletsMap = new Map(tabletsParsed.map(t => [t.tablet_id, t]));
-    for (const t of existingTablets) {
-      if (!newTabletsMap.has(t.tablet_id)) {
-        t.activa = false;
-        newTabletsMap.set(t.tablet_id, t);
-      }
-    }
-    store.masterData.tablets = Array.from(newTabletsMap.values());
-
-    // 3. Orígenes
-    const existingOrigenes = store.masterData.origenes || [];
-    const newOrigenesMap = new Map(origenesParsed);
-    for (const o of existingOrigenes) {
-      if (!newOrigenesMap.has(o.origen_id)) {
-        o.activa = false; // en memoria usamos activa
-        newOrigenesMap.set(o.origen_id, o);
-      }
-    }
-    store.masterData.origenes = Array.from(newOrigenesMap.values());
-
-    // 4. Razones
-    const existingRazones = store.masterData.razones || [];
-    const newRazonesMap = new Map(razonesParsed.map(r => [r.razon_id, r]));
-    for (const r of existingRazones) {
-      if (!newRazonesMap.has(r.razon_id)) {
-        r.activa = false;
-        newRazonesMap.set(r.razon_id, r);
-      }
-    }
-    store.masterData.razones = Array.from(newRazonesMap.values());
-
-    // 5. Turnos
-    const existingTurnos = store.masterData.turnos || [];
-    const newTurnosMap = new Map(turnosParsed.map(t => [`${t.turno_id}:${t.fecha_inicio_vigencia}`, t]));
-    for (const t of existingTurnos) {
-      const key = `${t.turno_id}:${t.fecha_inicio_vigencia}`;
-      if (!newTurnosMap.has(key)) {
-        t.activo = false;
-        newTurnosMap.set(key, t);
-      }
-    }
-    store.masterData.turnos = Array.from(newTurnosMap.values());
+    // Modo Memoria - Reemplazar el catálogo de parámetros con lo importado desde Excel
+    store.masterData.secaderos = Array.from(secaderosParsed.values());
+    store.masterData.tablets = tabletsParsed;
+    store.masterData.origenes = Array.from(origenesParsed.values());
+    store.masterData.razones = razonesParsed;
+    store.masterData.turnos = turnosParsed;
 
     if (typeof store.saveToDisk === "function") {
       store.saveToDisk();
     }
-    console.log("[ OK ] Parametros importados (Upsert) y guardados en memoria sin borrar historiales.");
+    console.log("[ OK ] Parámetros importados: el catálogo activo fue reemplazado exactamente con la planilla Excel.");
   }
 
   // Sincronizar todo con Google Sheets post-importacion (compatible con promesas y síncronos)

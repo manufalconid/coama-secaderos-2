@@ -56,10 +56,11 @@ async function run() {
     return;
   }
 
-  // Columnas exactas solicitadas por el ERP (13 columnas)
+  // Columnas exactas solicitadas por el ERP (14 columnas)
   const headers = [
     "fecha_de_registro",
     "linea",
+    "turno_id",
     "turno_hora_desde",
     "turno_hora_hasta",
     "tiempo_de_turno_en_horas_programadas",
@@ -98,18 +99,37 @@ async function run() {
     const horasProg = ev.horas_totales_turno ?? 12;
     const horasProgStr = Number.isInteger(Number(horasProg)) ? Number(horasProg).toString() : Number(horasProg).toFixed(1).replace(".", ",");
 
+    const formatLocalTime = (isoStr) => {
+      if (!isoStr) return "";
+      const str = String(isoStr).trim();
+      if (/^\d{2}:\d{2}(:\d{2})?$/.test(str)) return str;
+      try {
+        const d = new Date(str);
+        if (isNaN(d.getTime())) return str;
+        return d.toLocaleTimeString("es-AR", { timeZone: "America/Argentina/Buenos_Aires", hour12: false });
+      } catch (e) {
+        return str;
+      }
+    };
+
+    const start = ev.hora_inicio_turno || "06:00:00";
+    const end = ev.hora_fin_turno || "18:00:00";
+    const isTD = start <= "12:00:00" && end > "12:00:00";
+    const compositeTurnoId = `${ev.fecha_registro || ""}-${isTD ? "TD" : "TN"}`;
+
     const row = [
       ev.fecha_registro || "",
       (ev.linea || "").toUpperCase(),
-      ev.hora_inicio_turno || "06:00:00",
-      ev.hora_fin_turno || "18:00:00",
+      compositeTurnoId,
+      start,
+      end,
       horasProgStr,
       (ev.categoria_tm || "OPERATIVO").toUpperCase(),
       (ev.tiempo_muerto || "PARADA").toUpperCase(),
       observacionVal,
       ev.ubicacion ? ev.ubicacion.toUpperCase() : "",
-      ev.hora_desde || "",
-      ev.hora_hasta || "",
+      formatLocalTime(ev.hora_desde || ev.fecha_hora_inicio),
+      formatLocalTime(ev.hora_hasta || ev.fecha_hora_fin),
       durHr,
       durMin
     ];
@@ -241,8 +261,7 @@ function populateUnifiedFields(event, masterData) {
   const hora_inicio_descanso = event.hora_inicio_descanso || (activeTurno && activeTurno.turno_id === "tur-dia" ? "12:00:00" : (activeTurno && activeTurno.turno_id === "tur-noche" ? "00:00:00" : null));
   const hora_fin_descanso = event.hora_fin_descanso || (activeTurno && activeTurno.turno_id === "tur-dia" ? "13:00:00" : (activeTurno && activeTurno.turno_id === "tur-noche" ? "01:00:00" : null));
 
-  const tiempo_disponible_turno = event.tiempo_disponible_turno != null ? event.tiempo_disponible_turno : (activeTurno ? Number(activeTurno.horas_totales) - Number(activeTurno.horas_descanso) : 11.00);
-  const tiempo_de_descanso = activeTurno ? Number(activeTurno.horas_descanso) : 1.00;
+  const tiempo_disponible_turno = event.tiempo_disponible_turno != null ? event.tiempo_disponible_turno : (activeTurno ? Number(activeTurno.horas_totales) : 12.00);
   const horas_totales_turno = activeTurno ? Number(activeTurno.horas_totales) : 12;
   const turno_id = event.turno_id || (activeTurno ? activeTurno.turno_id : null);
 

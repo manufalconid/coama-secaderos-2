@@ -92,7 +92,63 @@ const PLANT_3_SECADEROS = [
   }
 ];
 
+function IntroSplash({ onFinish }) {
+  const [fading, setFading] = useState(false);
+
+  const handleEnd = () => {
+    setFading(true);
+    setTimeout(onFinish, 400);
+  };
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      handleEnd();
+    }, 1800);
+    return () => clearTimeout(timer);
+  }, []);
+
+  return (
+    <div
+      onClick={handleEnd}
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        width: "100vw",
+        height: "100vh",
+        backgroundColor: "#000000",
+        zIndex: 999999,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        cursor: "pointer",
+        opacity: fading ? 0 : 1,
+        transition: "opacity 0.4s ease-out",
+        overflow: "hidden"
+      }}
+    >
+      <video
+        src="/intro-lumo.mp4"
+        autoPlay
+        muted
+        playsInline
+        onEnded={handleEnd}
+        onError={handleEnd}
+        style={{
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          border: "none",
+          margin: 0,
+          padding: 0
+        }}
+      />
+    </div>
+  );
+}
+
 function App() {
+  const [showSplash, setShowSplash] = useState(true);
   const [activeTab, setActiveTab] = useState(() => {
     const params = new URLSearchParams(window.location.search);
     return params.get("presentacion") === "true" ? "presentacion" : "operacion";
@@ -129,7 +185,27 @@ function App() {
   useEffect(() => {
     refreshData();
     const interval = setInterval(refreshData, 5000);
-    return () => clearInterval(interval);
+
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        if (document.fullscreenElement) {
+          document.exitFullscreen().catch(() => {});
+        }
+      } else if (e.key === "F11") {
+        e.preventDefault();
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen().catch(() => {});
+        } else {
+          document.exitFullscreen().catch(() => {});
+        }
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("keydown", handleKeyDown);
+    };
   }, []);
 
   const showToast = (message) => {
@@ -621,7 +697,9 @@ function App() {
   }
 
   return (
-    <div className="app-shell">
+    <>
+      {showSplash && <IntroSplash onFinish={() => setShowSplash(false)} />}
+      <div className="app-shell">
       <aside className="sidebar">
         <div className="brand-header">
           <img src="/lumo-transparent-logo.png" alt="Lumo Data Solutions" className="lumo-logo-img" />
@@ -891,6 +969,7 @@ function App() {
         </div>
       </main>
     </div>
+    </>
   );
 }
 

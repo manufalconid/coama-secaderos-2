@@ -1,257 +1,201 @@
 import React from "react";
-import { Save } from "lucide-react";
+import TouchButton from "../TouchButton";
+import { CheckCircle2, ArrowLeft, Clock, AlertTriangle, FileText, MapPin } from "lucide-react";
 
 interface ConfirmationStageProps {
-  assignedSecaderoName: string;
   origenName: string;
   razonName: string;
   suggestedReasonName: string;
   elapsedTime: number;
-  selectedReasonObj: any;
   formObservacion: string;
-  setFormObservacion: (obs: string) => void;
   formUbicacion: string;
-  setFormUbicacion: (ub: string) => void;
-  parsedPredefinedObservations: string[];
   formatSeconds: (secs: number) => string;
-  handleResetDeclarationFlow: () => void;
+  onBackToEdit: () => void;
   handleConfirmSaveStoppage: () => void;
 }
 
 export default function ConfirmationStage({
-  assignedSecaderoName,
   origenName,
   razonName,
   suggestedReasonName,
   elapsedTime,
-  selectedReasonObj,
   formObservacion,
-  setFormObservacion,
   formUbicacion,
-  setFormUbicacion,
-  parsedPredefinedObservations,
   formatSeconds,
-  handleResetDeclarationFlow,
+  onBackToEdit,
   handleConfirmSaveStoppage
-}) {
-  const isObsRequired = selectedReasonObj?.observacion_obligatoria;
-  const isUbicacionRequired = selectedReasonObj?.mostrar_perfil;
-  const isSaveDisabled = !!(isObsRequired && (isUbicacionRequired ? !formUbicacion : !formObservacion));
-
-  const handleSelectUbicacion = (val: string) => {
-    if (formUbicacion === val) {
-      if (!isSaveDisabled) {
-        handleConfirmSaveStoppage();
-      }
-    } else {
-      setFormUbicacion(val);
-    }
-  };
-
-  const handleSelectObservation = (obs: string) => {
-    if (formObservacion === obs) {
-      if (!isSaveDisabled) {
-        handleConfirmSaveStoppage();
-      }
-    } else {
-      setFormObservacion(obs);
-    }
-  };
+}: ConfirmationStageProps) {
+  const finalReasonName = suggestedReasonName ? `[Sug.] ${suggestedReasonName}` : razonName;
 
   return (
-    <div className="stage-container">
-      <div className="stage-title-block">
-        <h2 className="stage-title">Confirmar Cierre de Parada [Paso 3 de 3]</h2>
-        <p className="stage-subtitle">Verifica los datos de detención antes de guardar</p>
+    <div className="stage-container" style={{ alignItems: "center" }}>
+      <div className="stage-title-block" style={{ textAlign: "center" }}>
+        <h2 className="stage-title" style={{ fontSize: "24px" }}>Resumen y Confirmación Final [Paso 4 de 4]</h2>
+        <p className="stage-subtitle" style={{ fontSize: "15px" }}>
+          Revisa el resumen de la detención antes de guardar el registro
+        </p>
       </div>
 
-      <div className="form-panel" style={{ width: "100%", maxWidth: "700px" }}>
-        <div className="summary-grid">
-          <div className="summary-card">
-            <span className="summary-label">MÁQUINA</span>
-            <span className="summary-value">{assignedSecaderoName}</span>
+      <div
+        className="form-panel"
+        style={{
+          width: "100%",
+          maxWidth: "680px",
+          background: "var(--bg-card)",
+          padding: "24px",
+          borderRadius: "8px",
+          border: "1px solid var(--border-subtle)",
+          boxShadow: "0 8px 24px rgba(0,0,0,0.4)"
+        }}
+      >
+        {/* Tarjetas de Resumen Claras y Legibles */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "20px" }}>
+          
+          {/* Categoría (Origen) */}
+          <div
+            style={{
+              padding: "16px",
+              borderRadius: "6px",
+              background: "var(--bg-input)",
+              border: "1px solid var(--border-subtle)"
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--text-dim)", fontSize: "12px", fontWeight: 700, textTransform: "uppercase", marginBottom: "6px" }}>
+              <AlertTriangle size={16} color="var(--brand-lumo-gold)" />
+              CATEGORÍA (ORIGEN)
+            </div>
+            <div style={{ fontSize: "18px", fontWeight: "bold", color: "#fff" }}>
+              {origenName || "NO DEFINIDO"}
+            </div>
           </div>
-          <div className="summary-card">
-            <span className="summary-label">ORIGEN</span>
-            <span className="summary-value">{origenName}</span>
+
+          {/* Tiempo Muerto (Motivo) */}
+          <div
+            style={{
+              padding: "16px",
+              borderRadius: "6px",
+              background: "var(--bg-input)",
+              border: "1px solid var(--border-subtle)"
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--text-dim)", fontSize: "12px", fontWeight: 700, textTransform: "uppercase", marginBottom: "6px" }}>
+              <AlertTriangle size={16} color="var(--brand-lumo-gold)" />
+              TIEMPO MUERTO (MOTIVO)
+            </div>
+            <div style={{ fontSize: "18px", fontWeight: "bold", color: "var(--brand-lumo-gold)" }}>
+              {finalReasonName || "NO DEFINIDO"}
+            </div>
           </div>
-          <div className="summary-card">
-            <span className="summary-label">MOTIVO</span>
-            <span className="summary-value highlight">
-              {suggestedReasonName ? `[Sug.] ${suggestedReasonName}` : razonName}
-            </span>
+
+          {/* Observación */}
+          <div
+            style={{
+              gridColumn: "1 / -1",
+              padding: "16px",
+              borderRadius: "6px",
+              background: "var(--bg-input)",
+              border: "1px solid var(--border-subtle)"
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--text-dim)", fontSize: "12px", fontWeight: 700, textTransform: "uppercase", marginBottom: "6px" }}>
+              <FileText size={16} color="var(--brand-lumo-gold)" />
+              OBSERVACIÓN
+            </div>
+            <div style={{ fontSize: "16px", fontWeight: "600", color: "#fff", lineHeight: "1.4" }}>
+              {formObservacion || "Sin observaciones adicionales"}
+            </div>
           </div>
-          <div className="summary-card">
-            <span className="summary-label">DURACIÓN</span>
-            <span className="summary-value">{formatSeconds(elapsedTime)}</span>
+
+          {/* Ubicación (Si fue definida) */}
+          {formUbicacion && (
+            <div
+              style={{
+                gridColumn: "1 / -1",
+                padding: "16px",
+                borderRadius: "6px",
+                background: "rgba(250, 204, 21, 0.08)",
+                border: "1px solid var(--brand-lumo-gold)"
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--brand-lumo-gold)", fontSize: "12px", fontWeight: 700, textTransform: "uppercase", marginBottom: "6px" }}>
+                <MapPin size={16} color="var(--brand-lumo-gold)" />
+                UBICACIÓN EN SECADERO
+              </div>
+              <div style={{ fontSize: "16px", fontWeight: "bold", color: "#fff" }}>
+                {formUbicacion}
+              </div>
+            </div>
+          )}
+
+          {/* Duración */}
+          <div
+            style={{
+              gridColumn: "1 / -1",
+              padding: "16px",
+              borderRadius: "6px",
+              background: "var(--bg-input)",
+              border: "1px solid var(--border-subtle)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between"
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--text-dim)", fontSize: "12px", fontWeight: 700, textTransform: "uppercase" }}>
+              <Clock size={16} color="var(--brand-lumo-gold)" />
+              DURACIÓN TOTAL PARADA:
+            </div>
+            <div style={{ fontSize: "20px", fontWeight: 900, color: "var(--brand-lumo-gold)" }}>
+              {formatSeconds(elapsedTime)}
+            </div>
           </div>
         </div>
 
-        {isUbicacionRequired ? (
-          <div className="form-field" style={{ marginTop: "16px" }}>
-            <label className="form-label" style={{ display: "flex", justifyContent: "space-between" }}>
-              <span>Ubicación en el Secadero (Obligatorio)</span>
-              {!formUbicacion && (
-                <span style={{ color: "var(--state-alert)", fontSize: "12px" }}>Selecciona Entrada, Salida o Nivel/Puerta *</span>
-              )}
-            </label>
-            
-            <div className="secadero-profile-wrapper">
-              <div className="secadero-overlay-layout">
-                {/* Left: Entrada */}
-                <div className="secadero-side-zone">
-                  <button
-                    type="button"
-                    className={`secadero-zone-btn ${formUbicacion === "ENTRADA" ? "selected" : ""}`}
-                    onClick={() => handleSelectUbicacion("ENTRADA")}
-                  >
-                    ENTRADA
-                  </button>
-                </div>
-
-                {/* Center: Grid and Row Labels */}
-                <div style={{ display: "flex", flexDirection: "column" }}>
-                  <div className="secadero-grid-wrapper">
-                    <div className="secadero-row-labels">
-                      {[6, 5, 4, 3, 2, 1].map(lvl => (
-                        <span key={lvl} className="secadero-row-label">N {lvl}</span>
-                      ))}
-                    </div>
-                    
-                    <div className="secadero-grid-container">
-                      {[6, 5, 4, 3, 2, 1].map(lvl => {
-                        return Array.from({ length: 13 }, (_, i) => i + 1).map(door => {
-                          const val = `N${lvl}P${door}`;
-                          const isSelected = formUbicacion === val;
-                          return (
-                            <button
-                              key={`${lvl}-${door}`}
-                              type="button"
-                              className={`secadero-cell ${isSelected ? "selected" : ""}`}
-                              onClick={() => handleSelectUbicacion(val)}
-                              title={val}
-                            />
-                          );
-                        });
-                      })}
-                    </div>
-
-                    <div className="secadero-row-labels">
-                      {[6, 5, 4, 3, 2, 1].map(lvl => (
-                        <span key={lvl} className="secadero-row-label">N {lvl}</span>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Column labels (Doors) */}
-                  <div className="secadero-col-labels">
-                    {Array.from({ length: 13 }, (_, i) => i + 1).map(door => (
-                      <span key={door} className="secadero-col-label">{door}</span>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Right: Salida */}
-                <div className="secadero-side-zone">
-                  <button
-                    type="button"
-                    className={`secadero-zone-btn ${formUbicacion === "SALIDA" ? "selected" : ""}`}
-                    onClick={() => handleSelectUbicacion("SALIDA")}
-                  >
-                    SALIDA
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Optional Comment for Layout reasons */}
-            <div style={{ marginTop: "12px" }}>
-              <span style={{ fontSize: "12px", color: "var(--text-muted)", display: "block", marginBottom: "4px" }}>Comentario Adicional (Opcional):</span>
-              <input
-                type="text"
-                placeholder="Detalles sobre herramientas, repuestos, etc..."
-                value={formObservacion}
-                onChange={e => setFormObservacion(e.target.value)}
-                className="input-text"
-                style={{ fontSize: "16px", padding: "12px" }}
-              />
-            </div>
-          </div>
-        ) : parsedPredefinedObservations.length > 0 ? (
-          <div className="form-field" style={{ marginTop: "16px" }}>
-            <label className="form-label" style={{ display: "flex", justifyContent: "space-between" }}>
-              <span>Detalle / Observación {isObsRequired ? "(Obligatorio)" : "(Opcional)"}</span>
-              {isObsRequired && !formObservacion && (
-                <span style={{ color: "var(--state-alert)", fontSize: "12px" }}>Requerido *</span>
-              )}
-            </label>
-            <div className="choice-grid" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "10px", marginTop: "8px" }}>
-              {parsedPredefinedObservations.map((obs: string) => {
-                const isSelected = formObservacion === obs;
-                return (
-                  <button
-                    key={obs}
-                    type="button"
-                    className={`choice-card ${isSelected ? "selected" : ""}`}
-                    onClick={() => handleSelectObservation(obs)}
-                    style={{
-                      padding: "14px",
-                      fontSize: "15px",
-                      fontWeight: isSelected ? "bold" : "normal",
-                      border: isSelected ? "2px solid var(--brand-lumo)" : "1px solid var(--border-subtle)",
-                      background: isSelected ? "rgba(250, 204, 21, 0.15)" : "var(--bg-input)",
-                      color: isSelected ? "var(--text-main)" : "#fff"
-                    }}
-                  >
-                    {obs}
-                  </button>
-                );
-              })}
-            </div>
-            {!isObsRequired && (
-              <div style={{ marginTop: "12px" }}>
-                <span style={{ fontSize: "12px", color: "var(--text-muted)", display: "block", marginBottom: "4px" }}>O escribe un comentario personalizado:</span>
-                <input
-                  type="text"
-                  placeholder="Escribe un comentario..."
-                  value={formObservacion}
-                  onChange={e => setFormObservacion(e.target.value)}
-                  className="input-text"
-                  style={{ fontSize: "16px", padding: "12px" }}
-                />
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="form-field" style={{ marginTop: "16px" }}>
-            <label className="form-label">Comentarios Adicionales (Opcional)</label>
-            <input
-              type="text"
-              placeholder="Detalles sobre herramientas, repuestos, etc..."
-              value={formObservacion}
-              onChange={e => setFormObservacion(e.target.value)}
-              className="input-text"
-              style={{ fontSize: "16px", padding: "14px" }}
-            />
-          </div>
-        )}
-
-        <div className="action-footer-fixed" style={{ marginTop: "24px" }}>
-          <button type="button" className="btn-control secondary" onClick={handleResetDeclarationFlow}>
-            Cancelar
-          </button>
-          <button
-            type="button"
-            className="btn-control primary"
-            disabled={isSaveDisabled}
-            onClick={handleConfirmSaveStoppage}
+        {/* BOTONES DE ACCIÓN: VOLVER (Mediano/Secundario) Y ACEPTAR (GIGANTE / Principal) */}
+        <div style={{ display: "flex", gap: "16px", alignItems: "stretch", marginTop: "24px" }}>
+          {/* Botón Volver para editar */}
+          <TouchButton
+            onConfirm={onBackToEdit}
+            confirmText="TOCA DE NUEVO PARA VOLVER"
+            className="btn-control secondary"
             style={{
-              opacity: isSaveDisabled ? 0.5 : 1,
-              cursor: isSaveDisabled ? "not-allowed" : "pointer"
+              width: "160px",
+              padding: "18px",
+              fontSize: "15px",
+              fontWeight: "bold",
+              borderRadius: "8px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "8px"
             }}
           >
-            <Save size={18} /> Guardar Parada
-          </button>
+            <ArrowLeft size={20} /> Volver
+          </TouchButton>
+
+          {/* Botón Aceptar GIGANTE */}
+          <TouchButton
+            onConfirm={handleConfirmSaveStoppage}
+            confirmText="¡TOCA DE NUEVO PARA GUARDAR PARADA!"
+            className="btn-control primary"
+            style={{
+              flex: 1,
+              padding: "22px",
+              fontSize: "20px",
+              fontWeight: 900,
+              borderRadius: "8px",
+              background: "var(--brand-lumo-gold)",
+              color: "#000",
+              border: "none",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "12px",
+              boxShadow: "0 4px 20px rgba(250, 204, 21, 0.4)",
+              cursor: "pointer"
+            }}
+          >
+            <CheckCircle2 size={26} color="#000" /> ACEPTAR Y GUARDAR
+          </TouchButton>
         </div>
       </div>
     </div>

@@ -468,7 +468,7 @@ function defaultSeed() {
       { razon_id: "raz-falta-personal", origen_ids: ["ori-operativo"], codigo: "P029", nombre: "FALTA PERSONAL", activa: true },
       { razon_id: "raz-falta-presion-vapor", origen_ids: ["ori-operativo"], codigo: "P030", nombre: "FALTA PRESION VAPOR", activa: true },
       { razon_id: "raz-sin-material", origen_ids: ["ori-proceso"], codigo: "P031", nombre: "SIN MATERIAL", activa: true },
-      { razon_id: "raz-atascamiento", origen_ids: ["ori-operativo", "ori-mecanico"], codigo: "P032", nombre: "ATASCAMIENTO", activa: true, observacion_obligatoria: true, observaciones_predefinidas: null, mostrar_perfil: true }
+      { razon_id: "raz-atascamiento", origen_ids: ["ori-operativo", "ori-mecanico"], codigo: "P032", nombre: "ATASCAMIENTO", activa: true, observacion_obligatoria: true, ubicacion_obligatoria: true, observaciones_predefinidas: "Tranque en entrada, Tranque en salida, Rotura de tirante, Acumulación de viruta, Falla mecánica", mostrar_perfil: true, mostrar_perfil_completo: true, mostrar_perfil_niveles: false }
     ],
     turnos: [
       { turno_id: "tur-dia", nombre: "Turno Día (06:00 a 18:00)", hora_inicio: "06:00:00", hora_fin: "18:00:00", horas_totales: 12.00, horas_descanso: 1.00, activo: true },
@@ -481,7 +481,7 @@ function defaultManualProposals() {
   return [];
 }
 
-function populateUnifiedFields(event, masterData) {
+export function populateUnifiedFields(event, masterData) {
   const timestamp_registro = event.timestamp_registro || event.creado_en_tablet || new Date().toISOString();
   
   let fecha_registro = event.fecha_registro;
@@ -592,7 +592,7 @@ function populateUnifiedFields(event, masterData) {
   const hora_inicio_descanso = event.hora_inicio_descanso || (activeTurno && activeTurno.turno_id === "tur-dia" ? "12:00:00" : (activeTurno && activeTurno.turno_id === "tur-noche" ? "00:00:00" : null));
   const hora_fin_descanso = event.hora_fin_descanso || (activeTurno && activeTurno.turno_id === "tur-dia" ? "13:00:00" : (activeTurno && activeTurno.turno_id === "tur-noche" ? "01:00:00" : null));
 
-  const tiempo_disponible_turno = event.tiempo_disponible_turno != null ? event.tiempo_disponible_turno : (activeTurno ? Number(activeTurno.horas_totales) - Number(activeTurno.horas_descanso) : 11.00);
+  const tiempo_disponible_turno = event.tiempo_disponible_turno != null ? event.tiempo_disponible_turno : (activeTurno ? Number(activeTurno.horas_totales) : 12.00);
   const horas_totales_turno = activeTurno ? Number(activeTurno.horas_totales) : 12;
   const turno_id = event.turno_id || (activeTurno ? activeTurno.turno_id : null);
 

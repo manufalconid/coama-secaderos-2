@@ -14,8 +14,11 @@ import MainStage from "./components/Stages/MainStage";
 import OrigenStage from "./components/Stages/OrigenStage";
 import RazonStage from "./components/Stages/RazonStage";
 import SuggestRazonStage from "./components/Stages/SuggestRazonStage";
+import ObservacionStage from "./components/Stages/ObservacionStage";
+import UbicacionSecaderoStage from "./components/Stages/UbicacionSecaderoStage";
 import ConfirmationStage from "./components/Stages/ConfirmationStage";
 import HistoryTab from "./components/HistoryTab";
+import TouchButton from "./components/TouchButton";
 
 // Standard UUID helper
 function generateUUID() {
@@ -43,38 +46,7 @@ const FALLBACK_MASTER_DATA = {
     { origen_id: "ori-proceso", nombre: "PROCESO" }
   ],
   razones: [
-    { razon_id: "raz-cargador", origen_ids: ["ori-electrico", "ori-mecanico"], codigo: "P001", nombre: "CARGADOR", activa: true },
-    { razon_id: "raz-corte-energia", origen_ids: ["ori-externo"], codigo: "P002", nombre: "CORTE DE ENERGIA", activa: true },
-    { razon_id: "raz-evacuacion-paquetes", origen_ids: ["ori-logistica", "ori-operativo", "ori-proceso"], codigo: "P003", nombre: "EVACUACIÓN DE PAQUETES", activa: true },
-    { razon_id: "raz-falta-abastecimiento", origen_ids: ["ori-logistica", "ori-operativo"], codigo: "P004", nombre: "FALTA ABASTECIMIENTO", activa: true },
-    { razon_id: "raz-cadena", origen_ids: ["ori-mecanico"], codigo: "P005", nombre: "CADENA", activa: true },
-    { razon_id: "raz-compresor", origen_ids: ["ori-mecanico", "ori-neumatico"], codigo: "P006", nombre: "COMPRESOR", activa: true },
-    { razon_id: "raz-mecanico", origen_ids: ["ori-mecanico"], codigo: "P007", nombre: "MECANICO", activa: true },
-    { razon_id: "raz-rodillo-entrada", origen_ids: ["ori-mecanico"], codigo: "P008", nombre: "RODILLO DE ENTRADA", activa: true },
-    { razon_id: "raz-varios", origen_ids: ["ori-mecanico"], codigo: "P009", nombre: "Varios", activa: true },
-    { razon_id: "raz-falta-aire", origen_ids: ["ori-neumatico"], codigo: "P010", nombre: "FALTA AIRE", activa: true },
-    { razon_id: "raz-caldera", origen_ids: ["ori-operativo", "ori-proceso"], codigo: "P011", nombre: "CALDERA", activa: true },
-    { razon_id: "raz-cambio-medida", origen_ids: ["ori-operativo", "ori-proceso"], codigo: "P012", nombre: "CAMBIO DE MEDIDA", activa: true },
-    { razon_id: "raz-capacitacion", origen_ids: ["ori-operativo"], codigo: "P013", nombre: "CAPACITACION", activa: true },
-    { razon_id: "raz-parada-humedad", origen_ids: ["ori-operativo", "ori-proceso"], codigo: "P014", nombre: "PARADA POR HUMEDAD", activa: true },
-    { razon_id: "raz-parada-programada", origen_ids: ["ori-operativo", "ori-proceso"], codigo: "P015", nombre: "PARADA PROGRAMADA", activa: true },
-    { razon_id: "raz-recarga-secadero", origen_ids: ["ori-logistica", "ori-operativo", "ori-proceso"], codigo: "P016", nombre: "RECARGA DEL SECADERO", activa: true },
-    { razon_id: "raz-secadero-trancado", origen_ids: ["ori-operativo", "ori-proceso"], codigo: "P017", nombre: "SECADERO TRANCADO", activa: true },
-    { razon_id: "raz-motores-no-encienden", origen_ids: ["ori-electrico"], codigo: "P018", nombre: "MOTORES NO ENCIENDEN", activa: true },
-    { razon_id: "raz-problema-electrico", origen_ids: ["ori-electrico"], codigo: "P019", nombre: "PROBLEMA ELECTRICO", activa: true },
-    { razon_id: "raz-tablero-control", origen_ids: ["ori-electrico"], codigo: "P020", nombre: "TABLERO DE CONTROL", activa: true },
-    { razon_id: "raz-cinta-mesa-salida", origen_ids: ["ori-mecanico"], codigo: "P021", nombre: "CINTA DE MESA DE SALIDA", activa: true },
-    { razon_id: "raz-mesa-entrada", origen_ids: ["ori-mecanico"], codigo: "P022", nombre: "MESA DE ENTRADA", activa: true },
-    { razon_id: "raz-mesa-salida", origen_ids: ["ori-mecanico"], codigo: "P023", nombre: "MESA DE SALIDA", activa: true },
-    { razon_id: "raz-polea", origen_ids: ["ori-mecanico"], codigo: "P024", nombre: "POLEA", activa: true },
-    { razon_id: "raz-limpieza", origen_ids: ["ori-operativo"], codigo: "P025", nombre: "LIMPIEZA", activa: true },
-    { razon_id: "raz-motor-principal", origen_ids: ["ori-electrico"], codigo: "P026", nombre: "MOTOR PRINCIPAL", activa: true },
-    { razon_id: "raz-recargar-aceite", origen_ids: ["ori-mecanico"], codigo: "P027", nombre: "RECARGAR ACEITE", activa: true },
-    { razon_id: "raz-banio", origen_ids: ["ori-operativo"], codigo: "P028", nombre: "BAÑO", activa: true },
-    { razon_id: "raz-falta-personal", origen_ids: ["ori-operativo"], codigo: "P029", nombre: "FALTA PERSONAL", activa: true },
-    { razon_id: "raz-falta-presion-vapor", origen_ids: ["ori-operativo"], codigo: "P030", font_family: "var(--font-sans)", nombre: "FALTA PRESION VAPOR", activa: true },
-    { razon_id: "raz-sin-material", origen_ids: ["ori-proceso"], codigo: "P031", nombre: "SIN MATERIAL", activa: true },
-    { razon_id: "raz-atascamiento", origen_ids: ["ori-operativo", "ori-mecanico"], codigo: "P032", nombre: "ATASCAMIENTO", activa: true, observacion_obligatoria: true, observaciones_predefinidas: null, mostrar_perfil: true }
+    { razon_id: "raz-atascamiento", origen_ids: ["ori-operativo", "ori-mecanico"], codigo: "P032", nombre: "ATASCAMIENTO", activa: true, observacion_obligatoria: true, ubicacion_obligatoria: true, observaciones_predefinidas: "Tranque en entrada, Tranque en salida, Rotura de tirante, Acumulación de viruta, Falla mecánica", mostrar_perfil: true, mostrar_perfil_completo: true, mostrar_perfil_niveles: false }
   ],
   productos: ["Deck / 1 x 4 x 10", "Deck / 1 x 6 x 10", "Cepillado / 1.5 x 3.5 x 10", "Viga / 2 x 4 x 12"],
   operarios: ["Gonzalez Nelson", "Mallorquin Fabian", "Mieres Hugo", "Villalba Andres"]
@@ -86,6 +58,8 @@ type Stage =
   | "STAGE_ORIGEN"
   | "STAGE_RAZON"
   | "STAGE_SUGGEST_RAZON"
+  | "STAGE_OBSERVACION"
+  | "STAGE_UBICACION"
   | "STAGE_CONFIRMATION";
 
 function getTimeoutSignal(ms: number) {
@@ -617,26 +591,38 @@ export default function App() {
   }
 
   function handleSelectOrigen(id: string) {
-    if (formOrigenId === id) {
-      setCurrentStage("STAGE_RAZON");
-    } else {
-      setFormOrigenId(id);
-    }
+    setFormOrigenId(id);
+    setCurrentStage("STAGE_RAZON");
   }
 
   function handleSelectReason(id: string) {
-    if (formRazonId === id) {
-      setSuggestedReasonName("");
-      setCurrentStage("STAGE_CONFIRMATION");
+    setFormRazonId(id);
+    setSuggestedReasonName("");
+    setCurrentStage("STAGE_OBSERVACION");
+  }
+
+  function handleSaveSuggestedReason() {
+    if (!suggestedReasonName.trim()) return;
+    setFormRazonId("");
+    setCurrentStage("STAGE_OBSERVACION");
+  }
+
+  function handleNextFromObservacion() {
+    const hasLocation = !!(
+      selectedReasonObj?.mostrar_perfil_completo ||
+      selectedReasonObj?.mostrar_perfil_niveles ||
+      selectedReasonObj?.mostrar_perfil ||
+      selectedReasonObj?.ubicacion_obligatoria
+    );
+
+    if (hasLocation) {
+      setCurrentStage("STAGE_UBICACION");
     } else {
-      setFormRazonId(id);
+      setCurrentStage("STAGE_CONFIRMATION");
     }
   }
 
-  function handleSaveSuggestedReason(e: React.FormEvent) {
-    e.preventDefault();
-    if (!suggestedReasonName.trim()) return;
-    setFormRazonId("");
+  function handleNextFromUbicacion() {
     setCurrentStage("STAGE_CONFIRMATION");
   }
 
@@ -991,21 +977,50 @@ export default function App() {
           />
         )}
 
+        {currentStage === "STAGE_OBSERVACION" && (
+          <ObservacionStage
+            origenName={chosenOrigenObj ? chosenOrigenObj.nombre : formOrigenId}
+            razonName={chosenRazonObj ? chosenRazonObj.nombre : ""}
+            suggestedReasonName={suggestedReasonName}
+            selectedReasonObj={selectedReasonObj}
+            formObservacion={formObservacion}
+            setFormObservacion={setFormObservacion}
+            parsedPredefinedObservations={parsedPredefinedObservations}
+            onBack={() => setCurrentStage(suggestedReasonName ? "STAGE_SUGGEST_RAZON" : "STAGE_RAZON")}
+            onNext={handleNextFromObservacion}
+          />
+        )}
+
+        {currentStage === "STAGE_UBICACION" && (
+          <UbicacionSecaderoStage
+            isPerfilCompleto={!!(selectedReasonObj?.mostrar_perfil_completo ?? selectedReasonObj?.mostrar_perfil)}
+            isPerfilNiveles={!!selectedReasonObj?.mostrar_perfil_niveles}
+            isUbicacionObligatoria={!!(selectedReasonObj?.ubicacion_obligatoria ?? selectedReasonObj?.mostrar_perfil)}
+            formUbicacion={formUbicacion}
+            setFormUbicacion={setFormUbicacion}
+            onBack={() => setCurrentStage("STAGE_OBSERVACION")}
+            onNext={handleNextFromUbicacion}
+          />
+        )}
+
         {currentStage === "STAGE_CONFIRMATION" && (
           <ConfirmationStage
-            assignedSecaderoName={assignedSecaderoName}
             origenName={chosenOrigenObj ? chosenOrigenObj.nombre : formOrigenId}
             razonName={chosenRazonObj ? chosenRazonObj.nombre : ""}
             suggestedReasonName={suggestedReasonName}
             elapsedTime={elapsedTime}
-            selectedReasonObj={selectedReasonObj}
             formObservacion={formObservacion}
-            setFormObservacion={setFormObservacion}
             formUbicacion={formUbicacion}
-            setFormUbicacion={setFormUbicacion}
-            parsedPredefinedObservations={parsedPredefinedObservations}
             formatSeconds={formatSeconds}
-            handleResetDeclarationFlow={handleResetDeclarationFlow}
+            onBackToEdit={() => {
+              const hasLocation = !!(
+                selectedReasonObj?.mostrar_perfil_completo ||
+                selectedReasonObj?.mostrar_perfil_niveles ||
+                selectedReasonObj?.mostrar_perfil ||
+                selectedReasonObj?.ubicacion_obligatoria
+              );
+              setCurrentStage(hasLocation ? "STAGE_UBICACION" : "STAGE_OBSERVACION");
+            }}
             handleConfirmSaveStoppage={handleConfirmSaveStoppage}
           />
         )}

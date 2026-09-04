@@ -113,7 +113,7 @@ Implementado:
 - Detección automática y fallback elegante a modo memoria en el backend si el servidor PostgreSQL no está disponible.
 - Solución al problema de reinicio del input de archivos en la carga de la planilla de parámetros en el portal frontend (Vite).
 - Compilación automatizada y exitosa del instalador APK para Android (`Coama_secaderos_LUMO_v1.0.5.apk`) con incremento de versión a `1.0.5` y solución de advertencias de empaquetado en Capacitor/Vite.
-- Reestructuración y validación definitiva de las exportaciones para el ERP de COAMA (vía CLI `npm run export:erp`, endpoint HTTP `GET /export/erp` y botón web del portal de supervisor), configurando exactamente las 13 columnas requeridas (eliminando `tiempo_de_descanso`, delimitador `;`, decimales con `,`, codificación UTF-8 con BOM y CRLF para Excel en español).
+- Reestructuración y validación definitiva de las exportaciones para el ERP de COAMA (vía CLI `npm run export:erp`, endpoint HTTP `GET /export/erp` y botón web del portal de supervisor), configurando exactamente las 13 columnas requeridas (documentado en detalle en `docs/technical/especificacion-exportacion-erp.md`).
 
 Pendiente:
 

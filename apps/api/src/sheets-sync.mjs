@@ -34,41 +34,109 @@ function formatDecimal(val) {
   return num.toString().replace(".", ",");
 }
 
+export function getCompositeTurnoId(fecha, horaInicio, horaFin, turnoIdRaw) {
+  if (!fecha) return "";
+  const f = fecha.trim();
+
+  const start = horaInicio ? horaInicio.slice(0, 5) : "06:00";
+  const end = horaFin ? horaFin.slice(0, 5) : "18:00";
+
+  let isTD = false;
+
+  // Si el turno comprende las 12:00 hs del mediodía
+  if (start < end) {
+    if (start <= "12:00" && end > "12:00") {
+      isTD = true;
+    }
+  } else {
+    // Si cruza medianoche (ej 18:00 a 06:00)
+    if ("12:00" >= start || "12:00" < end) {
+      isTD = true;
+    }
+  }
+
+  // Verificación adicional por identificador o nombre del turno
+  if (turnoIdRaw && typeof turnoIdRaw === "string") {
+    const norm = turnoIdRaw.toLowerCase();
+    if (norm.includes("dia") || norm.includes("día") || norm === "td" || norm.includes("tur-dia")) {
+      isTD = true;
+    } else if (norm.includes("noche") || norm === "tn" || norm.includes("tur-noche")) {
+      isTD = false;
+    }
+  }
+
+  return `${f}-${isTD ? "TD" : "TN"}`;
+}
+
+export function formatLocalTime(isoStr) {
+  if (!isoStr) return "";
+  const str = String(isoStr).trim();
+  if (/^\d{2}:\d{2}(:\d{2})?$/.test(str)) return str;
+  try {
+    const d = new Date(str);
+    if (isNaN(d.getTime())) return str;
+    return d.toLocaleTimeString("es-AR", {
+      timeZone: "America/Argentina/Buenos_Aires",
+      hour12: false
+    });
+  } catch (err) {
+    return str;
+  }
+}
+
+export function formatLocalTimestamp(isoStr) {
+  if (!isoStr) return "";
+  const str = String(isoStr).trim();
+  try {
+    const d = new Date(str);
+    if (isNaN(d.getTime())) return str;
+    const dateStr = d.toLocaleDateString("es-AR", { timeZone: "America/Argentina/Buenos_Aires" });
+    const timeStr = d.toLocaleTimeString("es-AR", { timeZone: "America/Argentina/Buenos_Aires", hour12: false });
+    const [day, m, y] = dateStr.split("/");
+    const fecha = `${y}-${m.padStart(2, "0")}-${day.padStart(2, "0")}`;
+    return `${fecha} ${timeStr}`;
+  } catch (err) {
+    return str;
+  }
+}
+
 export function deriveDailyTurnos(events, masterData) {
-  const turnosMap = new Map(); // key = `${fecha}_${linea}_${turno_id}` -> turno record
+  const turnosMap = new Map(); // key = `${compositeId}_${linea}` -> turno record
 
   for (const e of events) {
-    if (!e.fecha_registro || !e.turno_id) continue;
+    if (!e.fecha_registro) continue;
     
     // Resolver linea
     const secObj = masterData.secaderos ? masterData.secaderos.find(s => s.secadero_id === e.secadero_id) : null;
     let linea = e.linea || (secObj ? secObj.nombre : e.secadero_id || "");
     if (linea) {
-      linea = linea.replace(/^Secadero\s+/i, "").toUpperCase();
+      linea = linea.replace(/^sec-/i, "").replace(/^Secadero\s+/i, "").toUpperCase().trim();
     }
-
-    const key = `${e.fecha_registro}_${linea}_${e.turno_id}`;
-    if (turnosMap.has(key)) continue;
 
     // Buscar configuración de turno
     let shiftObj = null;
-    if (masterData.turnos) {
+    if (masterData.turnos && e.turno_id) {
       shiftObj = masterData.turnos.find(t => t.turno_id === e.turno_id);
     }
 
+    const start = e.hora_inicio_turno || (shiftObj ? shiftObj.hora_inicio : "06:00:00");
+    const end = e.hora_fin_turno || (shiftObj ? shiftObj.hora_fin : "18:00:00");
+    const compositeId = getCompositeTurnoId(e.fecha_registro, start, end, e.turno_id || e.tipo_turno);
+
+    const key = `${compositeId}_${linea}`;
+    if (turnosMap.has(key)) continue;
+
     const horas_totales = shiftObj ? Number(shiftObj.horas_totales) : 12.0;
-    const horas_descanso = shiftObj ? Number(shiftObj.horas_descanso) : 1.0;
-    const horas_programadas = horas_totales - horas_descanso;
+    const horas_programadas = horas_totales; // Sin horas de descanso
 
     turnosMap.set(key, {
       fecha: e.fecha_registro,
       linea: linea,
-      turno_id: e.turno_id,
-      nombre: shiftObj ? shiftObj.nombre : (e.tipo_turno || e.turno_id),
-      hora_inicio: e.hora_inicio_turno || (shiftObj ? shiftObj.hora_inicio : ""),
-      hora_fin: e.hora_fin_turno || (shiftObj ? shiftObj.hora_fin : ""),
+      turno_id: compositeId,
+      nombre: shiftObj ? shiftObj.nombre : (e.tipo_turno || e.turno_id || compositeId),
+      hora_inicio: start,
+      hora_fin: end,
       horas_totales: horas_totales,
-      horas_descanso: horas_descanso,
       horas_programadas: horas_programadas
     });
   }
@@ -102,17 +170,19 @@ async function ensureSheetExists(title, headers) {
           ]
         }
       });
-      // Escribir cabeceras
-      await sheets.spreadsheets.values.update({
-        spreadsheetId: sheetId,
-        range: `${title}!A1`,
-        valueInputOption: "RAW",
-        requestBody: {
-          values: [headers]
-        }
-      });
-      console.log(`[ GOOGLE SHEETS ] Pestaña ${title} creada con sus cabeceras.`);
+      console.log(`[ GOOGLE SHEETS ] Pestaña ${title} creada.`);
     }
+
+    // Siempre asegurar que las cabeceras en la fila 1 coincidan exactamente con la estructura actual
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: sheetId,
+      range: `${title}!A1`,
+      valueInputOption: "RAW",
+      requestBody: {
+        values: [headers]
+      }
+    });
+
     return true;
   } catch (err) {
     console.error(`[ GOOGLE SHEETS ] Error al asegurar pestaña ${title}:`, err);
@@ -139,7 +209,7 @@ export async function syncRawEventToSheets(e, forceState = null) {
   const title = "registros_crudos_tablet";
   const headers = [
     "evento_id", "tablet_id", "secadero_id", "fecha_registro", "linea", 
-    "fecha_hora_inicio", "hora_registro", "fecha_hora_fin", "duracion_minutos", 
+    "turno_id", "fecha_hora_inicio", "hora_registro", "fecha_hora_fin", "duracion_minutos", 
     "estado_evento", "tipo_registro", "categoria", "tiempo muerto", 
     "observacion", "ubicacion", "version", "tipo_turno"
   ];
@@ -152,6 +222,7 @@ export async function syncRawEventToSheets(e, forceState = null) {
 
   const state = forceState || e.estado_evento || "abierto";
   const isCerrado = state === "cerrado";
+  const compositeTurnoId = getCompositeTurnoId(e.fecha_registro, e.hora_inicio_turno, e.hora_fin_turno, e.turno_id || e.tipo_turno);
 
   const row = [
     e.evento_id || "",
@@ -159,9 +230,10 @@ export async function syncRawEventToSheets(e, forceState = null) {
     e.secadero_id || "",
     e.fecha_registro || "",
     e.linea || "",
-    e.fecha_hora_inicio || "",
-    e.hora_registro || "",
-    isCerrado ? (e.fecha_hora_fin || "") : "",
+    compositeTurnoId,
+    formatLocalTimestamp(e.fecha_hora_inicio),
+    formatLocalTime(e.hora_registro || e.fecha_hora_inicio),
+    isCerrado ? formatLocalTimestamp(e.fecha_hora_fin) : "",
     isCerrado ? (e.duracion_segundos !== null && e.duracion_segundos !== undefined ? formatDecimal((Number(e.duracion_segundos) / 60).toFixed(1)) : "") : "",
     state,
     e.tipo_registro || "",
@@ -178,7 +250,7 @@ export async function syncRawEventToSheets(e, forceState = null) {
     let foundIndex = -1;
     // Buscar coincidencia por clave única: evento_id + estado_evento
     for (let i = 1; i < existing.length; i++) {
-      if (existing[i][0] === e.evento_id && existing[i][9] === state) {
+      if (existing[i][0] === e.evento_id && existing[i][10] === state) {
         foundIndex = i;
         break;
       }
@@ -189,7 +261,7 @@ export async function syncRawEventToSheets(e, forceState = null) {
       if (hasChanged) {
         await sheets.spreadsheets.values.update({
           spreadsheetId: sheetId,
-          range: `${title}!A${foundIndex + 1}:Q${foundIndex + 1}`,
+          range: `${title}!A${foundIndex + 1}:R${foundIndex + 1}`,
           valueInputOption: "RAW",
           requestBody: { values: [row] }
         });
@@ -212,7 +284,7 @@ export async function syncRawEventToSheets(e, forceState = null) {
 export async function syncProcessedEventToSheets(e) {
   const title = "registros_procesados";
   const headers = [
-    "evento_id", "fecha_de_registro", "linea", "turno_hora_desde", "turno_hora_hasta",
+    "evento_id", "fecha_de_registro", "linea", "turno_id", "turno_hora_desde", "turno_hora_hasta",
     "tiempo_de_turno_en_horas_programadas",
     "categoria", "tiempo_muerto", "observacion", "ubicacion",
     "tiempo_muerto_hora_desde", "tiempo_muerto_hora_hasta",
@@ -240,11 +312,13 @@ export async function syncProcessedEventToSheets(e) {
 
     const horasProg = e.horas_totales_turno ?? 12;
     const horasProgStr = Number.isInteger(Number(horasProg)) ? Number(horasProg).toString() : Number(horasProg).toFixed(1).replace(".", ",");
+    const compositeTurnoId = getCompositeTurnoId(e.fecha_registro, e.hora_inicio_turno, e.hora_fin_turno, e.turno_id || e.tipo_turno);
 
     const row = [
       e.evento_id || "",
       e.fecha_registro || "",
       (e.linea || "").toUpperCase(),
+      compositeTurnoId,
       e.hora_inicio_turno || "06:00:00",
       e.hora_fin_turno || "18:00:00",
       horasProgStr,
@@ -252,8 +326,8 @@ export async function syncProcessedEventToSheets(e) {
       (e.tiempo_muerto || "PARADA").toUpperCase(),
       observacionVal,
       e.ubicacion ? e.ubicacion.toUpperCase() : "",
-      e.hora_desde || "",
-      e.hora_hasta || "",
+      formatLocalTime(e.hora_desde || e.fecha_hora_inicio),
+      formatLocalTime(e.hora_hasta || e.fecha_hora_fin),
       durHr,
       durMin
     ];
@@ -273,7 +347,7 @@ export async function syncProcessedEventToSheets(e) {
       if (hasChanged) {
         await sheets.spreadsheets.values.update({
           spreadsheetId: sheetId,
-          range: `${title}!A${foundIndex + 1}:N${foundIndex + 1}`,
+          range: `${title}!A${foundIndex + 1}:O${foundIndex + 1}`,
           valueInputOption: "RAW",
           requestBody: { values: [row] }
         });
@@ -295,7 +369,7 @@ export async function syncProcessedEventToSheets(e) {
 
 export async function syncTurnosToSheets(turnos) {
   const title = "turnos";
-  const headers = ["fecha", "linea", "turno_id", "nombre", "hora_inicio", "hora_fin", "horas_totales", "horas_descanso", "horas_programadas"];
+  const headers = ["fecha", "linea", "turno_id", "nombre", "hora_inicio", "hora_fin", "horas_totales", "horas_programadas"];
 
   const sheets = getSheetsClient();
   if (!sheets) return;
@@ -323,7 +397,6 @@ export async function syncTurnosToSheets(turnos) {
         t.hora_inicio || "",
         t.hora_fin || "",
         formatDecimal(t.horas_totales),
-        formatDecimal(t.horas_descanso),
         formatDecimal(t.horas_programadas)
       ];
 
@@ -333,7 +406,7 @@ export async function syncTurnosToSheets(turnos) {
         const hasChanged = row.some((val, idx) => String(val) !== String(found.values[idx] ?? ""));
         if (hasChanged) {
           updates.push({
-            range: `${title}!A${found.rowIndex + 1}:I${found.rowIndex + 1}`,
+            range: `${title}!A${found.rowIndex + 1}:H${found.rowIndex + 1}`,
             values: [row]
           });
         }
@@ -375,7 +448,7 @@ export async function exportAllToSheets(events, masterData) {
   const titleCrudos = "registros_crudos_tablet";
   const headersCrudos = [
     "evento_id", "tablet_id", "secadero_id", "fecha_registro", "linea", 
-    "fecha_hora_inicio", "hora_registro", "fecha_hora_fin", "duracion_minutos", 
+    "turno_id", "fecha_hora_inicio", "hora_registro", "fecha_hora_fin", "duracion_minutos", 
     "estado_evento", "tipo_registro", "categoria", "tiempo muerto", 
     "observacion", "ubicacion", "version", "tipo_turno"
   ];
@@ -384,7 +457,7 @@ export async function exportAllToSheets(events, masterData) {
   const existingCrudos = await getExistingRows(titleCrudos);
   const crudosMap = new Map(); // key = `${evento_id}_${estado_evento}` -> { rowIndex, values }
   for (let i = 1; i < existingCrudos.length; i++) {
-    const key = `${existingCrudos[i][0]}_${existingCrudos[i][9]}`;
+    const key = `${existingCrudos[i][0]}_${existingCrudos[i][10]}`;
     crudosMap.set(key, { rowIndex: i, values: existingCrudos[i] });
   }
 
@@ -398,6 +471,8 @@ export async function exportAllToSheets(events, masterData) {
   });
 
   for (const e of sortedEvents) {
+    const compositeTurnoId = getCompositeTurnoId(e.fecha_registro, e.hora_inicio_turno, e.hora_fin_turno, e.turno_id || e.tipo_turno);
+
     // Fila 1: Inicio (abierto)
     const rowAbierto = [
       e.evento_id || "",
@@ -405,8 +480,9 @@ export async function exportAllToSheets(events, masterData) {
       e.secadero_id || "",
       e.fecha_registro || "",
       e.linea || "",
-      e.fecha_hora_inicio || "",
-      e.hora_registro || "",
+      compositeTurnoId,
+      formatLocalTimestamp(e.fecha_hora_inicio),
+      formatLocalTime(e.hora_registro || e.fecha_hora_inicio),
       "",
       "",
       "abierto",
@@ -425,7 +501,7 @@ export async function exportAllToSheets(events, masterData) {
       const hasChanged = rowAbierto.some((val, idx) => String(val) !== String(foundAbierto.values[idx] ?? ""));
       if (hasChanged) {
         crudosUpdates.push({
-          range: `${titleCrudos}!A${foundAbierto.rowIndex + 1}:Q${foundAbierto.rowIndex + 1}`,
+          range: `${titleCrudos}!A${foundAbierto.rowIndex + 1}:R${foundAbierto.rowIndex + 1}`,
           values: [rowAbierto]
         });
       }
@@ -441,9 +517,10 @@ export async function exportAllToSheets(events, masterData) {
         e.secadero_id || "",
         e.fecha_registro || "",
         e.linea || "",
-        e.fecha_hora_inicio || "",
-        e.hora_registro || "",
-        e.fecha_hora_fin || "",
+        compositeTurnoId,
+        formatLocalTimestamp(e.fecha_hora_inicio),
+        formatLocalTime(e.hora_registro || e.fecha_hora_inicio),
+        formatLocalTimestamp(e.fecha_hora_fin),
         e.duracion_segundos !== null && e.duracion_segundos !== undefined ? formatDecimal((Number(e.duracion_segundos) / 60).toFixed(1)) : "",
         "cerrado",
         e.tipo_registro || "",
@@ -461,7 +538,7 @@ export async function exportAllToSheets(events, masterData) {
         const hasChanged = rowCerrado.some((val, idx) => String(val) !== String(foundCerrado.values[idx] ?? ""));
         if (hasChanged) {
           crudosUpdates.push({
-            range: `${titleCrudos}!A${foundCerrado.rowIndex + 1}:Q${foundCerrado.rowIndex + 1}`,
+            range: `${titleCrudos}!A${foundCerrado.rowIndex + 1}:R${foundCerrado.rowIndex + 1}`,
             values: [rowCerrado]
           });
         }
@@ -494,7 +571,7 @@ export async function exportAllToSheets(events, masterData) {
   // 2. Reescribir registros procesados incrementalmente
   const titleProcesados = "registros_procesados";
   const headersProcesados = [
-    "evento_id", "fecha_de_registro", "linea", "turno_hora_desde", "turno_hora_hasta",
+    "evento_id", "fecha_de_registro", "linea", "turno_id", "turno_hora_desde", "turno_hora_hasta",
     "tiempo_de_turno_en_horas_programadas",
     "categoria", "tiempo_muerto", "observacion", "ubicacion",
     "tiempo_muerto_hora_desde", "tiempo_muerto_hora_hasta",
@@ -528,11 +605,13 @@ export async function exportAllToSheets(events, masterData) {
 
     const horasProg = e.horas_totales_turno ?? 12;
     const horasProgStr = Number.isInteger(Number(horasProg)) ? Number(horasProg).toString() : Number(horasProg).toFixed(1).replace(".", ",");
+    const compositeTurnoId = getCompositeTurnoId(e.fecha_registro, e.hora_inicio_turno, e.hora_fin_turno, e.turno_id || e.tipo_turno);
 
     const row = [
       e.evento_id || "",
       e.fecha_registro || "",
       (e.linea || "").toUpperCase(),
+      compositeTurnoId,
       e.hora_inicio_turno || "06:00:00",
       e.hora_fin_turno || "18:00:00",
       horasProgStr,
@@ -540,8 +619,8 @@ export async function exportAllToSheets(events, masterData) {
       (e.tiempo_muerto || "PARADA").toUpperCase(),
       observacionVal,
       e.ubicacion ? e.ubicacion.toUpperCase() : "",
-      e.hora_desde || "",
-      e.hora_hasta || "",
+      formatLocalTime(e.hora_desde || e.fecha_hora_inicio),
+      formatLocalTime(e.hora_hasta || e.fecha_hora_fin),
       durHr,
       durMin
     ];
@@ -551,7 +630,7 @@ export async function exportAllToSheets(events, masterData) {
       const hasChanged = row.some((val, idx) => String(val) !== String(found.values[idx] ?? ""));
       if (hasChanged) {
         procesadosUpdates.push({
-          range: `${titleProcesados}!A${found.rowIndex + 1}:N${found.rowIndex + 1}`,
+          range: `${titleProcesados}!A${found.rowIndex + 1}:O${found.rowIndex + 1}`,
           values: [row]
         });
       }
