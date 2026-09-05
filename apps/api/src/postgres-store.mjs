@@ -25,7 +25,7 @@ export class PgSyncStore {
     try {
       const [razonesRes, origenesRes, secaderosRes, tabletsRes, razonOrigenesRes, turnosRes] = await Promise.all([
         client.query(
-          "select razon_id, codigo, nombre, activa, observacion_obligatoria, observaciones_predefinidas, mostrar_perfil from razones_parada where activa = true order by nombre"
+          "select razon_id, codigo, nombre, activa, observacion_obligatoria, observaciones_predefinidas, mostrar_perfil, ubicacion_obligatoria, ubicacion_fija, ubicacion_lista, vista_electricos, vista_mecanicos, vista_mecanicos_rodillos, matriz, matriz_extendida from razones_parada where activa = true order by nombre"
         ),
         client.query(
           "select origen_id, codigo, nombre, activo as activa from origenes_parada where activo = true order by nombre"
@@ -79,7 +79,7 @@ export class PgSyncStore {
   async listRazones() {
     const [razonesRes, razonOrigenesRes] = await Promise.all([
       this.pool.query(
-        "select razon_id, codigo, nombre, activa, observacion_obligatoria, observaciones_predefinidas, mostrar_perfil from razones_parada order by nombre"
+        "select razon_id, codigo, nombre, activa, observacion_obligatoria, observaciones_predefinidas, mostrar_perfil, ubicacion_obligatoria, ubicacion_fija, ubicacion_lista, vista_electricos, vista_mecanicos, vista_mecanicos_rodillos, matriz, matriz_extendida from razones_parada order by nombre"
       ),
       this.pool.query(
         "select razon_id, origen_id from razon_origenes"
@@ -108,8 +108,12 @@ export class PgSyncStore {
 
       const result = await client.query(
         `
-          insert into razones_parada (razon_id, codigo, nombre, activa, observacion_obligatoria, observaciones_predefinidas, mostrar_perfil, modificado_en)
-          values ($1, $2, $3, $4, $5, $6, $7, now())
+          insert into razones_parada (
+            razon_id, codigo, nombre, activa, observacion_obligatoria, observaciones_predefinidas, mostrar_perfil,
+            ubicacion_obligatoria, ubicacion_fija, ubicacion_lista, vista_electricos, vista_mecanicos,
+            vista_mecanicos_rodillos, matriz, matriz_extendida, modificado_en
+          )
+          values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, now())
           on conflict (razon_id) do update set
             codigo = excluded.codigo,
             nombre = excluded.nombre,
@@ -117,8 +121,16 @@ export class PgSyncStore {
             observacion_obligatoria = excluded.observacion_obligatoria,
             observaciones_predefinidas = excluded.observaciones_predefinidas,
             mostrar_perfil = excluded.mostrar_perfil,
+            ubicacion_obligatoria = excluded.ubicacion_obligatoria,
+            ubicacion_fija = excluded.ubicacion_fija,
+            ubicacion_lista = excluded.ubicacion_lista,
+            vista_electricos = excluded.vista_electricos,
+            vista_mecanicos = excluded.vista_mecanicos,
+            vista_mecanicos_rodillos = excluded.vista_mecanicos_rodillos,
+            matriz = excluded.matriz,
+            matriz_extendida = excluded.matriz_extendida,
             modificado_en = now()
-          returning razon_id, codigo, nombre, activa, observacion_obligatoria, observaciones_predefinidas, mostrar_perfil
+          returning *
         `,
         [
           razonId,
@@ -127,7 +139,15 @@ export class PgSyncStore {
           input.activa ?? true,
           input.observacion_obligatoria ?? false,
           normalizeOptionalString(input.observaciones_predefinidas),
-          input.mostrar_perfil ?? false
+          input.mostrar_perfil ?? false,
+          input.ubicacion_obligatoria ?? false,
+          normalizeOptionalString(input.ubicacion_fija),
+          normalizeOptionalString(input.ubicacion_lista),
+          input.vista_electricos ?? false,
+          input.vista_mecanicos ?? false,
+          input.vista_mecanicos_rodillos ?? false,
+          input.matriz ?? false,
+          input.matriz_extendida ?? false
         ]
       );
 
@@ -459,7 +479,7 @@ export class PgSyncStore {
   async getMasterDataInternal(client) {
     const [razonesRes, origenesRes, secaderosRes, tabletsRes, razonOrigenesRes, turnosRes] = await Promise.all([
       client.query(
-        "select razon_id, codigo, nombre, activa, observacion_obligatoria, observaciones_predefinidas, mostrar_perfil from razones_parada where activa = true order by nombre"
+        "select razon_id, codigo, nombre, activa, observacion_obligatoria, observaciones_predefinidas, mostrar_perfil, ubicacion_obligatoria, ubicacion_fija, ubicacion_lista, vista_electricos, vista_mecanicos, vista_mecanicos_rodillos, matriz, matriz_extendida from razones_parada where activa = true order by nombre"
       ),
       client.query(
         "select origen_id, codigo, nombre, activo as activa from origenes_parada where activo = true order by nombre"

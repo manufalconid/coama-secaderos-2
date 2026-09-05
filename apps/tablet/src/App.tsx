@@ -608,7 +608,19 @@ export default function App() {
   }
 
   function handleNextFromObservacion() {
+    if (selectedReasonObj?.ubicacion_fija && selectedReasonObj.ubicacion_fija.trim()) {
+      setFormUbicacion(selectedReasonObj.ubicacion_fija.trim().toUpperCase());
+      setCurrentStage("STAGE_CONFIRMATION");
+      return;
+    }
+
     const hasLocation = !!(
+      selectedReasonObj?.ubicacion_lista ||
+      selectedReasonObj?.vista_electricos ||
+      selectedReasonObj?.vista_mecanicos ||
+      selectedReasonObj?.vista_mecanicos_rodillos ||
+      selectedReasonObj?.matriz ||
+      selectedReasonObj?.matriz_extendida ||
       selectedReasonObj?.mostrar_perfil_completo ||
       selectedReasonObj?.mostrar_perfil_niveles ||
       selectedReasonObj?.mostrar_perfil ||
@@ -993,6 +1005,7 @@ export default function App() {
 
         {currentStage === "STAGE_UBICACION" && (
           <UbicacionSecaderoStage
+            selectedReasonObj={selectedReasonObj}
             isPerfilCompleto={!!(selectedReasonObj?.mostrar_perfil_completo ?? selectedReasonObj?.mostrar_perfil)}
             isPerfilNiveles={!!selectedReasonObj?.mostrar_perfil_niveles}
             isUbicacionObligatoria={!!(selectedReasonObj?.ubicacion_obligatoria ?? selectedReasonObj?.mostrar_perfil)}
@@ -1013,7 +1026,17 @@ export default function App() {
             formUbicacion={formUbicacion}
             formatSeconds={formatSeconds}
             onBackToEdit={() => {
+              if (selectedReasonObj?.ubicacion_fija) {
+                setCurrentStage("STAGE_OBSERVACION");
+                return;
+              }
               const hasLocation = !!(
+                selectedReasonObj?.ubicacion_lista ||
+                selectedReasonObj?.vista_electricos ||
+                selectedReasonObj?.vista_mecanicos ||
+                selectedReasonObj?.vista_mecanicos_rodillos ||
+                selectedReasonObj?.matriz ||
+                selectedReasonObj?.matriz_extendida ||
                 selectedReasonObj?.mostrar_perfil_completo ||
                 selectedReasonObj?.mostrar_perfil_niveles ||
                 selectedReasonObj?.mostrar_perfil ||

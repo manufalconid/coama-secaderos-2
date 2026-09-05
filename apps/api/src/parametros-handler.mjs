@@ -35,8 +35,13 @@ export async function exportParametros(store) {
     "Observaciones Predefinidas",
     "Observacion Obligatoria",
     "Ubicacion Obligatoria",
-    "Mostrar Perfil Secadero completo",
-    "Mostrar Perfil Secadero niveles"
+    "Ubicacion Fija",
+    "Ubicacion Lista",
+    "Vista Electricos",
+    "Vista Mecanicos",
+    "Vista Mecanicos Rodillos",
+    "Matriz",
+    "Matriz Extendida"
   ];
   const paradasRows = [paradasHeaders];
   for (const r of razones) {
@@ -50,8 +55,13 @@ export async function exportParametros(store) {
       r.observaciones_predefinidas || "",
       r.observacion_obligatoria ? "SI" : "NO",
       r.ubicacion_obligatoria ? "SI" : "NO",
-      (r.mostrar_perfil_completo ?? r.mostrar_perfil) ? "SI" : "NO",
-      r.mostrar_perfil_niveles ? "SI" : "NO"
+      r.ubicacion_fija || "",
+      r.ubicacion_lista || "",
+      r.vista_electricos ? "SI" : "NO",
+      r.vista_mecanicos ? "SI" : "NO",
+      r.vista_mecanicos_rodillos ? "SI" : "NO",
+      r.matriz ? "SI" : "NO",
+      r.matriz_extendida ? "SI" : "NO"
     ]);
   }
 
@@ -153,6 +163,16 @@ export async function importParametros(store, buffer) {
     const obsPre = (row["Observaciones Predefinidas"] || "").toString().trim();
     const obligVal = (row["Observacion Obligatoria"] || "").toString().trim().toUpperCase();
     const ubicacionObligVal = (row["Ubicacion Obligatoria"] || "").toString().trim().toUpperCase();
+
+    const ubicacionFija = (row["Ubicacion Fija"] || row["Ubicacion fija"] || "").toString().trim();
+    const ubicacionLista = (row["Ubicacion Lista"] || row["Ubicacion lista"] || "").toString().trim();
+
+    const vistaElectricosVal = (row["Vista Electricos"] || row["Vista electricos"] || "").toString().trim().toUpperCase();
+    const vistaMecanicosVal = (row["Vista Mecanicos"] || row["Vista mecanicos"] || "").toString().trim().toUpperCase();
+    const vistaMecanicosRodillosVal = (row["Vista Mecanicos Rodillos"] || row["Vista mecanicos rodillos"] || "").toString().trim().toUpperCase();
+    const matrizVal = (row["Matriz"] || row["matriz"] || "").toString().trim().toUpperCase();
+    const matrizExtendidaVal = (row["Matriz Extendida"] || row["Matriz extendida"] || "").toString().trim().toUpperCase();
+
     const perfilCompletoVal = (row["Mostrar Perfil Secadero completo"] || "").toString().trim().toUpperCase();
     const perfilNivelesVal = (row["Mostrar Perfil Secadero niveles"] || "").toString().trim().toUpperCase();
     const perfilLegacyVal = (row["Mostrar Perfil Secadero"] || "").toString().trim().toUpperCase();
@@ -179,9 +199,15 @@ export async function importParametros(store, buffer) {
       linksMap.set(`${razonId}:${origId}`, { razon_id: razonId, origen_id: origId });
     }
 
+    const isVistaElectricos = vistaElectricosVal === "SI" || vistaElectricosVal === "TRUE";
+    const isVistaMecanicos = vistaMecanicosVal === "SI" || vistaMecanicosVal === "TRUE";
+    const isVistaMecanicosRodillos = vistaMecanicosRodillosVal === "SI" || vistaMecanicosRodillosVal === "TRUE";
+    const isMatriz = matrizVal === "SI" || matrizVal === "TRUE";
+    const isMatrizExtendida = matrizExtendidaVal === "SI" || matrizExtendidaVal === "TRUE";
+
     const isPerfilCompleto = perfilCompletoVal === "SI" || perfilCompletoVal === "TRUE" || (perfilCompletoVal === "" && (perfilLegacyVal === "SI" || perfilLegacyVal === "TRUE"));
     const isPerfilNiveles = perfilNivelesVal === "SI" || perfilNivelesVal === "TRUE";
-    const isUbicacionOblig = ubicacionObligVal === "SI" || ubicacionObligVal === "TRUE" || ((isPerfilCompleto || isPerfilNiveles) && ubicacionObligVal === "");
+    const isUbicacionOblig = ubicacionObligVal === "SI" || ubicacionObligVal === "TRUE" || ((isPerfilCompleto || isPerfilNiveles || isVistaElectricos || isVistaMecanicos || isVistaMecanicosRodillos || isMatriz || isMatrizExtendida || ubicacionLista) && ubicacionObligVal === "");
 
     if (razonesParsedMap.has(razonId)) {
       const existing = razonesParsedMap.get(razonId);
@@ -194,9 +220,16 @@ export async function importParametros(store, buffer) {
       if (obsPre && !existing.observaciones_predefinidas) existing.observaciones_predefinidas = obsPre;
       if (obligVal === "SI" || obligVal === "TRUE") existing.observacion_obligatoria = true;
       if (isUbicacionOblig) existing.ubicacion_obligatoria = true;
+      if (ubicacionFija) existing.ubicacion_fija = ubicacionFija;
+      if (ubicacionLista) existing.ubicacion_lista = ubicacionLista;
+      if (isVistaElectricos) existing.vista_electricos = true;
+      if (isVistaMecanicos) existing.vista_mecanicos = true;
+      if (isVistaMecanicosRodillos) existing.vista_mecanicos_rodillos = true;
+      if (isMatriz) existing.matriz = true;
+      if (isMatrizExtendida) existing.matriz_extendida = true;
       if (isPerfilCompleto) existing.mostrar_perfil_completo = true;
       if (isPerfilNiveles) existing.mostrar_perfil_niveles = true;
-      existing.mostrar_perfil = existing.mostrar_perfil_completo || existing.mostrar_perfil_niveles;
+      existing.mostrar_perfil = existing.mostrar_perfil_completo || existing.mostrar_perfil_niveles || existing.vista_electricos || existing.vista_mecanicos || existing.vista_mecanicos_rodillos || existing.matriz || existing.matriz_extendida;
     } else {
       razonesParsedMap.set(razonId, {
         razon_id: razonId,
@@ -206,7 +239,14 @@ export async function importParametros(store, buffer) {
         observacion_obligatoria: obligVal === "SI" || obligVal === "TRUE",
         ubicacion_obligatoria: isUbicacionOblig,
         observaciones_predefinidas: obsPre || null,
-        mostrar_perfil: isPerfilCompleto || isPerfilNiveles,
+        ubicacion_fija: ubicacionFija || null,
+        ubicacion_lista: ubicacionLista || null,
+        vista_electricos: isVistaElectricos,
+        vista_mecanicos: isVistaMecanicos,
+        vista_mecanicos_rodillos: isVistaMecanicosRodillos,
+        matriz: isMatriz,
+        matriz_extendida: isMatrizExtendida,
+        mostrar_perfil: isPerfilCompleto || isPerfilNiveles || isVistaElectricos || isVistaMecanicos || isVistaMecanicosRodillos || isMatriz || isMatrizExtendida,
         mostrar_perfil_completo: isPerfilCompleto,
         mostrar_perfil_niveles: isPerfilNiveles,
         origen_ids: mappedOrigenIds
@@ -339,8 +379,10 @@ export async function importParametros(store, buffer) {
         await client.query(
           `
             insert into razones_parada (
-              razon_id, codigo, nombre, activa, observacion_obligatoria, observaciones_predefinidas, mostrar_perfil, modificado_en
-            ) values ($1, $2, $3, $4, $5, $6, $7, now())
+              razon_id, codigo, nombre, activa, observacion_obligatoria, observaciones_predefinidas, mostrar_perfil,
+              ubicacion_obligatoria, ubicacion_fija, ubicacion_lista, vista_electricos, vista_mecanicos,
+              vista_mecanicos_rodillos, matriz, matriz_extendida, modificado_en
+            ) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, now())
             on conflict (razon_id) do update set
               codigo = excluded.codigo,
               nombre = excluded.nombre,
@@ -348,9 +390,33 @@ export async function importParametros(store, buffer) {
               observacion_obligatoria = excluded.observacion_obligatoria,
               observaciones_predefinidas = excluded.observaciones_predefinidas,
               mostrar_perfil = excluded.mostrar_perfil,
+              ubicacion_obligatoria = excluded.ubicacion_obligatoria,
+              ubicacion_fija = excluded.ubicacion_fija,
+              ubicacion_lista = excluded.ubicacion_lista,
+              vista_electricos = excluded.vista_electricos,
+              vista_mecanicos = excluded.vista_mecanicos,
+              vista_mecanicos_rodillos = excluded.vista_mecanicos_rodillos,
+              matriz = excluded.matriz,
+              matriz_extendida = excluded.matriz_extendida,
               modificado_en = now()
           `,
-          [r.razon_id, r.codigo, r.nombre, r.activa, r.observacion_obligatoria, r.observaciones_predefinidas, r.mostrar_perfil]
+          [
+            r.razon_id,
+            r.codigo,
+            r.nombre,
+            r.activa,
+            r.observacion_obligatoria,
+            r.observaciones_predefinidas,
+            r.mostrar_perfil,
+            r.ubicacion_obligatoria ?? false,
+            r.ubicacion_fija ?? null,
+            r.ubicacion_lista ?? null,
+            r.vista_electricos ?? false,
+            r.vista_mecanicos ?? false,
+            r.vista_mecanicos_rodillos ?? false,
+            r.matriz ?? false,
+            r.matriz_extendida ?? false
+          ]
         );
       }
       // Desactivar razones no incluidas en el excel

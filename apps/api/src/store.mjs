@@ -165,7 +165,15 @@ export class InMemorySyncStore {
       nombre: input.nombre.trim(),
       activa: input.activa ?? true,
       observacion_obligatoria: input.observacion_obligatoria ?? false,
+      ubicacion_obligatoria: input.ubicacion_obligatoria ?? false,
       observaciones_predefinidas: input.observaciones_predefinidas ?? null,
+      ubicacion_fija: input.ubicacion_fija ?? null,
+      ubicacion_lista: input.ubicacion_lista ?? null,
+      vista_electricos: input.vista_electricos ?? false,
+      vista_mecanicos: input.vista_mecanicos ?? false,
+      vista_mecanicos_rodillos: input.vista_mecanicos_rodillos ?? false,
+      matriz: input.matriz ?? false,
+      matriz_extendida: input.matriz_extendida ?? false,
       mostrar_perfil: input.mostrar_perfil ?? false
     });
     this.saveToDisk();
