@@ -192,10 +192,11 @@ export class InMemorySyncStore {
     const item = {
       turno_id: turnoId,
       nombre: input.nombre.trim(),
+      supervisor: input.supervisor ? input.supervisor.trim() : null,
       hora_inicio: input.hora_inicio,
       hora_fin: input.hora_fin,
       horas_totales: Number(input.horas_totales ?? 12.00),
-      horas_descanso: Number(input.horas_descanso ?? 0.00),
+      horas_descanso: 0.00,
       activo: input.activo ?? true,
       fecha_inicio_vigencia: vigencia
     };
@@ -586,6 +587,7 @@ export function populateUnifiedFields(event, masterData) {
     }
   }
 
+  const supervisor_turno = activeTurno ? (activeTurno.supervisor || null) : (event.supervisor_turno || null);
   const hora_inicio_turno = event.hora_inicio_turno || (activeTurno ? activeTurno.hora_inicio : null);
   const hora_fin_turno = event.hora_fin_turno || (activeTurno ? activeTurno.hora_fin : null);
   const tipo_turno = event.tipo_turno || (activeTurno ? activeTurno.nombre : null);
@@ -605,6 +607,7 @@ export function populateUnifiedFields(event, masterData) {
     hora_inicio_turno,
     hora_fin_turno,
     tipo_turno,
+    supervisor_turno,
     horas_totales_turno,
     hora_inicio_descanso,
     hora_fin_descanso,

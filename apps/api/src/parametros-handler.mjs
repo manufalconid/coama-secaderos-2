@@ -59,10 +59,10 @@ export async function exportParametros(store) {
   const turnosHeaders = [
     "Turno ID",
     "Nombre",
+    "Supervisor",
     "Hora Inicio",
     "Hora Fin",
     "Horas Totales",
-    "Horas Descanso",
     "Fecha Vigencia",
     "Activo"
   ];
@@ -71,10 +71,10 @@ export async function exportParametros(store) {
     turnosRows.push([
       t.turno_id,
       t.nombre,
+      t.supervisor || "",
       t.hora_inicio,
       t.hora_fin,
       t.horas_totales,
-      t.horas_descanso,
       t.fecha_inicio_vigencia || "2026-08-26",
       t.activo ? "SI" : "NO"
     ]);
@@ -222,10 +222,10 @@ export async function importParametros(store, buffer) {
   for (const row of turnosData) {
     const turnoId = (row["Turno ID"] || "").toString().trim().toLowerCase();
     const name = (row["Nombre"] || "").toString().trim();
+    const supervisor = (row["Supervisor"] || row["Supervisor Asignado"] || row["Nombre Supervisor"] || "").toString().trim();
     const start = (row["Hora Inicio"] || "").toString().trim();
     const end = (row["Hora Fin"] || "").toString().trim();
     const tot = Number(row["Horas Totales"] || 12.0);
-    const desc = Number(row["Horas Descanso"] || 0.0);
     const vig = (row["Fecha Vigencia"] || "").toString().trim();
     const act = (row["Activo"] || "").toString().trim().toUpperCase();
 
@@ -235,10 +235,11 @@ export async function importParametros(store, buffer) {
     turnosParsedMap.set(key, {
       turno_id: turnoId,
       nombre: name,
+      supervisor: supervisor || null,
       hora_inicio: start,
       hora_fin: end,
       horas_totales: tot,
-      horas_descanso: desc,
+      horas_descanso: 0.00,
       fecha_inicio_vigencia: vig || "2026-08-26",
       activo: act !== "NO" && act !== "FALSE"
     });
@@ -386,10 +387,11 @@ export async function importParametros(store, buffer) {
         await client.query(
           `
             insert into turnos (
-              turno_id, nombre, hora_inicio, hora_fin, horas_totales, horas_descanso, activo, fecha_inicio_vigencia, modificado_en
-            ) values ($1, $2, $3, $4, $5, $6, $7, $8, now())
+              turno_id, nombre, supervisor, hora_inicio, hora_fin, horas_totales, horas_descanso, activo, fecha_inicio_vigencia, modificado_en
+            ) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, now())
             on conflict (turno_id, fecha_inicio_vigencia) do update set
               nombre = excluded.nombre,
+              supervisor = excluded.supervisor,
               hora_inicio = excluded.hora_inicio,
               hora_fin = excluded.hora_fin,
               horas_totales = excluded.horas_totales,
@@ -397,7 +399,7 @@ export async function importParametros(store, buffer) {
               activo = excluded.activo,
               modificado_en = now()
           `,
-          [t.turno_id, t.nombre, t.hora_inicio, t.hora_fin, t.horas_totales, t.horas_descanso, t.activo, t.fecha_inicio_vigencia]
+          [t.turno_id, t.nombre, t.supervisor, t.hora_inicio, t.hora_fin, t.horas_totales, t.horas_descanso, t.activo, t.fecha_inicio_vigencia]
         );
       }
       // Desactivar turnos no incluidos en el excel

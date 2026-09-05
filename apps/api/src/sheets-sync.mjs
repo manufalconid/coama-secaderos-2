@@ -132,10 +132,23 @@ export function deriveDailyTurnos(events, masterData) {
       linea = linea.replace(/^sec-/i, "").replace(/^Secadero\s+/i, "").toUpperCase().trim();
     }
 
-    // Buscar configuración de turno
+    // Buscar configuración de turno respectiva a la fecha de vigencia
     let shiftObj = null;
-    if (masterData.turnos && e.turno_id) {
-      shiftObj = masterData.turnos.find(t => t.turno_id === e.turno_id);
+    if (masterData.turnos && masterData.turnos.length > 0) {
+      const eventDate = e.fecha_registro;
+      const validShifts = masterData.turnos.filter(t => !t.fecha_inicio_vigencia || t.fecha_inicio_vigencia <= eventDate);
+      if (validShifts.length > 0) {
+        const dates = validShifts.map(t => t.fecha_inicio_vigencia || "1970-01-01").sort();
+        const maxDate = dates.pop();
+        const candidateShifts = validShifts.filter(t => (t.fecha_inicio_vigencia || "1970-01-01") === maxDate);
+        if (e.turno_id) {
+          shiftObj = candidateShifts.find(t => t.turno_id === e.turno_id) || masterData.turnos.find(t => t.turno_id === e.turno_id);
+        } else {
+          shiftObj = candidateShifts[0];
+        }
+      } else {
+        if (e.turno_id) shiftObj = masterData.turnos.find(t => t.turno_id === e.turno_id);
+      }
     }
 
     const start = e.hora_inicio_turno || (shiftObj ? shiftObj.hora_inicio : "06:00:00");
@@ -153,6 +166,7 @@ export function deriveDailyTurnos(events, masterData) {
       linea: linea,
       turno_id: compositeId,
       nombre: shiftObj ? shiftObj.nombre : (e.tipo_turno || e.turno_id || compositeId),
+      supervisor: e.supervisor_turno || (shiftObj ? shiftObj.supervisor || "" : ""),
       hora_inicio: start,
       hora_fin: end,
       horas_totales: horas_totales,
@@ -228,7 +242,7 @@ export async function syncRawEventToSheets(e, forceState = null) {
   const title = "registros_crudos_tablet";
   const headers = [
     "evento_id", "tablet_id", "secadero_id", "fecha_registro", "linea", 
-    "turno_id", "fecha_hora_inicio", "hora_registro", "fecha_hora_fin", "duracion_minutos", 
+    "turno_id", "supervisor_turno", "fecha_hora_inicio", "hora_registro", "fecha_hora_fin", "duracion_minutos", 
     "estado_evento", "tipo_registro", "categoria", "tiempo muerto", 
     "observacion", "ubicacion", "version", "tipo_turno"
   ];
@@ -250,6 +264,7 @@ export async function syncRawEventToSheets(e, forceState = null) {
     e.fecha_registro || "",
     e.linea || "",
     compositeTurnoId,
+    e.supervisor_turno || "",
     formatLocalTimestamp(e.fecha_hora_inicio),
     formatLocalTime(e.hora_registro || e.fecha_hora_inicio),
     isCerrado ? formatLocalTimestamp(e.fecha_hora_fin) : "",
@@ -269,7 +284,7 @@ export async function syncRawEventToSheets(e, forceState = null) {
     let foundIndex = -1;
     // Buscar coincidencia por clave única: evento_id + estado_evento
     for (let i = 1; i < existing.length; i++) {
-      if (existing[i][0] === e.evento_id && existing[i][10] === state) {
+      if (existing[i][0] === e.evento_id && existing[i][11] === state) {
         foundIndex = i;
         break;
       }
@@ -280,7 +295,7 @@ export async function syncRawEventToSheets(e, forceState = null) {
       if (hasChanged) {
         await sheets.spreadsheets.values.update({
           spreadsheetId: sheetId,
-          range: `${title}!A${foundIndex + 1}:R${foundIndex + 1}`,
+          range: `${title}!A${foundIndex + 1}:S${foundIndex + 1}`,
           valueInputOption: "RAW",
           requestBody: { values: [row] }
         });
@@ -303,7 +318,7 @@ export async function syncRawEventToSheets(e, forceState = null) {
 export async function syncProcessedEventToSheets(e) {
   const title = "registros_procesados";
   const headers = [
-    "evento_id", "fecha_de_registro", "linea", "turno_id", "turno_hora_desde", "turno_hora_hasta",
+    "evento_id", "fecha_de_registro", "linea", "turno_id", "supervisor_turno", "turno_hora_desde", "turno_hora_hasta",
     "tiempo_de_turno_en_horas_programadas",
     "categoria", "tiempo_muerto", "observacion", "ubicacion",
     "tiempo_muerto_hora_desde", "tiempo_muerto_hora_hasta",
@@ -338,6 +353,7 @@ export async function syncProcessedEventToSheets(e) {
       e.fecha_registro || "",
       (e.linea || "").toUpperCase(),
       compositeTurnoId,
+      e.supervisor_turno || "",
       e.hora_inicio_turno || "06:00:00",
       e.hora_fin_turno || "18:00:00",
       horasProgStr,
@@ -366,7 +382,7 @@ export async function syncProcessedEventToSheets(e) {
       if (hasChanged) {
         await sheets.spreadsheets.values.update({
           spreadsheetId: sheetId,
-          range: `${title}!A${foundIndex + 1}:O${foundIndex + 1}`,
+          range: `${title}!A${foundIndex + 1}:P${foundIndex + 1}`,
           valueInputOption: "RAW",
           requestBody: { values: [row] }
         });
@@ -388,7 +404,7 @@ export async function syncProcessedEventToSheets(e) {
 
 export async function syncTurnosToSheets(turnos) {
   const title = "turnos";
-  const headers = ["fecha", "linea", "turno_id", "nombre", "hora_inicio", "hora_fin", "horas_totales", "horas_programadas"];
+  const headers = ["fecha", "linea", "turno_id", "nombre", "supervisor", "hora_inicio", "hora_fin", "horas_totales", "horas_programadas"];
 
   const sheets = getSheetsClient();
   if (!sheets) return;
@@ -413,6 +429,7 @@ export async function syncTurnosToSheets(turnos) {
         t.linea || "",
         t.turno_id || "",
         t.nombre || "",
+        t.supervisor || "",
         t.hora_inicio || "",
         t.hora_fin || "",
         formatDecimal(t.horas_totales),
@@ -425,7 +442,7 @@ export async function syncTurnosToSheets(turnos) {
         const hasChanged = row.some((val, idx) => String(val) !== String(found.values[idx] ?? ""));
         if (hasChanged) {
           updates.push({
-            range: `${title}!A${found.rowIndex + 1}:H${found.rowIndex + 1}`,
+            range: `${title}!A${found.rowIndex + 1}:I${found.rowIndex + 1}`,
             values: [row]
           });
         }
@@ -467,7 +484,7 @@ export async function exportAllToSheets(events, masterData) {
   const titleCrudos = "registros_crudos_tablet";
   const headersCrudos = [
     "evento_id", "tablet_id", "secadero_id", "fecha_registro", "linea", 
-    "turno_id", "fecha_hora_inicio", "hora_registro", "fecha_hora_fin", "duracion_minutos", 
+    "turno_id", "supervisor_turno", "fecha_hora_inicio", "hora_registro", "fecha_hora_fin", "duracion_minutos", 
     "estado_evento", "tipo_registro", "categoria", "tiempo muerto", 
     "observacion", "ubicacion", "version", "tipo_turno"
   ];
@@ -476,7 +493,7 @@ export async function exportAllToSheets(events, masterData) {
   const existingCrudos = await getExistingRows(titleCrudos);
   const crudosMap = new Map(); // key = `${evento_id}_${estado_evento}` -> { rowIndex, values }
   for (let i = 1; i < existingCrudos.length; i++) {
-    const key = `${existingCrudos[i][0]}_${existingCrudos[i][10]}`;
+    const key = `${existingCrudos[i][0]}_${existingCrudos[i][11]}`;
     crudosMap.set(key, { rowIndex: i, values: existingCrudos[i] });
   }
 
@@ -500,6 +517,7 @@ export async function exportAllToSheets(events, masterData) {
       e.fecha_registro || "",
       e.linea || "",
       compositeTurnoId,
+      e.supervisor_turno || "",
       formatLocalTimestamp(e.fecha_hora_inicio),
       formatLocalTime(e.hora_registro || e.fecha_hora_inicio),
       "",
@@ -520,7 +538,7 @@ export async function exportAllToSheets(events, masterData) {
       const hasChanged = rowAbierto.some((val, idx) => String(val) !== String(foundAbierto.values[idx] ?? ""));
       if (hasChanged) {
         crudosUpdates.push({
-          range: `${titleCrudos}!A${foundAbierto.rowIndex + 1}:R${foundAbierto.rowIndex + 1}`,
+          range: `${titleCrudos}!A${foundAbierto.rowIndex + 1}:S${foundAbierto.rowIndex + 1}`,
           values: [rowAbierto]
         });
       }
@@ -537,6 +555,7 @@ export async function exportAllToSheets(events, masterData) {
         e.fecha_registro || "",
         e.linea || "",
         compositeTurnoId,
+        e.supervisor_turno || "",
         formatLocalTimestamp(e.fecha_hora_inicio),
         formatLocalTime(e.hora_registro || e.fecha_hora_inicio),
         formatLocalTimestamp(e.fecha_hora_fin),
@@ -557,7 +576,7 @@ export async function exportAllToSheets(events, masterData) {
         const hasChanged = rowCerrado.some((val, idx) => String(val) !== String(foundCerrado.values[idx] ?? ""));
         if (hasChanged) {
           crudosUpdates.push({
-            range: `${titleCrudos}!A${foundCerrado.rowIndex + 1}:R${foundCerrado.rowIndex + 1}`,
+            range: `${titleCrudos}!A${foundCerrado.rowIndex + 1}:S${foundCerrado.rowIndex + 1}`,
             values: [rowCerrado]
           });
         }
@@ -590,7 +609,7 @@ export async function exportAllToSheets(events, masterData) {
   // 2. Reescribir registros procesados incrementalmente
   const titleProcesados = "registros_procesados";
   const headersProcesados = [
-    "evento_id", "fecha_de_registro", "linea", "turno_id", "turno_hora_desde", "turno_hora_hasta",
+    "evento_id", "fecha_de_registro", "linea", "turno_id", "supervisor_turno", "turno_hora_desde", "turno_hora_hasta",
     "tiempo_de_turno_en_horas_programadas",
     "categoria", "tiempo_muerto", "observacion", "ubicacion",
     "tiempo_muerto_hora_desde", "tiempo_muerto_hora_hasta",
@@ -631,6 +650,7 @@ export async function exportAllToSheets(events, masterData) {
       e.fecha_registro || "",
       (e.linea || "").toUpperCase(),
       compositeTurnoId,
+      e.supervisor_turno || "",
       e.hora_inicio_turno || "06:00:00",
       e.hora_fin_turno || "18:00:00",
       horasProgStr,
@@ -638,8 +658,8 @@ export async function exportAllToSheets(events, masterData) {
       (e.tiempo_muerto || "PARADA").toUpperCase(),
       observacionVal,
       e.ubicacion ? e.ubicacion.toUpperCase() : "",
-      formatLocalTime(e.hora_desde || e.fecha_hora_inicio),
-      formatLocalTime(e.hora_hasta || e.fecha_hora_fin),
+      formatErpIsoLocal(e.hora_desde || e.fecha_hora_inicio),
+      formatErpIsoLocal(e.hora_hasta || e.fecha_hora_fin),
       durHr,
       durMin
     ];
@@ -649,7 +669,7 @@ export async function exportAllToSheets(events, masterData) {
       const hasChanged = row.some((val, idx) => String(val) !== String(found.values[idx] ?? ""));
       if (hasChanged) {
         procesadosUpdates.push({
-          range: `${titleProcesados}!A${found.rowIndex + 1}:O${found.rowIndex + 1}`,
+          range: `${titleProcesados}!A${found.rowIndex + 1}:P${found.rowIndex + 1}`,
           values: [row]
         });
       }

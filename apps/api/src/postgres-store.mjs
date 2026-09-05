@@ -40,7 +40,7 @@ export class PgSyncStore {
           "select razon_id, origen_id from razon_origenes"
         ),
         client.query(
-          "select turno_id, nombre, hora_inicio, hora_fin, horas_totales, horas_descanso, activo, fecha_inicio_vigencia from turnos where activo = true order by fecha_inicio_vigencia desc, nombre"
+          "select turno_id, nombre, supervisor, hora_inicio, hora_fin, horas_totales, horas_descanso, activo, fecha_inicio_vigencia from turnos where activo = true order by fecha_inicio_vigencia desc, nombre"
         )
       ]);
 
@@ -177,7 +177,7 @@ export class PgSyncStore {
 
   async listTurnos() {
     const result = await this.pool.query(
-      "select turno_id, nombre, hora_inicio, hora_fin, horas_totales, horas_descanso, activo from turnos order by nombre"
+      "select turno_id, nombre, supervisor, hora_inicio, hora_fin, horas_totales, horas_descanso, activo, fecha_inicio_vigencia from turnos order by fecha_inicio_vigencia desc, nombre"
     );
     return result.rows.map(t => ({
       ...t,
@@ -188,27 +188,30 @@ export class PgSyncStore {
 
   async saveTurno(input, turnoId = input?.turno_id ?? `tur-${randomUUID()}`) {
     requireName(input, "turno");
+    const supervisor = input.supervisor ? input.supervisor.trim() : null;
     const result = await this.pool.query(
       `
-        insert into turnos (turno_id, nombre, hora_inicio, hora_fin, horas_totales, horas_descanso, activo, modificado_en)
-        values ($1, $2, $3, $4, $5, $6, $7, now())
+        insert into turnos (turno_id, nombre, supervisor, hora_inicio, hora_fin, horas_totales, horas_descanso, activo, modificado_en)
+        values ($1, $2, $3, $4, $5, $6, $7, $8, now())
         on conflict (turno_id) do update set
           nombre = excluded.nombre,
+          supervisor = excluded.supervisor,
           hora_inicio = excluded.hora_inicio,
           hora_fin = excluded.hora_fin,
           horas_totales = excluded.horas_totales,
           horas_descanso = excluded.horas_descanso,
           activo = excluded.activo,
           modificado_en = now()
-        returning turno_id, nombre, hora_inicio, hora_fin, horas_totales, horas_descanso, activo
+        returning turno_id, nombre, supervisor, hora_inicio, hora_fin, horas_totales, horas_descanso, activo
       `,
       [
         turnoId,
         input.nombre.trim(),
+        supervisor,
         input.hora_inicio,
         input.hora_fin,
         Number(input.horas_totales ?? 12.00),
-        Number(input.horas_descanso ?? 0.00),
+        0.00,
         input.activo ?? true
       ]
     );
@@ -471,7 +474,7 @@ export class PgSyncStore {
         "select razon_id, origen_id from razon_origenes"
       ),
       client.query(
-        "select turno_id, nombre, hora_inicio, hora_fin, horas_totales, horas_descanso, activo, fecha_inicio_vigencia from turnos where activo = true order by fecha_inicio_vigencia desc, nombre"
+        "select turno_id, nombre, supervisor, hora_inicio, hora_fin, horas_totales, horas_descanso, activo, fecha_inicio_vigencia from turnos where activo = true order by fecha_inicio_vigencia desc, nombre"
       )
     ]);
 
@@ -954,6 +957,7 @@ function populateUnifiedFields(event, masterData) {
   const hora_inicio_turno = event.hora_inicio_turno || (activeTurno ? activeTurno.hora_inicio : null);
   const hora_fin_turno = event.hora_fin_turno || (activeTurno ? activeTurno.hora_fin : null);
   const tipo_turno = event.tipo_turno || (activeTurno ? activeTurno.nombre : null);
+  const supervisor_turno = activeTurno ? (activeTurno.supervisor || null) : (event.supervisor_turno || null);
   
   const hora_inicio_descanso = event.hora_inicio_descanso || (activeTurno && activeTurno.turno_id === "tur-dia" ? "12:00:00" : (activeTurno && activeTurno.turno_id === "tur-noche" ? "00:00:00" : null));
   const hora_fin_descanso = event.hora_fin_descanso || (activeTurno && activeTurno.turno_id === "tur-dia" ? "13:00:00" : (activeTurno && activeTurno.turno_id === "tur-noche" ? "01:00:00" : null));
@@ -970,6 +974,7 @@ function populateUnifiedFields(event, masterData) {
     hora_inicio_turno,
     hora_fin_turno,
     tipo_turno,
+    supervisor_turno,
     horas_totales_turno,
     hora_inicio_descanso,
     hora_fin_descanso,
