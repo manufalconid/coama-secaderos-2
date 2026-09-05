@@ -2,7 +2,7 @@ import http from "node:http";
 import { InMemorySyncStore, populateUnifiedFields } from "./store.mjs";
 import { PgSyncStore } from "./postgres-store.mjs";
 import { exportParametros, importParametros } from "./parametros-handler.mjs";
-import { syncRawEventToSheets, syncProcessedEventToSheets, exportAllToSheets } from "./sheets-sync.mjs";
+import { syncRawEventToSheets, syncProcessedEventToSheets, exportAllToSheets, formatErpIsoLocal } from "./sheets-sync.mjs";
 
 
 const host = process.env.API_HOST ?? "0.0.0.0";
@@ -31,28 +31,91 @@ const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN;
 const telegramChatId = process.env.TELEGRAM_CHAT_ID;
 const portalUrl = process.env.SUPERVISOR_PORTAL_URL ?? "http://127.0.0.1:5173";
 
-async function notifyTelegram(text) {
+function getArgentinaTimeStr(dateInput = new Date()) {
+  try {
+    const d = new Date(dateInput);
+    if (isNaN(d.getTime())) return "";
+    return d.toLocaleTimeString("es-AR", {
+      timeZone: "America/Argentina/Buenos_Aires",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false
+    });
+  } catch {
+    return "";
+  }
+}
+
+const telegramQueue = [];
+let isProcessingTelegramQueue = false;
+
+function queueTelegramMessage(text) {
   if (!telegramBotToken || !telegramChatId) {
-    console.log("Notificación de Telegram omitida (no configurado).");
+    console.log("[ TELEGRAM ] Notificación omitida (no configurado).");
     return;
   }
+
+  let fullText = text;
+  if (!fullText.includes("Hora de envío del servidor:")) {
+    const serverTimeStr = getArgentinaTimeStr(new Date());
+    fullText += `\n\nHora de envío del servidor: ${serverTimeStr}`;
+  }
+
+  telegramQueue.push({
+    text: fullText,
+    addedAt: new Date()
+  });
+
+  console.log(`[ TELEGRAM QUEUE ] Mensaje encolado. Total en cola: ${telegramQueue.length}`);
+  processTelegramQueue().catch(err => console.error("[ TELEGRAM QUEUE ] Error procesando cola:", err));
+}
+
+async function processTelegramQueue() {
+  if (isProcessingTelegramQueue) return;
+  if (telegramQueue.length === 0) return;
+  if (!telegramBotToken || !telegramChatId) return;
+
+  isProcessingTelegramQueue = true;
+
   try {
-    const url = `https://api.telegram.org/bot${telegramBotToken}/sendMessage`;
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        chat_id: telegramChatId,
-        text,
-        parse_mode: "HTML"
-      })
-    });
-    if (!res.ok) {
-      const errText = await res.text();
-      console.error("Error al enviar notificación a Telegram:", errText);
+    while (telegramQueue.length > 0) {
+      const item = telegramQueue[0];
+      const url = `https://api.telegram.org/bot${telegramBotToken}/sendMessage`;
+
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            chat_id: telegramChatId,
+            text: item.text,
+            parse_mode: "HTML"
+          }),
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+
+        if (res.ok) {
+          console.log(`[ TELEGRAM QUEUE ] Mensaje enviado con éxito. Restantes en cola: ${telegramQueue.length - 1}`);
+          telegramQueue.shift();
+          await new Promise(r => setTimeout(r, 400));
+        } else {
+          const errText = await res.text();
+          console.error(`[ TELEGRAM QUEUE ] Error HTTP ${res.status} al enviar a Telegram:`, errText);
+          setTimeout(processTelegramQueue, 10000);
+          break;
+        }
+      } catch (err) {
+        console.error("[ TELEGRAM QUEUE ] Fallo de red/conexión al enviar a Telegram. Reintentando en 10s:", err.message);
+        setTimeout(processTelegramQueue, 10000);
+        break;
+      }
     }
-  } catch (err) {
-    console.error("Error en notifyTelegram:", err);
+  } finally {
+    isProcessingTelegramQueue = false;
   }
 }
 
@@ -144,7 +207,7 @@ const server = http.createServer(async (req, res) => {
       const message = `🔴 <b>Notificación de Prueba de Telegram</b>\n` +
         `El Bot de COAMA Secaderos ha sido configurado correctamente.\n\n` +
         `🔗 <a href="${portalUrl}">Ir al Portal del Supervisor</a>`;
-      await notifyTelegram(message);
+      queueTelegramMessage(message);
       return sendJson(res, 200, { success: true });
     }
 
@@ -215,21 +278,23 @@ const server = http.createServer(async (req, res) => {
               syncRawEventToSheets(fullEvent, "abierto").catch(err => console.error("Error sincronizando evento crudo (abierto) a Google Sheets:", err));
 
               if (fullEvent.estado_evento === "abierto") {
-                const message = `🚨Detención ${cleanLinea}`;
-                notifyTelegram(message).catch(err => console.error("Error enviando notificacion a Telegram en segundo plano:", err));
+                const startStr = getArgentinaTimeStr(fullEvent.fecha_hora_inicio || fullEvent.hora_desde || new Date());
+                const message = `🚨Detención ${cleanLinea} ${startStr}`;
+                queueTelegramMessage(message);
               } else if (fullEvent.estado_evento === "cerrado") {
                 // Si ya llega directamente cerrado, enviamos fin a crudos y a procesados
                 syncRawEventToSheets(fullEvent, "cerrado").catch(err => console.error("Error sincronizando evento crudo (cerrado) a Google Sheets:", err));
                 syncProcessedEventToSheets(fullEvent).catch(err => console.error("Error sincronizando evento procesado a Google Sheets:", err));
 
+                const endStr = getArgentinaTimeStr(fullEvent.fecha_hora_fin || fullEvent.hora_hasta || new Date());
                 const minutes = Math.round((fullEvent.duracion_segundos || 0) / 60);
                 const tMuerto = fullEvent.tiempo_muerto || "Sin motivo";
                 const cat = fullEvent.categoria_tm || "Sin categoría";
                 const obs = fullEvent.observacion || "Sin observaciones";
                 const ubi = fullEvent.ubicacion || "Sin ubicación";
 
-                const message = `✅Fin de detención ${cleanLinea}. ${minutes} minutos perdidos por ${tMuerto}, ${cat}, ${obs}, ${ubi}`;
-                notifyTelegram(message).catch(err => console.error("Error enviando notificacion a Telegram en segundo plano:", err));
+                const message = `✅Fin de detención ${cleanLinea} ${endStr}. ${minutes} minutos perdidos por ${tMuerto}, ${cat}, ${obs}, ${ubi}`;
+                queueTelegramMessage(message);
               }
             } else if (item.status === "updated") {
               // Sincronizar siempre los cambios a Google Sheets (crudos y procesados)
@@ -241,14 +306,15 @@ const server = http.createServer(async (req, res) => {
 
                 // Solo enviar Telegram si no estaba cerrado previamente
                 if (!item.wasClosed) {
+                  const endStr = getArgentinaTimeStr(fullEvent.fecha_hora_fin || fullEvent.hora_hasta || new Date());
                   const minutes = Math.round((fullEvent.duracion_segundos || 0) / 60);
                   const tMuerto = fullEvent.tiempo_muerto || "Sin motivo";
                   const cat = fullEvent.categoria_tm || "Sin categoría";
                   const obs = fullEvent.observacion || "Sin observaciones";
                   const ubi = fullEvent.ubicacion || "Sin ubicación";
 
-                  const message = `✅Fin de detención ${cleanLinea}. ${minutes} minutos perdidos por ${tMuerto}, ${cat}, ${obs}, ${ubi}`;
-                  notifyTelegram(message).catch(err => console.error("Error enviando notificacion a Telegram en segundo plano:", err));
+                  const message = `✅Fin de detención ${cleanLinea} ${endStr}. ${minutes} minutos perdidos por ${tMuerto}, ${cat}, ${obs}, ${ubi}`;
+                  queueTelegramMessage(message);
                 }
               }
             }
@@ -315,8 +381,8 @@ const server = http.createServer(async (req, res) => {
           (ev.tiempo_muerto || "PARADA").toUpperCase(),
           observacionVal,
           ev.ubicacion ? ev.ubicacion.toUpperCase() : "",
-          ev.hora_desde || "",
-          ev.hora_hasta || "",
+          formatErpIsoLocal(ev.hora_desde || ev.fecha_hora_inicio),
+          formatErpIsoLocal(ev.hora_hasta || ev.fecha_hora_fin),
           durHr,
           durMin
         ];
@@ -470,16 +536,19 @@ async function handleAdminRoute(req, res, url) {
       return sendJson(res, 200, await store.listEventos());
     }
     if (req.method === "PATCH" && id) {
-      const updatedEvent = await store.saveEvento(id, await readJson(req));
-      if (updatedEvent) {
+      const rawUpdatedEvent = await store.saveEvento(id, await readJson(req));
+      if (rawUpdatedEvent) {
+        const masterData = await store.getMasterData();
+        const updatedEvent = populateUnifiedFields(rawUpdatedEvent, masterData);
         if (updatedEvent.estado_evento === "abierto") {
           syncRawEventToSheets(updatedEvent, "abierto").catch(err => console.error("Error al sincronizar evento editado (abierto) a Google Sheets:", err));
         } else if (updatedEvent.estado_evento === "cerrado") {
           syncRawEventToSheets(updatedEvent, "cerrado").catch(err => console.error("Error al sincronizar evento editado (cerrado) a Google Sheets:", err));
           syncProcessedEventToSheets(updatedEvent).catch(err => console.error("Error al sincronizar evento editado (procesado) a Google Sheets:", err));
         }
+        return sendJson(res, 200, updatedEvent);
       }
-      return sendJson(res, 200, updatedEvent);
+      return sendJson(res, 200, rawUpdatedEvent);
     }
   }
 

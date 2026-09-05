@@ -386,10 +386,11 @@ export class InMemorySyncStore {
   }
 
   snapshot() {
+    const eventsArray = Array.from(this.events.values()).map(e => populateUnifiedFields(e, this.masterData));
     return {
-      events: [...this.events.values()],
-      eventOrigins: [...this.eventOrigins.entries()].map(([evento_id, origenes]) => ({ evento_id, origenes })),
-      manualProposals: [...this.manualProposals.values()]
+      events: eventsArray,
+      eventOrigins: Array.from(this.eventOrigins.entries()).map(([evento_id, origenes]) => ({ evento_id, origenes })),
+      manualProposals: Array.from(this.manualProposals.values())
     };
   }
 }

@@ -718,16 +718,18 @@ export class PgSyncStore {
   }
 
   async snapshot() {
+    const events = await this.listEventos();
+    const masterData = await this.getMasterDataInternal();
+    const populatedEvents = events.map(e => populateUnifiedFields(e, masterData));
     const client = await this.pool.connect();
     try {
-      const [events, eventOrigins, manualProposals] = await Promise.all([
-        client.query("select * from eventos_tiempo_muerto order by fecha_hora_inicio, evento_id"),
+      const [eventOrigins, manualProposals] = await Promise.all([
         client.query("select * from evento_origenes order by evento_id, evento_origen_id"),
         client.query("select * from propuestas_maestro order by creado_en, propuesta_id")
       ]);
 
       return {
-        events: events.rows,
+        events: populatedEvents,
         eventOrigins: eventOrigins.rows,
         manualProposals: manualProposals.rows
       };

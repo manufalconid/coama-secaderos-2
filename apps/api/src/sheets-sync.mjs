@@ -84,6 +84,25 @@ export function formatLocalTime(isoStr) {
   }
 }
 
+export function formatErpIsoLocal(isoStr) {
+  if (!isoStr) return "";
+  const str = String(isoStr).trim();
+  try {
+    const d = new Date(str);
+    if (isNaN(d.getTime())) return str;
+    const dateStr = d.toLocaleDateString("en-CA", { timeZone: "America/Argentina/Buenos_Aires" });
+    const timeStr = d.toLocaleTimeString("es-AR", { timeZone: "America/Argentina/Buenos_Aires", hour12: false });
+    const ms = String(d.getMilliseconds()).padStart(3, "0");
+    const parts = timeStr.split(":");
+    const hh = parts[0].padStart(2, "0");
+    const mm = parts[1].padStart(2, "0");
+    const ss = (parts[2] || "00").padStart(2, "0");
+    return `${dateStr}T${hh}:${mm}:${ss}.${ms}Z`;
+  } catch (err) {
+    return str;
+  }
+}
+
 export function formatLocalTimestamp(isoStr) {
   if (!isoStr) return "";
   const str = String(isoStr).trim();
@@ -326,8 +345,8 @@ export async function syncProcessedEventToSheets(e) {
       (e.tiempo_muerto || "PARADA").toUpperCase(),
       observacionVal,
       e.ubicacion ? e.ubicacion.toUpperCase() : "",
-      formatLocalTime(e.hora_desde || e.fecha_hora_inicio),
-      formatLocalTime(e.hora_hasta || e.fecha_hora_fin),
+      formatErpIsoLocal(e.hora_desde || e.fecha_hora_inicio),
+      formatErpIsoLocal(e.hora_hasta || e.fecha_hora_fin),
       durHr,
       durMin
     ];

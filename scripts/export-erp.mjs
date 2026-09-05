@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { populateUnifiedFields } from "../apps/api/src/store.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -99,14 +100,20 @@ async function run() {
     const horasProg = ev.horas_totales_turno ?? 12;
     const horasProgStr = Number.isInteger(Number(horasProg)) ? Number(horasProg).toString() : Number(horasProg).toFixed(1).replace(".", ",");
 
-    const formatLocalTime = (isoStr) => {
+    const formatErpIsoLocal = (isoStr) => {
       if (!isoStr) return "";
       const str = String(isoStr).trim();
-      if (/^\d{2}:\d{2}(:\d{2})?$/.test(str)) return str;
       try {
         const d = new Date(str);
         if (isNaN(d.getTime())) return str;
-        return d.toLocaleTimeString("es-AR", { timeZone: "America/Argentina/Buenos_Aires", hour12: false });
+        const dateStr = d.toLocaleDateString("en-CA", { timeZone: "America/Argentina/Buenos_Aires" });
+        const timeStr = d.toLocaleTimeString("es-AR", { timeZone: "America/Argentina/Buenos_Aires", hour12: false });
+        const ms = String(d.getMilliseconds()).padStart(3, "0");
+        const parts = timeStr.split(":");
+        const hh = parts[0].padStart(2, "0");
+        const mm = parts[1].padStart(2, "0");
+        const ss = (parts[2] || "00").padStart(2, "0");
+        return `${dateStr}T${hh}:${mm}:${ss}.${ms}Z`;
       } catch (e) {
         return str;
       }
@@ -128,8 +135,8 @@ async function run() {
       (ev.tiempo_muerto || "PARADA").toUpperCase(),
       observacionVal,
       ev.ubicacion ? ev.ubicacion.toUpperCase() : "",
-      formatLocalTime(ev.hora_desde || ev.fecha_hora_inicio),
-      formatLocalTime(ev.hora_hasta || ev.fecha_hora_fin),
+      formatErpIsoLocal(ev.hora_desde || ev.fecha_hora_inicio),
+      formatErpIsoLocal(ev.hora_hasta || ev.fecha_hora_fin),
       durHr,
       durMin
     ];
@@ -164,130 +171,6 @@ async function run() {
   console.log(`       Nombre: ${filename} y COAMA_Exportacion_ERP.csv`);
   console.log(`       Ruta:   ${outputPath}`);
   console.log(`       Total de paradas unicas exportadas: ${closedEvents.length}`);
-}
-
-function populateUnifiedFields(event, masterData) {
-  const timestamp_registro = event.timestamp_registro || event.creado_en_tablet || new Date().toISOString();
-  
-  let fecha_registro = event.fecha_registro;
-  let hora_registro = event.hora_registro;
-  try {
-    const localD = new Date(timestamp_registro);
-    const dateStr = localD.toLocaleDateString("es-AR", { timeZone: "America/Argentina/Buenos_Aires" });
-    const timeStr = localD.toLocaleTimeString("es-AR", { timeZone: "America/Argentina/Buenos_Aires", hour12: false });
-    if (!fecha_registro) {
-      const [d, m, y] = dateStr.split("/");
-      fecha_registro = `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
-    }
-    if (!hora_registro) {
-      hora_registro = timeStr;
-    }
-  } catch (err) {
-    console.error("Error formatting date/time for sync", err);
-  }
-
-  const hora_desde = event.hora_desde || event.fecha_hora_inicio;
-  const hora_hasta = event.hora_hasta || event.fecha_hora_fin;
-  
-  let tiempo_parada = event.tiempo_parada;
-  if (tiempo_parada == null && hora_desde && hora_hasta) {
-    tiempo_parada = Math.floor((new Date(hora_hasta) - new Date(hora_desde)) / 1000);
-  } else if (tiempo_parada == null && event.duracion_segundos != null) {
-    tiempo_parada = event.duracion_segundos;
-  }
-
-  const observaciones = event.observaciones || event.observacion || "";
-
-  let linea = event.linea;
-  if (!linea) {
-    const secadero = masterData.secaderos.find(s => s.secadero_id === event.secadero_id);
-    linea = secadero ? secadero.nombre : event.secadero_id;
-  }
-  if (linea) {
-    linea = linea.replace("Secadero ", "").toUpperCase();
-  }
-
-  let categoria_tm = event.categoria_tm;
-  if (!categoria_tm && Array.isArray(event.origenes) && event.origenes.length > 0) {
-    const oNames = event.origenes.map(o => {
-      if (o.origen_manual) return o.origen_manual;
-      const m = masterData.origenes.find(x => x.origen_id === o.origen_id);
-      return m ? m.nombre : o.origen_id;
-    });
-    categoria_tm = oNames.join(", ");
-  }
-
-  let tiempo_muerto = event.tiempo_muerto;
-  if (!tiempo_muerto) {
-    if (event.razon_manual) {
-      tiempo_muerto = event.razon_manual;
-    } else if (event.razon_id) {
-      const r = masterData.razones.find(x => x.razon_id === event.razon_id);
-      tiempo_muerto = r ? r.nombre : event.razon_id;
-    }
-  }
-
-  let activeTurno = null;
-  if (Array.isArray(masterData.turnos) && masterData.turnos.length > 0 && hora_desde) {
-    try {
-      const localTimeStr = new Date(hora_desde).toLocaleTimeString("es-AR", {
-        timeZone: "America/Argentina/Buenos_Aires",
-        hour12: false
-      });
-      for (const t of masterData.turnos) {
-        const start = t.hora_inicio;
-        const end = t.hora_fin;
-        if (start < end) {
-          if (localTimeStr >= start && localTimeStr < end) {
-            activeTurno = t;
-            break;
-          }
-        } else {
-          if (localTimeStr >= start || localTimeStr < end) {
-            activeTurno = t;
-            break;
-          }
-        }
-      }
-    } catch (e) {
-      console.error("Error matching shifts", e);
-    }
-  }
-
-  const hora_inicio_turno = event.hora_inicio_turno || (activeTurno ? activeTurno.hora_inicio : null);
-  const hora_fin_turno = event.hora_fin_turno || (activeTurno ? activeTurno.hora_fin : null);
-  const tipo_turno = event.tipo_turno || (activeTurno ? activeTurno.nombre : null);
-  
-  const hora_inicio_descanso = event.hora_inicio_descanso || (activeTurno && activeTurno.turno_id === "tur-dia" ? "12:00:00" : (activeTurno && activeTurno.turno_id === "tur-noche" ? "00:00:00" : null));
-  const hora_fin_descanso = event.hora_fin_descanso || (activeTurno && activeTurno.turno_id === "tur-dia" ? "13:00:00" : (activeTurno && activeTurno.turno_id === "tur-noche" ? "01:00:00" : null));
-
-  const tiempo_disponible_turno = event.tiempo_disponible_turno != null ? event.tiempo_disponible_turno : (activeTurno ? Number(activeTurno.horas_totales) : 12.00);
-  const horas_totales_turno = activeTurno ? Number(activeTurno.horas_totales) : 12;
-  const turno_id = event.turno_id || (activeTurno ? activeTurno.turno_id : null);
-
-  return {
-    ...event,
-    fecha_registro,
-    hora_registro,
-    timestamp_registro,
-    hora_inicio_turno,
-    hora_fin_turno,
-    tipo_turno,
-    horas_totales_turno,
-    hora_inicio_descanso,
-    hora_fin_descanso,
-    linea,
-    hora_desde,
-    hora_hasta,
-    categoria_tm,
-    tiempo_muerto,
-    observaciones,
-    ubicacion: event.ubicacion || null,
-    tiempo_disponible_turno,
-    tiempo_de_descanso,
-    tiempo_parada,
-    turno_id
-  };
 }
 
 run();
