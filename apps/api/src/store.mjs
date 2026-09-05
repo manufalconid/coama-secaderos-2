@@ -83,10 +83,10 @@ export class InMemorySyncStore {
   getEvento(eventoId) {
     const raw = this.events.get(eventoId);
     if (!raw) return null;
-    return {
+    return populateUnifiedFields({
       ...raw,
       origenes: this.eventOrigins.get(eventoId) || []
-    };
+    }, this.masterData);
   }
 
   saveEvento(eventoId, input) {
@@ -587,7 +587,7 @@ export function populateUnifiedFields(event, masterData) {
     }
   }
 
-  const supervisor_turno = activeTurno ? (activeTurno.supervisor || null) : (event.supervisor_turno || null);
+  const supervisor_turno = (activeTurno && activeTurno.supervisor) ? activeTurno.supervisor : (event.supervisor_turno || event.supervisor || null);
   const hora_inicio_turno = event.hora_inicio_turno || (activeTurno ? activeTurno.hora_inicio : null);
   const hora_fin_turno = event.hora_fin_turno || (activeTurno ? activeTurno.hora_fin : null);
   const tipo_turno = event.tipo_turno || (activeTurno ? activeTurno.nombre : null);

@@ -544,10 +544,12 @@ export class PgSyncStore {
       const eventRes = await client.query("select * from eventos_tiempo_muerto where evento_id = $1", [eventoId]);
       if (eventRes.rowCount === 0) return null;
       const originsRes = await client.query("select origen_id, origen_manual from evento_origenes where evento_id = $1", [eventoId]);
-      return {
+      const raw = {
         ...eventRes.rows[0],
         origenes: originsRes.rows
       };
+      const masterData = await this.getMasterDataInternal(client);
+      return populateUnifiedFields(raw, masterData);
     } finally {
       client.release();
     }
@@ -957,7 +959,7 @@ function populateUnifiedFields(event, masterData) {
   const hora_inicio_turno = event.hora_inicio_turno || (activeTurno ? activeTurno.hora_inicio : null);
   const hora_fin_turno = event.hora_fin_turno || (activeTurno ? activeTurno.hora_fin : null);
   const tipo_turno = event.tipo_turno || (activeTurno ? activeTurno.nombre : null);
-  const supervisor_turno = activeTurno ? (activeTurno.supervisor || null) : (event.supervisor_turno || null);
+  const supervisor_turno = (activeTurno && activeTurno.supervisor) ? activeTurno.supervisor : (event.supervisor_turno || event.supervisor || null);
   
   const hora_inicio_descanso = event.hora_inicio_descanso || (activeTurno && activeTurno.turno_id === "tur-dia" ? "12:00:00" : (activeTurno && activeTurno.turno_id === "tur-noche" ? "00:00:00" : null));
   const hora_fin_descanso = event.hora_fin_descanso || (activeTurno && activeTurno.turno_id === "tur-dia" ? "13:00:00" : (activeTurno && activeTurno.turno_id === "tur-noche" ? "01:00:00" : null));
