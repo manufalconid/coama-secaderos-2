@@ -192,7 +192,7 @@ export default function AnalisisView({ eventos, masterData, showToast }) {
       <div className="clean-card" style={{ height: "75vh", minHeight: "680px", padding: 0, overflow: "hidden", border: "1px solid var(--border-subtle)" }}>
         <iframe
           title="Looker Studio"
-          src="https://datastudio.google.com/embed/reporting/a16c3288-f5cd-42ca-967f-a385c9df0fc6/page/p_ymxhovxmyd"
+          src="https://datastudio.google.com/embed/reporting/1006faa4-11e5-4ced-985f-343126bf6d51/page/p_z2r3vgy76d"
           width="100%"
           height="100%"
           style={{ border: 0 }}

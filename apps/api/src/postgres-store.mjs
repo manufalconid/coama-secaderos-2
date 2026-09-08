@@ -552,7 +552,9 @@ export class PgSyncStore {
         ...evt,
         origenes: originsMap.get(evt.evento_id) ?? []
       }));
-      return mergeEvents(rawEvents);
+      const merged = mergeEvents(rawEvents);
+      const masterData = await this.getMasterDataInternal(client);
+      return merged.map(e => populateUnifiedFields(e, masterData));
     } finally {
       client.release();
     }

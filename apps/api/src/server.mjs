@@ -275,7 +275,7 @@ const server = http.createServer(async (req, res) => {
 
             if (item.status === "inserted") {
               // Si es nuevo, siempre tiene al menos el inicio ("abierto")
-              syncRawEventToSheets(fullEvent, "abierto").catch(err => console.error("Error sincronizando evento crudo (abierto) a Google Sheets:", err));
+              syncRawEventToSheets(fullEvent, "abierto", masterData).catch(err => console.error("Error sincronizando evento crudo (abierto) a Google Sheets:", err));
 
               if (fullEvent.estado_evento === "abierto") {
                 const startStr = getArgentinaTimeStr(fullEvent.fecha_hora_inicio || fullEvent.hora_desde || new Date());
@@ -283,8 +283,8 @@ const server = http.createServer(async (req, res) => {
                 queueTelegramMessage(message);
               } else if (fullEvent.estado_evento === "cerrado") {
                 // Si ya llega directamente cerrado, enviamos fin a crudos y a procesados
-                syncRawEventToSheets(fullEvent, "cerrado").catch(err => console.error("Error sincronizando evento crudo (cerrado) a Google Sheets:", err));
-                syncProcessedEventToSheets(fullEvent).catch(err => console.error("Error sincronizando evento procesado a Google Sheets:", err));
+                syncRawEventToSheets(fullEvent, "cerrado", masterData).catch(err => console.error("Error sincronizando evento crudo (cerrado) a Google Sheets:", err));
+                syncProcessedEventToSheets(fullEvent, masterData).catch(err => console.error("Error sincronizando evento procesado a Google Sheets:", err));
 
                 const endStr = getArgentinaTimeStr(fullEvent.fecha_hora_fin || fullEvent.hora_hasta || new Date());
                 const minutes = Math.round((fullEvent.duracion_segundos || 0) / 60);
@@ -299,10 +299,10 @@ const server = http.createServer(async (req, res) => {
             } else if (item.status === "updated") {
               // Sincronizar siempre los cambios a Google Sheets (crudos y procesados)
               if (fullEvent.estado_evento === "abierto") {
-                syncRawEventToSheets(fullEvent, "abierto").catch(err => console.error("Error sincronizando evento crudo (abierto) a Google Sheets:", err));
+                syncRawEventToSheets(fullEvent, "abierto", masterData).catch(err => console.error("Error sincronizando evento crudo (abierto) a Google Sheets:", err));
               } else if (fullEvent.estado_evento === "cerrado") {
-                syncRawEventToSheets(fullEvent, "cerrado").catch(err => console.error("Error sincronizando evento crudo (cerrado) a Google Sheets:", err));
-                syncProcessedEventToSheets(fullEvent).catch(err => console.error("Error sincronizando evento procesado a Google Sheets:", err));
+                syncRawEventToSheets(fullEvent, "cerrado", masterData).catch(err => console.error("Error sincronizando evento crudo (cerrado) a Google Sheets:", err));
+                syncProcessedEventToSheets(fullEvent, masterData).catch(err => console.error("Error sincronizando evento procesado a Google Sheets:", err));
 
                 // Solo enviar Telegram si no estaba cerrado previamente
                 if (!item.wasClosed) {
@@ -541,10 +541,10 @@ async function handleAdminRoute(req, res, url) {
         const masterData = await store.getMasterData();
         const updatedEvent = populateUnifiedFields(rawUpdatedEvent, masterData);
         if (updatedEvent.estado_evento === "abierto") {
-          syncRawEventToSheets(updatedEvent, "abierto").catch(err => console.error("Error al sincronizar evento editado (abierto) a Google Sheets:", err));
+          syncRawEventToSheets(updatedEvent, "abierto", masterData).catch(err => console.error("Error al sincronizar evento editado (abierto) a Google Sheets:", err));
         } else if (updatedEvent.estado_evento === "cerrado") {
-          syncRawEventToSheets(updatedEvent, "cerrado").catch(err => console.error("Error al sincronizar evento editado (cerrado) a Google Sheets:", err));
-          syncProcessedEventToSheets(updatedEvent).catch(err => console.error("Error al sincronizar evento editado (procesado) a Google Sheets:", err));
+          syncRawEventToSheets(updatedEvent, "cerrado", masterData).catch(err => console.error("Error al sincronizar evento editado (cerrado) a Google Sheets:", err));
+          syncProcessedEventToSheets(updatedEvent, masterData).catch(err => console.error("Error al sincronizar evento editado (procesado) a Google Sheets:", err));
         }
         return sendJson(res, 200, updatedEvent);
       }
