@@ -116,7 +116,55 @@ async function cleanSheetDuplicates() {
     }
   }
 
+  // 3. Limpiar 'turnos'
+  console.log("\n--- Limpiando 'turnos' ---");
+  const turnosRes = await sheets.spreadsheets.values.get({
+    spreadsheetId: sheetId,
+    range: "turnos!A:L"
+  });
+  const turnosRows = turnosRes.data.values || [];
+  if (turnosRows.length > 0) {
+    const header = turnosRows[0];
+    const uniqueTurnosRows = [];
+    const seenTurnosKeys = new Set();
+    let dupesCount = 0;
+
+    for (let i = 1; i < turnosRows.length; i++) {
+      const row = turnosRows[i];
+      const turnoIdCompleto = row[3];
+      if (!turnoIdCompleto) continue;
+      if (seenTurnosKeys.has(turnoIdCompleto)) {
+        dupesCount++;
+        console.log(`  [DUPLICADO ELIMINADO] Fila ${i + 1} con Turno ID Completo: ${turnoIdCompleto}`);
+      } else {
+        seenTurnosKeys.add(turnoIdCompleto);
+        uniqueTurnosRows.push(row);
+      }
+    }
+
+    console.log(`Filas originales: ${turnosRows.length - 1} | Únicas: ${uniqueTurnosRows.length} | Duplicados eliminados: ${dupesCount}`);
+
+    if (dupesCount > 0) {
+      await sheets.spreadsheets.values.clear({
+        spreadsheetId: sheetId,
+        range: "turnos!A:L"
+      });
+      await sheets.spreadsheets.values.update({
+        spreadsheetId: sheetId,
+        range: "turnos!A1",
+        valueInputOption: "USER_ENTERED",
+        requestBody: {
+          values: [header, ...uniqueTurnosRows]
+        }
+      });
+      console.log("✅ 'turnos' limpiado y reescrito sin duplicados.");
+    } else {
+      console.log("No había duplicados en 'turnos'.");
+    }
+  }
+
   console.log("\n🎉 ¡Limpieza de Google Sheets finalizada con éxito!");
 }
 
 cleanSheetDuplicates().catch(console.error);
+
