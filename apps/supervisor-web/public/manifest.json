@@ -1,0 +1,16 @@
+{
+  "short_name": "Lumo Secaderos",
+  "name": "Lumo Secaderos - Portal Supervisor",
+  "icons": [
+    {
+      "src": "/lumo_icon.png",
+      "type": "image/png",
+      "sizes": "512x512 256x256 192x192 128x128 64x64 32x32",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "display": "standalone"
+}

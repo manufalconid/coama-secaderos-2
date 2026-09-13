@@ -7525,6 +7525,97 @@
         "supervisor_turno": "Cesar",
         "horas_totales_turno": 12
       }
+    ],
+    [
+      "e4001db8-9e61-4cf5-b63b-c845fe9e4482",
+      {
+        "evento_id": "e4001db8-9e61-4cf5-b63b-c845fe9e4482",
+        "tablet_id": "tab-sec-omeco",
+        "secadero_id": "sec-omeco",
+        "fecha_hora_inicio": "2026-09-13T18:15:19.938Z",
+        "fecha_hora_fin": "2026-09-13T18:15:54.669Z",
+        "duracion_segundos": 35,
+        "estado_evento": "cerrado",
+        "tipo_registro": "manual",
+        "origen_id": "ori-operativo",
+        "razon_id": "raz-limpieza",
+        "observacion": "Prueba sin postgres modo json",
+        "version": 2,
+        "sincronizado": false,
+        "timestamp_registro": "2026-09-13T18:15:19.938Z",
+        "fecha_registro": "2026-09-13",
+        "hora_registro": "15:15:19",
+        "hora_desde": "2026-09-13T18:15:19.938Z",
+        "linea": "OMECO",
+        "hora_inicio_turno": "06:00:00",
+        "hora_fin_turno": "18:00:00",
+        "tipo_turno": "Turno Día (06:00 a 18:00)",
+        "hora_inicio_descanso": "12:00:00",
+        "hora_fin_descanso": "13:00:00",
+        "tiempo_disponible_turno": 12,
+        "turno_id": "tur-dia",
+        "hora_hasta": "2026-09-13T18:15:54.669Z",
+        "tiempo_parada": 35,
+        "categoria_tm": "OPERATIVO",
+        "tiempo_muerto": "LIMPIEZA",
+        "observaciones": "Prueba sin postgres modo json",
+        "ubicacion": null,
+        "origenes": [
+          {
+            "origen_id": "ori-operativo"
+          }
+        ],
+        "propuesta_manual": null,
+        "recibido_en_servidor": "2026-09-13T18:15:54.976Z",
+        "supervisor_turno": "Cesar",
+        "horas_totales_turno": 12
+      }
+    ],
+    [
+      "762a377b-c090-47b0-82e4-85b414236861",
+      {
+        "evento_id": "762a377b-c090-47b0-82e4-85b414236861",
+        "inicio_evento_id": "e4001db8-9e61-4cf5-b63b-c845fe9e4482",
+        "tablet_id": "tab-sec-omeco",
+        "secadero_id": "sec-omeco",
+        "fecha_hora_inicio": "2026-09-13T18:15:19.938Z",
+        "fecha_hora_fin": "2026-09-13T18:15:54.669Z",
+        "duracion_segundos": 35,
+        "estado_evento": "cerrado",
+        "tipo_registro": "manual",
+        "origen_id": "ori-operativo",
+        "razon_id": "raz-limpieza",
+        "observacion": "Prueba sin postgres modo json",
+        "version": 1,
+        "sincronizado": false,
+        "hora_inicio_turno": "06:00:00",
+        "hora_fin_turno": "18:00:00",
+        "tipo_turno": "Turno Día (06:00 a 18:00)",
+        "hora_inicio_descanso": "12:00:00",
+        "hora_fin_descanso": "13:00:00",
+        "linea": "OMECO",
+        "hora_desde": "2026-09-13T18:15:19.938Z",
+        "hora_hasta": "2026-09-13T18:15:54.669Z",
+        "categoria_tm": "OPERATIVO",
+        "tiempo_muerto": "LIMPIEZA",
+        "observaciones": "Prueba sin postgres modo json",
+        "ubicacion": null,
+        "tiempo_disponible_turno": 12,
+        "tiempo_parada": 35,
+        "turno_id": "tur-dia",
+        "origenes": [
+          {
+            "origen_id": "ori-operativo"
+          }
+        ],
+        "propuesta_manual": null,
+        "recibido_en_servidor": "2026-09-13T18:15:54.976Z",
+        "fecha_registro": "2026-09-13",
+        "hora_registro": "15:15:54",
+        "timestamp_registro": "2026-09-13T18:15:54.976Z",
+        "supervisor_turno": "Cesar",
+        "horas_totales_turno": 12
+      }
     ]
   ],
   "eventOrigins": [
@@ -8869,6 +8960,22 @@
       [
         {
           "origen_id": "ori-proceso"
+        }
+      ]
+    ],
+    [
+      "e4001db8-9e61-4cf5-b63b-c845fe9e4482",
+      [
+        {
+          "origen_id": "ori-operativo"
+        }
+      ]
+    ],
+    [
+      "762a377b-c090-47b0-82e4-85b414236861",
+      [
+        {
+          "origen_id": "ori-operativo"
         }
       ]
     ]

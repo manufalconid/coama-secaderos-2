@@ -21,59 +21,7 @@ export class PgSyncStore {
   }
 
   async getMasterData() {
-    const client = await this.pool.connect();
-    try {
-      const [razonesRes, origenesRes, secaderosRes, tabletsRes, razonOrigenesRes, turnosRes] = await Promise.all([
-        client.query(
-          "select razon_id, codigo, nombre, activa, observacion_obligatoria, observaciones_predefinidas, mostrar_perfil, ubicacion_obligatoria, ubicacion_fija, ubicacion_lista, vista_electricos, vista_mecanicos, vista_mecanicos_rodillos, matriz, matriz_extendida from razones_parada where activa = true order by nombre"
-        ),
-        client.query(
-          "select origen_id, codigo, nombre, activo as activa from origenes_parada where activo = true order by nombre"
-        ),
-        client.query(
-          "select secadero_id, codigo, nombre, activo from secaderos where activo = true order by codigo"
-        ),
-        client.query(
-          "select tablet_id, secadero_id, nombre, activa, ip_tablet from tablets where activa = true order by nombre"
-        ),
-        client.query(
-          "select razon_id, origen_id from razon_origenes"
-        ),
-        client.query(
-          "select turno_id, nombre, supervisor, hora_inicio, hora_fin, horas_totales, horas_descanso, activo, fecha_inicio_vigencia from turnos where activo = true order by fecha_inicio_vigencia desc, nombre"
-        )
-      ]);
-
-      const origenesMap = new Map();
-      for (const row of razonOrigenesRes.rows) {
-        if (!origenesMap.has(row.razon_id)) {
-          origenesMap.set(row.razon_id, []);
-        }
-        origenesMap.get(row.razon_id).push(row.origen_id);
-      }
-
-      const razones = razonesRes.rows.map(r => ({
-        ...r,
-        origen_ids: origenesMap.get(r.razon_id) ?? []
-      }));
-
-      const turnos = turnosRes.rows.map(t => ({
-        ...t,
-        horas_totales: Number(t.horas_totales),
-        horas_descanso: Number(t.horas_descanso),
-        fecha_inicio_vigencia: t.fecha_inicio_vigencia ? new Date(t.fecha_inicio_vigencia).toLocaleDateString("sv-SE") : "2026-08-26"
-      }));
-
-      return {
-        razones,
-        origenes: origenesRes.rows,
-        secaderos: secaderosRes.rows,
-        tablets: tabletsRes.rows,
-        turnos
-      };
-    } finally {
-      client.release();
-    }
+    return this.getMasterDataInternal();
   }
 
   async listRazones() {
@@ -209,11 +157,12 @@ export class PgSyncStore {
   async saveTurno(input, turnoId = input?.turno_id ?? `tur-${randomUUID()}`) {
     requireName(input, "turno");
     const supervisor = input.supervisor ? input.supervisor.trim() : null;
+    const vigencia = input.fecha_inicio_vigencia || "2026-08-26";
     const result = await this.pool.query(
       `
-        insert into turnos (turno_id, nombre, supervisor, hora_inicio, hora_fin, horas_totales, horas_descanso, activo, modificado_en)
-        values ($1, $2, $3, $4, $5, $6, $7, $8, now())
-        on conflict (turno_id) do update set
+        insert into turnos (turno_id, nombre, supervisor, hora_inicio, hora_fin, horas_totales, horas_descanso, activo, fecha_inicio_vigencia, modificado_en)
+        values ($1, $2, $3, $4, $5, $6, $7, $8, $9, now())
+        on conflict (turno_id, fecha_inicio_vigencia) do update set
           nombre = excluded.nombre,
           supervisor = excluded.supervisor,
           hora_inicio = excluded.hora_inicio,
@@ -222,7 +171,7 @@ export class PgSyncStore {
           horas_descanso = excluded.horas_descanso,
           activo = excluded.activo,
           modificado_en = now()
-        returning turno_id, nombre, supervisor, hora_inicio, hora_fin, horas_totales, horas_descanso, activo
+        returning turno_id, nombre, supervisor, hora_inicio, hora_fin, horas_totales, horas_descanso, activo, fecha_inicio_vigencia
       `,
       [
         turnoId,
@@ -232,14 +181,16 @@ export class PgSyncStore {
         input.hora_fin,
         Number(input.horas_totales ?? 12.00),
         0.00,
-        input.activo ?? true
+        input.activo ?? true,
+        vigencia
       ]
     );
     const row = result.rows[0];
     return {
       ...row,
       horas_totales: Number(row.horas_totales),
-      horas_descanso: Number(row.horas_descanso)
+      horas_descanso: Number(row.horas_descanso),
+      fecha_inicio_vigencia: row.fecha_inicio_vigencia ? new Date(row.fecha_inicio_vigencia).toLocaleDateString("sv-SE") : vigencia
     };
   }
 
@@ -476,55 +427,62 @@ export class PgSyncStore {
     }
   }
 
-  async getMasterDataInternal(client) {
-    const [razonesRes, origenesRes, secaderosRes, tabletsRes, razonOrigenesRes, turnosRes] = await Promise.all([
-      client.query(
-        "select razon_id, codigo, nombre, activa, observacion_obligatoria, observaciones_predefinidas, mostrar_perfil, ubicacion_obligatoria, ubicacion_fija, ubicacion_lista, vista_electricos, vista_mecanicos, vista_mecanicos_rodillos, matriz, matriz_extendida from razones_parada where activa = true order by nombre"
-      ),
-      client.query(
-        "select origen_id, codigo, nombre, activo as activa from origenes_parada where activo = true order by nombre"
-      ),
-      client.query(
-        "select secadero_id, codigo, nombre, activo from secaderos where activo = true order by codigo"
-      ),
-      client.query(
-        "select tablet_id, secadero_id, nombre, activa, ip_tablet from tablets where activa = true order by nombre"
-      ),
-      client.query(
-        "select razon_id, origen_id from razon_origenes"
-      ),
-      client.query(
-        "select turno_id, nombre, supervisor, hora_inicio, hora_fin, horas_totales, horas_descanso, activo, fecha_inicio_vigencia from turnos where activo = true order by fecha_inicio_vigencia desc, nombre"
-      )
-    ]);
+  async getMasterDataInternal(externalClient = null) {
+    const client = externalClient ?? await this.pool.connect();
+    try {
+      const [razonesRes, origenesRes, secaderosRes, tabletsRes, razonOrigenesRes, turnosRes] = await Promise.all([
+        client.query(
+          "select razon_id, codigo, nombre, activa, observacion_obligatoria, observaciones_predefinidas, mostrar_perfil, ubicacion_obligatoria, ubicacion_fija, ubicacion_lista, vista_electricos, vista_mecanicos, vista_mecanicos_rodillos, matriz, matriz_extendida from razones_parada where activa = true order by nombre"
+        ),
+        client.query(
+          "select origen_id, codigo, nombre, activo as activa from origenes_parada where activo = true order by nombre"
+        ),
+        client.query(
+          "select secadero_id, codigo, nombre, activo from secaderos where activo = true order by codigo"
+        ),
+        client.query(
+          "select tablet_id, secadero_id, nombre, activa, ip_tablet from tablets where activa = true order by nombre"
+        ),
+        client.query(
+          "select razon_id, origen_id from razon_origenes"
+        ),
+        client.query(
+          "select turno_id, nombre, supervisor, hora_inicio, hora_fin, horas_totales, horas_descanso, activo, fecha_inicio_vigencia from turnos where activo = true order by fecha_inicio_vigencia desc, nombre"
+        )
+      ]);
 
-    const origenesMap = new Map();
-    for (const row of razonOrigenesRes.rows) {
-      if (!origenesMap.has(row.razon_id)) {
-        origenesMap.set(row.razon_id, []);
+      const origenesMap = new Map();
+      for (const row of razonOrigenesRes.rows) {
+        if (!origenesMap.has(row.razon_id)) {
+          origenesMap.set(row.razon_id, []);
+        }
+        origenesMap.get(row.razon_id).push(row.origen_id);
       }
-      origenesMap.get(row.razon_id).push(row.origen_id);
+
+      const razones = razonesRes.rows.map(r => ({
+        ...r,
+        origen_ids: origenesMap.get(r.razon_id) ?? []
+      }));
+
+      const turnos = turnosRes.rows.map(t => ({
+        ...t,
+        horas_totales: Number(t.horas_totales),
+        horas_descanso: Number(t.horas_descanso),
+        fecha_inicio_vigencia: t.fecha_inicio_vigencia ? new Date(t.fecha_inicio_vigencia).toLocaleDateString("sv-SE") : "2026-08-26"
+      }));
+
+      return {
+        razones,
+        origenes: origenesRes.rows,
+        secaderos: secaderosRes.rows,
+        tablets: tabletsRes.rows,
+        turnos
+      };
+    } finally {
+      if (!externalClient) {
+        client.release();
+      }
     }
-
-    const razones = razonesRes.rows.map(r => ({
-      ...r,
-      origen_ids: origenesMap.get(r.razon_id) ?? []
-    }));
-
-    const turnos = turnosRes.rows.map(t => ({
-      ...t,
-      horas_totales: Number(t.horas_totales),
-      horas_descanso: Number(t.horas_descanso),
-      fecha_inicio_vigencia: t.fecha_inicio_vigencia ? new Date(t.fecha_inicio_vigencia).toLocaleDateString("sv-SE") : "2026-08-26"
-    }));
-
-    return {
-      razones,
-      origenes: origenesRes.rows,
-      secaderos: secaderosRes.rows,
-      tablets: tabletsRes.rows,
-      turnos
-    };
   }
 
   async listEventos() {
@@ -764,8 +722,8 @@ export class PgSyncStore {
   }
 
   async snapshot() {
-    const events = await this.listEventos();
     const masterData = await this.getMasterDataInternal();
+    const events = await this.listEventos();
     const populatedEvents = events.map(e => populateUnifiedFields(e, masterData));
     const client = await this.pool.connect();
     try {
@@ -777,7 +735,8 @@ export class PgSyncStore {
       return {
         events: populatedEvents,
         eventOrigins: eventOrigins.rows,
-        manualProposals: manualProposals.rows
+        manualProposals: manualProposals.rows,
+        masterData
       };
     } finally {
       client.release();

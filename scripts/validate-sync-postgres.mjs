@@ -12,9 +12,9 @@ const store = new PgSyncStore({ pool });
 
 const event = {
   evento_id: "11111111-1111-4111-8111-111111111111",
-  tablet_id: "tab-sec-1",
-  secadero_id: "sec-1",
-  razon_id: "raz-mantenimiento",
+  tablet_id: "tab-sec-omeco",
+  secadero_id: "sec-omeco",
+  razon_id: "raz-cadena",
   fecha_hora_inicio: "2026-08-03T10:00:00.000Z",
   fecha_hora_fin: "2026-08-03T10:25:00.000Z",
   duracion_segundos: 1500,
@@ -22,8 +22,8 @@ const event = {
   estado_evento: "cerrado",
   version: 1,
   origenes: [
-    { origen_id: "ori-secadero" },
-    { origen_id: "ori-caldera" }
+    { origen_id: "ori-mecanico" },
+    { origen_id: "ori-electrico" }
   ],
   propuesta_manual: {
     tipo: "origen",

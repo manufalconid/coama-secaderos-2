@@ -1,6 +1,6 @@
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const VALID_EVENT_STATES = new Set(["abierto", "cerrado", "corregido", "anulado"]);
-const VALID_PROPOSAL_TYPES = new Set(["razon"]);
+const VALID_PROPOSAL_TYPES = new Set(["razon", "origen"]);
 const VALID_LINEAS = new Set(["OMECO", "BENECKE", "RAUTE"]);
 
 export function validateSyncEvent(event) {

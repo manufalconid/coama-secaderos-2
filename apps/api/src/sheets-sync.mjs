@@ -1,18 +1,54 @@
+import fs from "node:fs";
+import path from "node:path";
 import { google } from "googleapis";
-
-const sheetId = process.env.GOOGLE_SHEET_ID;
-const serviceAccountKeyRaw = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
 
 let sheetsClient = null;
 
+function getSheetId() {
+  return process.env.GOOGLE_SHEET_ID;
+}
+
+function getCredentialsObject() {
+  const rawKey = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
+  if (rawKey && rawKey.trim().startsWith("{")) {
+    try {
+      return JSON.parse(rawKey);
+    } catch (e) {
+      console.error("[ GOOGLE SHEETS ] Error al parsear GOOGLE_SERVICE_ACCOUNT_KEY:", e.message);
+    }
+  }
+
+  const customPath = process.env.GOOGLE_APPLICATION_CREDENTIALS || process.env.GOOGLE_CREDENTIALS_PATH;
+  const potentialPaths = [
+    customPath,
+    path.resolve("google-credentials.json"),
+    path.resolve("apps/api/google-credentials.json")
+  ].filter(Boolean);
+
+  for (const p of potentialPaths) {
+    if (fs.existsSync(p)) {
+      try {
+        const fileContent = fs.readFileSync(p, "utf8");
+        return JSON.parse(fileContent);
+      } catch (e) {
+        console.error(`[ GOOGLE SHEETS ] Error leyendo archivo de credenciales en ${p}:`, e.message);
+      }
+    }
+  }
+
+  return null;
+}
+
 function getSheetsClient() {
   if (sheetsClient) return sheetsClient;
-  if (!sheetId || !serviceAccountKeyRaw) {
-    console.log("[ GOOGLE SHEETS ] Sincronización omitida (credenciales no configuradas).");
+  const sheetId = getSheetId();
+  const credentials = getCredentialsObject();
+
+  if (!sheetId || !credentials) {
+    console.log("[ GOOGLE SHEETS ] Sincronización omitida (credenciales o GOOGLE_SHEET_ID no configurados).");
     return null;
   }
   try {
-    const credentials = JSON.parse(serviceAccountKeyRaw);
     const auth = new google.auth.JWT({
       email: credentials.client_email,
       key: credentials.private_key,
@@ -369,6 +405,7 @@ export function deriveDailyTurnos(events, masterData) {
 async function ensureSheetExists(title, headers) {
   const sheets = getSheetsClient();
   if (!sheets) return false;
+  const sheetId = getSheetId();
   try {
     const meta = await sheets.spreadsheets.get({ spreadsheetId: sheetId });
     const sheetsList = meta.data.sheets || [];
@@ -411,6 +448,7 @@ async function ensureSheetExists(title, headers) {
 async function getExistingRows(title) {
   const sheets = getSheetsClient();
   if (!sheets) return [];
+  const sheetId = getSheetId();
   try {
     const res = await sheets.spreadsheets.values.get({
       spreadsheetId: sheetId,
@@ -434,6 +472,7 @@ export async function syncRawEventToSheets(e, forceState = null, masterData = nu
 
   const sheets = getSheetsClient();
   if (!sheets) return;
+  const sheetId = getSheetId();
 
   const ok = await ensureSheetExists(title, headers);
   if (!ok) return;
@@ -514,6 +553,7 @@ export async function syncProcessedEventToSheets(e, masterData = null) {
 
   const sheets = getSheetsClient();
   if (!sheets) return;
+  const sheetId = getSheetId();
 
   const ok = await ensureSheetExists(title, headers);
   if (!ok) return;
@@ -586,6 +626,7 @@ export async function syncTurnosToSheets(turnos) {
 
   const sheets = getSheetsClient();
   if (!sheets) return;
+  const sheetId = getSheetId();
 
   const ok = await ensureSheetExists(title, headers);
   if (!ok) return;
@@ -646,6 +687,7 @@ export async function syncTurnosToSheets(turnos) {
 export async function exportAllToSheets(events, masterData) {
   const sheets = getSheetsClient();
   if (!sheets) throw new Error("Google Sheets credentials not configured.");
+  const sheetId = getSheetId();
 
   // 1. Reescribir registros crudos incrementalmente
   const titleCrudos = "registros_crudos_tablet";

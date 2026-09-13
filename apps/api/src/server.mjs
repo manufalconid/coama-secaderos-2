@@ -1,3 +1,9 @@
+if (typeof process.loadEnvFile === "function") {
+  try {
+    process.loadEnvFile();
+  } catch (_) {}
+}
+
 import http from "node:http";
 import net from "node:net";
 import { exec } from "node:child_process";
@@ -7,10 +13,37 @@ import { exportParametros, importParametros } from "./parametros-handler.mjs";
 import { syncRawEventToSheets, syncProcessedEventToSheets, exportAllToSheets, formatErpIsoLocal } from "./sheets-sync.mjs";
 
 
+import fs from "node:fs";
+import path from "node:path";
+
 const host = process.env.API_HOST ?? "0.0.0.0";
 const port = Number(process.env.API_PORT ?? 8080);
 let storeMode = process.env.API_STORE ?? "memory";
 let store;
+
+async function autoReconcileSnapshotWithPostgres(pgStore) {
+  try {
+    const dataPath = path.resolve("apps/api/data/store_snapshot.json");
+    if (!fs.existsSync(dataPath)) return;
+    const raw = JSON.parse(fs.readFileSync(dataPath, "utf8"));
+    const events = raw.events
+      ? (Array.isArray(raw.events[0]) ? raw.events.map(e => e[1]) : raw.events)
+      : [];
+    if (events.length === 0) return;
+
+    let synced = 0;
+    for (let i = 0; i < events.length; i += 50) {
+      const chunk = events.slice(i, i + 50);
+      const res = await pgStore.syncBatch(chunk);
+      synced += (res.accepted || []).length;
+    }
+    if (synced > 0) {
+      console.log(`[ AUTO-SYNC ] Se reconciliaron ${synced} eventos desde store_snapshot.json hacia PostgreSQL.`);
+    }
+  } catch (err) {
+    console.warn(`[ AUTO-SYNC ] Nota en reconciliación automática: ${err.message}`);
+  }
+}
 
 if (storeMode === "postgres") {
   try {
@@ -19,6 +52,7 @@ if (storeMode === "postgres") {
     await pgStore.pool.query("SELECT 1");
     store = pgStore;
     console.log("[ OK ] Conectado a la base de datos PostgreSQL.");
+    autoReconcileSnapshotWithPostgres(pgStore).catch(e => console.warn("[ AUTO-SYNC Warning ]", e.message));
   } catch (err) {
     console.warn(`[ ADVERTENCIA ] No se pudo conectar a PostgreSQL (${err.message}). Cayendo en modo en memoria (storeMode = memory)...`);
     storeMode = "memory";
@@ -26,6 +60,24 @@ if (storeMode === "postgres") {
   }
 } else {
   store = new InMemorySyncStore(undefined, { seedProposals: true, persist: true });
+}
+
+// Reconexión y sincronización automática periódica si PostgreSQL se restaura
+if (process.env.API_STORE === "postgres") {
+  setInterval(async () => {
+    if (storeMode === "memory") {
+      try {
+        const testStore = new PgSyncStore();
+        await testStore.pool.query("SELECT 1");
+        console.log("[ AUTO-RECONNECT ] Conexión con PostgreSQL restaurada. Conmutando a PostgreSQL...");
+        store = testStore;
+        storeMode = "postgres";
+        await autoReconcileSnapshotWithPostgres(testStore);
+      } catch {
+        // Continúa en modo de contingencia en memoria
+      }
+    }
+  }, 20000);
 }
 const tabletConnections = new Map(); // tablet_id -> { lastSeenRx, lastRxIp, lastPingTx, lastPingTxSuccess, lastPingStatus, lastPingLatencyMs }
 const CONNECTION_TOLERANCE_MS = 45000; // 45 segundos de tolerancia para considerar conectada una tablet
