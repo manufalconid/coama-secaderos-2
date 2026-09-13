@@ -369,9 +369,9 @@ export class PgSyncStore {
         if (dbEvt.version === event.version) {
           // Comparar si hay cambios reales en los datos de la parada
           const hasChanges = 
-            dbEvt.razon_id !== (event.razon_id ?? null) ||
-            dbEvt.observacion !== (event.observacion ?? null) ||
-            dbEvt.ubicacion !== (event.ubicacion ?? null) ||
+            (dbEvt.razon_id || null) !== (event.razon_id || null) ||
+            (dbEvt.observacion || "").trim() !== (event.observacion || "").trim() ||
+            (dbEvt.ubicacion || "").trim() !== (event.ubicacion || "").trim() ||
             Date.parse(dbEvt.fecha_hora_inicio) !== Date.parse(event.fecha_hora_inicio) ||
             (dbEvt.fecha_hora_fin ? Date.parse(dbEvt.fecha_hora_fin) : null) !== (event.fecha_hora_fin ? Date.parse(event.fecha_hora_fin) : null);
 

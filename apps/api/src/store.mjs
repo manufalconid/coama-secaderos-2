@@ -350,9 +350,9 @@ export class InMemorySyncStore {
         if (current.version === event.version) {
           // Comparar si hay cambios reales en los datos de la parada
           const hasChanges = 
-            current.razon_id !== (event.razon_id ?? null) ||
-            current.observacion !== (event.observacion ?? null) ||
-            current.ubicacion !== (event.ubicacion ?? null) ||
+            (current.razon_id || null) !== (event.razon_id || null) ||
+            (current.observacion || "").trim() !== (event.observacion || "").trim() ||
+            (current.ubicacion || "").trim() !== (event.ubicacion || "").trim() ||
             Date.parse(current.fecha_hora_inicio) !== Date.parse(event.fecha_hora_inicio) ||
             (current.fecha_hora_fin ? Date.parse(current.fecha_hora_fin) : null) !== (event.fecha_hora_fin ? Date.parse(event.fecha_hora_fin) : null);
 

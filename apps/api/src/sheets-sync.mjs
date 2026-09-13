@@ -3,6 +3,15 @@ import path from "node:path";
 import { google } from "googleapis";
 
 let sheetsClient = null;
+let sheetsQueue = Promise.resolve();
+
+export function enqueueSheetsTask(task) {
+  const next = sheetsQueue.then(() => task()).catch(err => {
+    console.error("[ GOOGLE SHEETS QUEUE ERROR ]", err);
+  });
+  sheetsQueue = next;
+  return next;
+}
 
 function getSheetId() {
   return process.env.GOOGLE_SHEET_ID;
@@ -462,264 +471,28 @@ async function getExistingRows(title) {
 }
 
 export async function syncRawEventToSheets(e, forceState = null, masterData = null) {
-  const title = "registros_crudos_tablet";
-  const headers = [
-    "evento_id", "tablet_id", "secadero_id", "fecha_registro", "linea", 
-    "turno_id", "turno_td_tn", "supervisor_turno", "fecha_hora_inicio", "hora_registro", "fecha_hora_fin", "duracion_minutos", 
-    "estado_evento", "tipo_registro", "categoria", "tiempo muerto", 
-    "observacion", "ubicacion", "version", "tipo_turno"
-  ];
+  return enqueueSheetsTask(async () => {
+    const title = "registros_crudos_tablet";
+    const headers = [
+      "evento_id", "tablet_id", "secadero_id", "fecha_registro", "linea", 
+      "turno_id", "turno_td_tn", "supervisor_turno", "fecha_hora_inicio", "hora_registro", "fecha_hora_fin", "duracion_minutos", 
+      "estado_evento", "tipo_registro", "categoria", "tiempo muerto", 
+      "observacion", "ubicacion", "version", "tipo_turno"
+    ];
 
-  const sheets = getSheetsClient();
-  if (!sheets) return;
-  const sheetId = getSheetId();
+    const sheets = getSheetsClient();
+    if (!sheets) return;
+    const sheetId = getSheetId();
 
-  const ok = await ensureSheetExists(title, headers);
-  if (!ok) return;
+    const ok = await ensureSheetExists(title, headers);
+    if (!ok) return;
 
-  const state = forceState || e.estado_evento || "abierto";
-  const isCerrado = state === "cerrado";
-  const compositeTurnoId = getCompositeTurnoId(e.fecha_registro, e.hora_inicio_turno, e.hora_fin_turno, e.turno_id || e.tipo_turno);
-  const turnoCode = getTurnoCode(e.fecha_registro, e.hora_inicio_turno, e.hora_fin_turno, e.turno_id || e.tipo_turno);
-
-  const row = [
-    e.evento_id || "",
-    e.tablet_id || "",
-    e.secadero_id || "",
-    e.fecha_registro || "",
-    e.linea || "",
-    compositeTurnoId,
-    turnoCode,
-    getSupervisorForEvent(e, masterData),
-    formatLocalTimestamp(e.fecha_hora_inicio),
-    formatLocalTime(e.hora_registro || e.fecha_hora_inicio),
-    isCerrado ? formatLocalTimestamp(e.fecha_hora_fin) : "",
-    isCerrado ? formatNumber(e.duracion_segundos !== null && e.duracion_segundos !== undefined ? Number((Number(e.duracion_segundos) / 60).toFixed(1)) : "") : "",
-    state,
-    e.tipo_registro || "",
-    e.categoria_tm || "",
-    e.tiempo_muerto || "",
-    e.observacion || "",
-    e.ubicacion || "",
-    formatNumber(e.version),
-    e.tipo_turno || ""
-  ];
-
-  try {
-    const existing = await getExistingRows(title);
-    let foundIndex = -1;
-    // Buscar coincidencia por clave única: evento_id + estado_evento
-    for (let i = 1; i < existing.length; i++) {
-      if (existing[i][0] === e.evento_id && existing[i][12] === state) {
-        foundIndex = i;
-        break;
-      }
-    }
-
-    if (foundIndex !== -1) {
-      const hasChanged = row.some((val, idx) => String(val) !== String(existing[foundIndex][idx] ?? ""));
-      if (hasChanged) {
-        await sheets.spreadsheets.values.update({
-          spreadsheetId: sheetId,
-          range: `${title}!A${foundIndex + 1}:T${foundIndex + 1}`,
-          valueInputOption: "USER_ENTERED",
-          requestBody: { values: [row] }
-        });
-        console.log(`[ GOOGLE SHEETS ] Evento crudo actualizado (${state}): ${e.evento_id}`);
-      }
-    } else {
-      await sheets.spreadsheets.values.append({
-        spreadsheetId: sheetId,
-        range: `${title}!A:A`,
-        valueInputOption: "USER_ENTERED",
-        requestBody: { values: [row] }
-      });
-      console.log(`[ GOOGLE SHEETS ] Evento crudo insertado (${state}): ${e.evento_id}`);
-    }
-  } catch (err) {
-    console.error("[ GOOGLE SHEETS ] Error al sincronizar evento crudo:", err);
-  }
-}
-
-export async function syncProcessedEventToSheets(e, masterData = null) {
-  const title = "registros_procesados";
-  const headers = [
-    "evento_id", "fecha_de_registro", "linea", "turno_id", "turno_td_tn", "supervisor_turno", "turno_hora_desde", "turno_hora_hasta",
-    "tiempo_de_turno_en_horas_programadas",
-    "categoria", "tiempo_muerto", "observacion", "ubicacion",
-    "tiempo_muerto_hora_desde", "tiempo_muerto_hora_hasta",
-    "tiempo_muerto_en_horas", "tiempo_muerto_en_minutos"
-  ];
-
-  const sheets = getSheetsClient();
-  if (!sheets) return;
-  const sheetId = getSheetId();
-
-  const ok = await ensureSheetExists(title, headers);
-  if (!ok) return;
-
-  try {
-    const existing = await getExistingRows(title);
-    let foundIndex = -1;
-    // Buscar coincidencia por clave única: evento_id
-    for (let i = 1; i < existing.length; i++) {
-      if (existing[i][0] === e.evento_id) {
-        foundIndex = i;
-        break;
-      }
-    }
-
-    if (foundIndex !== -1) {
-      console.log(`[ GOOGLE SHEETS ] Evento procesado ya existe (${e.evento_id}), omitiendo para no pisar registros.`);
-      return;
-    }
-
-    const durSec = e.tiempo_parada != null ? Number(e.tiempo_parada) : (e.duracion_segundos != null ? Number(e.duracion_segundos) : 0);
-    const durHr = Number((durSec / 3600).toFixed(2));
-    const durMin = Number((durSec / 60).toFixed(1));
-
-    let obsText = (e.observacion || e.observaciones || "").replace(/\[Sugerido\].*?\.\s*/i, "").trim();
-    if (obsText) {
-      obsText = obsText.replace(/;/g, ",").replace(/\r?\n/g, " ").trim();
-    }
-    const observacionVal = obsText ? obsText.toUpperCase() : "-.-";
-
-    const horasProg = formatNumber(e.horas_totales_turno ?? 12);
+    const state = forceState || e.estado_evento || "abierto";
+    const isCerrado = state === "cerrado";
     const compositeTurnoId = getCompositeTurnoId(e.fecha_registro, e.hora_inicio_turno, e.hora_fin_turno, e.turno_id || e.tipo_turno);
     const turnoCode = getTurnoCode(e.fecha_registro, e.hora_inicio_turno, e.hora_fin_turno, e.turno_id || e.tipo_turno);
 
     const row = [
-      e.evento_id || "",
-      formatDateShort(e.fecha_registro),
-      (e.linea || "").toUpperCase(),
-      compositeTurnoId,
-      turnoCode,
-      getSupervisorForEvent(e, masterData),
-      formatHour2Digits(e.hora_inicio_turno || "06:00:00"),
-      formatHour2Digits(e.hora_fin_turno || "18:00:00"),
-      horasProg,
-      (e.categoria_tm || "OPERATIVO").toUpperCase(),
-      (e.tiempo_muerto || "PARADA").toUpperCase(),
-      observacionVal,
-      e.ubicacion ? e.ubicacion.toUpperCase() : "",
-      formatTimeHHMMSS(e.hora_desde || e.fecha_hora_inicio),
-      formatTimeHHMMSS(e.hora_hasta || e.fecha_hora_fin),
-      formatDecimalComma(durHr, 2),
-      formatNumber(durMin)
-    ];
-
-    await sheets.spreadsheets.values.append({
-      spreadsheetId: sheetId,
-      range: `${title}!A:A`,
-      valueInputOption: "USER_ENTERED",
-      requestBody: { values: [row] }
-    });
-    console.log(`[ GOOGLE SHEETS ] Evento procesado insertado: ${e.evento_id}`);
-  } catch (err) {
-    console.error("[ GOOGLE SHEETS ] Error al sincronizar evento procesado:", err);
-  }
-}
-
-export async function syncTurnosToSheets(turnos) {
-  const title = "turnos";
-  const headers = ["fecha", "linea", "turno_id", "turno_td_tn", "nombre", "supervisor", "hora_inicio", "hora_fin", "horas_totales", "horas_programadas", "horas_muertas"];
-
-  const sheets = getSheetsClient();
-  if (!sheets) return;
-  const sheetId = getSheetId();
-
-  const ok = await ensureSheetExists(title, headers);
-  if (!ok) return;
-
-  try {
-    const existing = await getExistingRows(title);
-    const existingKeys = new Set();
-    // Clave única: turno_id + linea + supervisor
-    for (let i = 1; i < existing.length; i++) {
-      const tId = existing[i][2] || "";
-      const linea = existing[i][1] || "";
-      const supervisor = existing[i][5] || "";
-      const key = `${tId}_${linea}_${supervisor}`;
-      existingKeys.add(key);
-    }
-
-    const newRows = [];
-
-    for (const t of turnos) {
-      const key = `${t.turno_id}_${t.linea}_${t.supervisor}`;
-      if (existingKeys.has(key)) {
-        // Omitir para no pisar registros existentes
-        continue;
-      }
-
-      const code = t.turno_td_tn || getTurnoCode(t.fecha, t.hora_inicio, t.hora_fin, t.turno_id || t.nombre);
-      const row = [
-        formatDateShort(t.fecha),
-        t.linea || "",
-        t.turno_id || "",
-        code,
-        t.nombre || "",
-        t.supervisor || "",
-        formatHour2Digits(t.hora_inicio),
-        formatHour2Digits(t.hora_fin),
-        formatNumber(t.horas_totales),
-        formatNumber(t.horas_programadas),
-        formatDecimalComma(t.horas_muertas, 2)
-      ];
-
-      newRows.push(row);
-    }
-
-    if (newRows.length > 0) {
-      await sheets.spreadsheets.values.append({
-        spreadsheetId: sheetId,
-        range: `${title}!A:A`,
-        valueInputOption: "USER_ENTERED",
-        requestBody: { values: newRows }
-      });
-      console.log(`[ GOOGLE SHEETS ] Turnos: ${newRows.length} nuevas filas añadidas.`);
-    }
-  } catch (err) {
-    console.error("[ GOOGLE SHEETS ] Error al sincronizar turnos:", err);
-  }
-}
-
-export async function exportAllToSheets(events, masterData) {
-  const sheets = getSheetsClient();
-  if (!sheets) throw new Error("Google Sheets credentials not configured.");
-  const sheetId = getSheetId();
-
-  // 1. Reescribir registros crudos incrementalmente
-  const titleCrudos = "registros_crudos_tablet";
-  const headersCrudos = [
-    "evento_id", "tablet_id", "secadero_id", "fecha_registro", "linea", 
-    "turno_id", "turno_td_tn", "supervisor_turno", "fecha_hora_inicio", "hora_registro", "fecha_hora_fin", "duracion_minutos", 
-    "estado_evento", "tipo_registro", "categoria", "tiempo muerto", 
-    "observacion", "ubicacion", "version", "tipo_turno"
-  ];
-  await ensureSheetExists(titleCrudos, headersCrudos);
-
-  const existingCrudos = await getExistingRows(titleCrudos);
-  const crudosMap = new Map(); // key = `${evento_id}_${estado_evento}` -> { rowIndex, values }
-  for (let i = 1; i < existingCrudos.length; i++) {
-    const key = `${existingCrudos[i][0]}_${existingCrudos[i][12]}`;
-    crudosMap.set(key, { rowIndex: i, values: existingCrudos[i] });
-  }
-
-  const crudosUpdates = [];
-  const crudosNewRows = [];
-
-  const sortedEvents = [...events].sort((a, b) => {
-    const dateA = new Date(a.fecha_hora_inicio || a.inicio || 0);
-    const dateB = new Date(b.fecha_hora_inicio || b.inicio || 0);
-    return dateA - dateB;
-  });
-
-  for (const e of sortedEvents) {
-    const compositeTurnoId = getCompositeTurnoId(e.fecha_registro, e.hora_inicio_turno, e.hora_fin_turno, e.turno_id || e.tipo_turno);
-    const turnoCode = getTurnoCode(e.fecha_registro, e.hora_inicio_turno, e.hora_fin_turno, e.turno_id || e.tipo_turno);
-    // Fila 1: Inicio (abierto)
-    const rowAbierto = [
       e.evento_id || "",
       e.tablet_id || "",
       e.secadero_id || "",
@@ -730,9 +503,9 @@ export async function exportAllToSheets(events, masterData) {
       getSupervisorForEvent(e, masterData),
       formatLocalTimestamp(e.fecha_hora_inicio),
       formatLocalTime(e.hora_registro || e.fecha_hora_inicio),
-      "",
-      "",
-      "abierto",
+      isCerrado ? formatLocalTimestamp(e.fecha_hora_fin) : "",
+      isCerrado ? formatNumber(e.duracion_segundos !== null && e.duracion_segundos !== undefined ? Number((Number(e.duracion_segundos) / 60).toFixed(1)) : "") : "",
+      state,
       e.tipo_registro || "",
       e.categoria_tm || "",
       e.tiempo_muerto || "",
@@ -742,106 +515,63 @@ export async function exportAllToSheets(events, masterData) {
       e.tipo_turno || ""
     ];
 
-    const keyAbierto = `${e.evento_id}_abierto`;
-    const foundAbierto = crudosMap.get(keyAbierto);
-    if (foundAbierto) {
-      const hasChanged = rowAbierto.some((val, idx) => String(val) !== String(foundAbierto.values[idx] ?? ""));
-      if (hasChanged) {
-        crudosUpdates.push({
-          range: `${titleCrudos}!A${foundAbierto.rowIndex + 1}:T${foundAbierto.rowIndex + 1}`,
-          values: [rowAbierto]
-        });
+    try {
+      const existing = await getExistingRows(title);
+      let foundIndex = -1;
+      // Buscar coincidencia por clave única: evento_id + estado_evento
+      for (let i = 1; i < existing.length; i++) {
+        if (existing[i][0] === e.evento_id && existing[i][12] === state) {
+          foundIndex = i;
+          break;
+        }
       }
-    } else {
-      crudosNewRows.push(rowAbierto);
-    }
 
-    // Fila 2: Fin (cerrado) si corresponde
-    if (e.estado_evento === "cerrado") {
-      const rowCerrado = [
-        e.evento_id || "",
-        e.tablet_id || "",
-        e.secadero_id || "",
-        e.fecha_registro || "",
-        e.linea || "",
-        compositeTurnoId,
-        turnoCode,
-        getSupervisorForEvent(e, masterData),
-        formatLocalTimestamp(e.fecha_hora_inicio),
-        formatLocalTime(e.hora_registro || e.fecha_hora_inicio),
-        formatLocalTimestamp(e.fecha_hora_fin),
-        formatNumber(e.duracion_segundos !== null && e.duracion_segundos !== undefined ? Number((Number(e.duracion_segundos) / 60).toFixed(1)) : ""),
-        "cerrado",
-        e.tipo_registro || "",
-        e.categoria_tm || "",
-        e.tiempo_muerto || "",
-        e.observacion || "",
-        e.ubicacion || "",
-        formatNumber(e.version),
-        e.tipo_turno || ""
-      ];
-
-      const keyCerrado = `${e.evento_id}_cerrado`;
-      const foundCerrado = crudosMap.get(keyCerrado);
-      if (foundCerrado) {
-        const hasChanged = rowCerrado.some((val, idx) => String(val) !== String(foundCerrado.values[idx] ?? ""));
+      if (foundIndex !== -1) {
+        const hasChanged = row.some((val, idx) => String(val) !== String(existing[foundIndex][idx] ?? ""));
         if (hasChanged) {
-          crudosUpdates.push({
-            range: `${titleCrudos}!A${foundCerrado.rowIndex + 1}:T${foundCerrado.rowIndex + 1}`,
-            values: [rowCerrado]
+          await sheets.spreadsheets.values.update({
+            spreadsheetId: sheetId,
+            range: `${title}!A${foundIndex + 1}:T${foundIndex + 1}`,
+            valueInputOption: "USER_ENTERED",
+            requestBody: { values: [row] }
           });
+          console.log(`[ GOOGLE SHEETS ] Evento crudo actualizado (${state}): ${e.evento_id}`);
         }
       } else {
-        crudosNewRows.push(rowCerrado);
+        await sheets.spreadsheets.values.append({
+          spreadsheetId: sheetId,
+          range: `${title}!A:A`,
+          valueInputOption: "USER_ENTERED",
+          requestBody: { values: [row] }
+        });
+        console.log(`[ GOOGLE SHEETS ] Evento crudo insertado (${state}): ${e.evento_id}`);
       }
+    } catch (err) {
+      console.error("[ GOOGLE SHEETS ] Error al sincronizar evento crudo:", err);
     }
-  }
+  });
+}
 
-  if (crudosUpdates.length > 0) {
-    await sheets.spreadsheets.values.batchUpdate({
-      spreadsheetId: sheetId,
-      requestBody: {
-        valueInputOption: "USER_ENTERED",
-        data: crudosUpdates
-      }
-    });
-    console.log(`[ GOOGLE SHEETS ] Crudos: ${crudosUpdates.length} filas actualizadas.`);
-  }
+export async function syncProcessedEventToSheets(e, masterData = null) {
+  return enqueueSheetsTask(async () => {
+    // Si no es un evento cerrado o es un evento técnico de fin redundante, ignorar
+    if (e.estado_evento !== "cerrado" || e.inicio_evento_id) return;
 
-  if (crudosNewRows.length > 0) {
-    await sheets.spreadsheets.values.append({
-      spreadsheetId: sheetId,
-      range: `${titleCrudos}!A:A`,
-      valueInputOption: "USER_ENTERED",
-      requestBody: { values: crudosNewRows }
-    });
-    console.log(`[ GOOGLE SHEETS ] Crudos: ${crudosNewRows.length} nuevas filas añadidas.`);
-  }
+    const title = "registros_procesados";
+    const headers = [
+      "evento_id", "fecha_de_registro", "linea", "turno_id", "turno_td_tn", "supervisor_turno", "turno_hora_desde", "turno_hora_hasta",
+      "tiempo_de_turno_en_horas_programadas",
+      "categoria", "tiempo_muerto", "observacion", "ubicacion",
+      "tiempo_muerto_hora_desde", "tiempo_muerto_hora_hasta",
+      "tiempo_muerto_en_horas", "tiempo_muerto_en_minutos"
+    ];
 
-  // 2. Reescribir registros procesados incrementalmente (solo añadir nuevos)
-  const titleProcesados = "registros_procesados";
-  const headersProcesados = [
-    "evento_id", "fecha_de_registro", "linea", "turno_id", "turno_td_tn", "supervisor_turno", "turno_hora_desde", "turno_hora_hasta",
-    "tiempo_de_turno_en_horas_programadas",
-    "categoria", "tiempo_muerto", "observacion", "ubicacion",
-    "tiempo_muerto_hora_desde", "tiempo_muerto_hora_hasta",
-    "tiempo_muerto_en_horas", "tiempo_muerto_en_minutos"
-  ];
-  await ensureSheetExists(titleProcesados, headersProcesados);
+    const sheets = getSheetsClient();
+    if (!sheets) return;
+    const sheetId = getSheetId();
 
-  const existingProcesados = await getExistingRows(titleProcesados);
-  const existingProcesadosIds = new Set();
-  for (let i = 1; i < existingProcesados.length; i++) {
-    if (existingProcesados[i][0]) {
-      existingProcesadosIds.add(existingProcesados[i][0]);
-    }
-  }
-
-  const procesadosNewRows = [];
-
-  for (const e of sortedEvents) {
-    if (e.estado_evento !== "cerrado" || e.inicio_evento_id) continue;
-    if (existingProcesadosIds.has(e.evento_id)) continue;
+    const ok = await ensureSheetExists(title, headers);
+    if (!ok) return;
 
     const durSec = e.tiempo_parada != null ? Number(e.tiempo_parada) : (e.duracion_segundos != null ? Number(e.duracion_segundos) : 0);
     const durHr = Number((durSec / 3600).toFixed(2));
@@ -877,20 +607,365 @@ export async function exportAllToSheets(events, masterData) {
       formatNumber(durMin)
     ];
 
-    procesadosNewRows.push(row);
-  }
+    try {
+      const existing = await getExistingRows(title);
+      let foundIndex = -1;
+      // Buscar coincidencia por clave única: evento_id
+      for (let i = 1; i < existing.length; i++) {
+        if (existing[i][0] === e.evento_id) {
+          foundIndex = i;
+          break;
+        }
+      }
 
-  if (procesadosNewRows.length > 0) {
-    await sheets.spreadsheets.values.append({
-      spreadsheetId: sheetId,
-      range: `${titleProcesados}!A:A`,
-      valueInputOption: "USER_ENTERED",
-      requestBody: { values: procesadosNewRows }
+      if (foundIndex !== -1) {
+        const hasChanged = row.some((val, idx) => String(val) !== String(existing[foundIndex][idx] ?? ""));
+        if (hasChanged) {
+          await sheets.spreadsheets.values.update({
+            spreadsheetId: sheetId,
+            range: `${title}!A${foundIndex + 1}:Q${foundIndex + 1}`,
+            valueInputOption: "USER_ENTERED",
+            requestBody: { values: [row] }
+          });
+          console.log(`[ GOOGLE SHEETS ] Evento procesado actualizado: ${e.evento_id}`);
+        }
+      } else {
+        await sheets.spreadsheets.values.append({
+          spreadsheetId: sheetId,
+          range: `${title}!A:A`,
+          valueInputOption: "USER_ENTERED",
+          requestBody: { values: [row] }
+        });
+        console.log(`[ GOOGLE SHEETS ] Evento procesado insertado: ${e.evento_id}`);
+      }
+    } catch (err) {
+      console.error("[ GOOGLE SHEETS ] Error al sincronizar evento procesado:", err);
+    }
+  });
+}
+
+export async function syncTurnosToSheets(turnos) {
+  return enqueueSheetsTask(async () => {
+    const title = "turnos";
+    const headers = ["fecha", "linea", "turno_id", "turno_td_tn", "nombre", "supervisor", "hora_inicio", "hora_fin", "horas_totales", "horas_programadas", "horas_muertas"];
+
+    const sheets = getSheetsClient();
+    if (!sheets) return;
+    const sheetId = getSheetId();
+
+    const ok = await ensureSheetExists(title, headers);
+    if (!ok) return;
+
+    try {
+      const existing = await getExistingRows(title);
+      const existingKeys = new Set();
+      // Clave única: fecha + turno_id + linea + supervisor
+      for (let i = 1; i < existing.length; i++) {
+        const f = existing[i][0] || "";
+        const linea = existing[i][1] || "";
+        const tId = existing[i][2] || "";
+        const supervisor = existing[i][5] || "";
+        const key = `${f}_${linea}_${tId}_${supervisor}`;
+        existingKeys.add(key);
+      }
+
+      const newRows = [];
+
+      for (const t of turnos) {
+        const fFormatted = formatDateShort(t.fecha);
+        const key = `${fFormatted}_${t.linea || ""}_${t.turno_id || ""}_${t.supervisor || ""}`;
+        if (existingKeys.has(key)) {
+          // Omitir para no pisar registros existentes
+          continue;
+        }
+        existingKeys.add(key);
+
+        const code = t.turno_td_tn || getTurnoCode(t.fecha, t.hora_inicio, t.hora_fin, t.turno_id || t.nombre);
+        const row = [
+          fFormatted,
+          t.linea || "",
+          t.turno_id || "",
+          code,
+          t.nombre || "",
+          t.supervisor || "",
+          formatHour2Digits(t.hora_inicio),
+          formatHour2Digits(t.hora_fin),
+          formatNumber(t.horas_totales),
+          formatNumber(t.horas_programadas),
+          formatDecimalComma(t.horas_muertas, 2)
+        ];
+
+        newRows.push(row);
+      }
+
+      if (newRows.length > 0) {
+        await sheets.spreadsheets.values.append({
+          spreadsheetId: sheetId,
+          range: `${title}!A:A`,
+          valueInputOption: "USER_ENTERED",
+          requestBody: { values: newRows }
+        });
+        console.log(`[ GOOGLE SHEETS ] Turnos: ${newRows.length} nuevas filas añadidas.`);
+      }
+    } catch (err) {
+      console.error("[ GOOGLE SHEETS ] Error al sincronizar turnos:", err);
+    }
+  });
+}
+
+export async function exportAllToSheets(events, masterData) {
+  return enqueueSheetsTask(async () => {
+    const sheets = getSheetsClient();
+    if (!sheets) throw new Error("Google Sheets credentials not configured.");
+    const sheetId = getSheetId();
+
+    // 0. Deduplicar lista de eventos de entrada por evento_id
+    const eventMap = new Map();
+    for (const ev of events || []) {
+      if (!ev || !ev.evento_id) continue;
+      const existingEv = eventMap.get(ev.evento_id);
+      if (!existingEv || (ev.estado_evento === "cerrado" && existingEv.estado_evento !== "cerrado") || (ev.version > (existingEv.version || 0))) {
+        eventMap.set(ev.evento_id, ev);
+      }
+    }
+    const deduplicatedEvents = Array.from(eventMap.values());
+
+    // 1. Sincronizar registros crudos incrementalmente
+    const titleCrudos = "registros_crudos_tablet";
+    const headersCrudos = [
+      "evento_id", "tablet_id", "secadero_id", "fecha_registro", "linea", 
+      "turno_id", "turno_td_tn", "supervisor_turno", "fecha_hora_inicio", "hora_registro", "fecha_hora_fin", "duracion_minutos", 
+      "estado_evento", "tipo_registro", "categoria", "tiempo muerto", 
+      "observacion", "ubicacion", "version", "tipo_turno"
+    ];
+    await ensureSheetExists(titleCrudos, headersCrudos);
+
+    const existingCrudos = await getExistingRows(titleCrudos);
+    const crudosMap = new Map(); // key = `${evento_id}_${estado_evento}` -> { rowIndex, values }
+    for (let i = 1; i < existingCrudos.length; i++) {
+      const key = `${existingCrudos[i][0]}_${existingCrudos[i][12]}`;
+      if (!crudosMap.has(key)) {
+        crudosMap.set(key, { rowIndex: i, values: existingCrudos[i] });
+      }
+    }
+
+    const crudosUpdates = [];
+    const crudosNewRows = [];
+    const seenCrudosKeys = new Set(crudosMap.keys());
+
+    const sortedEvents = [...deduplicatedEvents].sort((a, b) => {
+      const dateA = new Date(a.fecha_hora_inicio || a.inicio || 0);
+      const dateB = new Date(b.fecha_hora_inicio || b.inicio || 0);
+      return dateA - dateB;
     });
-    console.log(`[ GOOGLE SHEETS ] Procesados: ${procesadosNewRows.length} nuevas filas añadidas.`);
-  }
 
-  // 3. Reescribir turnos diarios incrementalmente (solo añadir nuevos)
-  const dailyTurnos = deriveDailyTurnos(sortedEvents, masterData);
-  await syncTurnosToSheets(dailyTurnos);
+    for (const e of sortedEvents) {
+      if (e.inicio_evento_id) continue;
+      const compositeTurnoId = getCompositeTurnoId(e.fecha_registro, e.hora_inicio_turno, e.hora_fin_turno, e.turno_id || e.tipo_turno);
+      const turnoCode = getTurnoCode(e.fecha_registro, e.hora_inicio_turno, e.hora_fin_turno, e.turno_id || e.tipo_turno);
+
+      // Fila 1: Inicio (abierto)
+      const rowAbierto = [
+        e.evento_id || "",
+        e.tablet_id || "",
+        e.secadero_id || "",
+        e.fecha_registro || "",
+        e.linea || "",
+        compositeTurnoId,
+        turnoCode,
+        getSupervisorForEvent(e, masterData),
+        formatLocalTimestamp(e.fecha_hora_inicio),
+        formatLocalTime(e.hora_registro || e.fecha_hora_inicio),
+        "",
+        "",
+        "abierto",
+        e.tipo_registro || "",
+        e.categoria_tm || "",
+        e.tiempo_muerto || "",
+        e.observacion || "",
+        e.ubicacion || "",
+        formatNumber(e.version),
+        e.tipo_turno || ""
+      ];
+
+      const keyAbierto = `${e.evento_id}_abierto`;
+      const foundAbierto = crudosMap.get(keyAbierto);
+      if (foundAbierto) {
+        const hasChanged = rowAbierto.some((val, idx) => String(val) !== String(foundAbierto.values[idx] ?? ""));
+        if (hasChanged) {
+          crudosUpdates.push({
+            range: `${titleCrudos}!A${foundAbierto.rowIndex + 1}:T${foundAbierto.rowIndex + 1}`,
+            values: [rowAbierto]
+          });
+        }
+      } else if (!seenCrudosKeys.has(keyAbierto)) {
+        seenCrudosKeys.add(keyAbierto);
+        crudosNewRows.push(rowAbierto);
+      }
+
+      // Fila 2: Fin (cerrado) si corresponde
+      if (e.estado_evento === "cerrado") {
+        const rowCerrado = [
+          e.evento_id || "",
+          e.tablet_id || "",
+          e.secadero_id || "",
+          e.fecha_registro || "",
+          e.linea || "",
+          compositeTurnoId,
+          turnoCode,
+          getSupervisorForEvent(e, masterData),
+          formatLocalTimestamp(e.fecha_hora_inicio),
+          formatLocalTime(e.hora_registro || e.fecha_hora_inicio),
+          formatLocalTimestamp(e.fecha_hora_fin),
+          formatNumber(e.duracion_segundos !== null && e.duracion_segundos !== undefined ? Number((Number(e.duracion_segundos) / 60).toFixed(1)) : ""),
+          "cerrado",
+          e.tipo_registro || "",
+          e.categoria_tm || "",
+          e.tiempo_muerto || "",
+          e.observacion || "",
+          e.ubicacion || "",
+          formatNumber(e.version),
+          e.tipo_turno || ""
+        ];
+
+        const keyCerrado = `${e.evento_id}_cerrado`;
+        const foundCerrado = crudosMap.get(keyCerrado);
+        if (foundCerrado) {
+          const hasChanged = rowCerrado.some((val, idx) => String(val) !== String(foundCerrado.values[idx] ?? ""));
+          if (hasChanged) {
+            crudosUpdates.push({
+              range: `${titleCrudos}!A${foundCerrado.rowIndex + 1}:T${foundCerrado.rowIndex + 1}`,
+              values: [rowCerrado]
+            });
+          }
+        } else if (!seenCrudosKeys.has(keyCerrado)) {
+          seenCrudosKeys.add(keyCerrado);
+          crudosNewRows.push(rowCerrado);
+        }
+      }
+    }
+
+    if (crudosUpdates.length > 0) {
+      await sheets.spreadsheets.values.batchUpdate({
+        spreadsheetId: sheetId,
+        requestBody: {
+          valueInputOption: "USER_ENTERED",
+          data: crudosUpdates
+        }
+      });
+      console.log(`[ GOOGLE SHEETS ] Crudos: ${crudosUpdates.length} filas actualizadas.`);
+    }
+
+    if (crudosNewRows.length > 0) {
+      await sheets.spreadsheets.values.append({
+        spreadsheetId: sheetId,
+        range: `${titleCrudos}!A:A`,
+        valueInputOption: "USER_ENTERED",
+        requestBody: { values: crudosNewRows }
+      });
+      console.log(`[ GOOGLE SHEETS ] Crudos: ${crudosNewRows.length} nuevas filas añadidas.`);
+    }
+
+    // 2. Sincronizar registros procesados incrementalmente (con actualización in-place)
+    const titleProcesados = "registros_procesados";
+    const headersProcesados = [
+      "evento_id", "fecha_de_registro", "linea", "turno_id", "turno_td_tn", "supervisor_turno", "turno_hora_desde", "turno_hora_hasta",
+      "tiempo_de_turno_en_horas_programadas",
+      "categoria", "tiempo_muerto", "observacion", "ubicacion",
+      "tiempo_muerto_hora_desde", "tiempo_muerto_hora_hasta",
+      "tiempo_muerto_en_horas", "tiempo_muerto_en_minutos"
+    ];
+    await ensureSheetExists(titleProcesados, headersProcesados);
+
+    const existingProcesados = await getExistingRows(titleProcesados);
+    const procesadosMap = new Map(); // evento_id -> { rowIndex, values }
+    for (let i = 1; i < existingProcesados.length; i++) {
+      if (existingProcesados[i][0]) {
+        if (!procesadosMap.has(existingProcesados[i][0])) {
+          procesadosMap.set(existingProcesados[i][0], { rowIndex: i, values: existingProcesados[i] });
+        }
+      }
+    }
+
+    const procesadosUpdates = [];
+    const procesadosNewRows = [];
+    const seenProcesadosIds = new Set(procesadosMap.keys());
+
+    for (const e of sortedEvents) {
+      if (e.estado_evento !== "cerrado" || e.inicio_evento_id) continue;
+
+      const durSec = e.tiempo_parada != null ? Number(e.tiempo_parada) : (e.duracion_segundos != null ? Number(e.duracion_segundos) : 0);
+      const durHr = Number((durSec / 3600).toFixed(2));
+      const durMin = Number((durSec / 60).toFixed(1));
+
+      let obsText = (e.observacion || e.observaciones || "").replace(/\[Sugerido\].*?\.\s*/i, "").trim();
+      if (obsText) {
+        obsText = obsText.replace(/;/g, ",").replace(/\r?\n/g, " ").trim();
+      }
+      const observacionVal = obsText ? obsText.toUpperCase() : "-.-";
+
+      const horasProg = formatNumber(e.horas_totales_turno ?? 12);
+      const compositeTurnoId = getCompositeTurnoId(e.fecha_registro, e.hora_inicio_turno, e.hora_fin_turno, e.turno_id || e.tipo_turno);
+      const turnoCode = getTurnoCode(e.fecha_registro, e.hora_inicio_turno, e.hora_fin_turno, e.turno_id || e.tipo_turno);
+
+      const row = [
+        e.evento_id || "",
+        formatDateShort(e.fecha_registro),
+        (e.linea || "").toUpperCase(),
+        compositeTurnoId,
+        turnoCode,
+        getSupervisorForEvent(e, masterData),
+        formatHour2Digits(e.hora_inicio_turno || "06:00:00"),
+        formatHour2Digits(e.hora_fin_turno || "18:00:00"),
+        horasProg,
+        (e.categoria_tm || "OPERATIVO").toUpperCase(),
+        (e.tiempo_muerto || "PARADA").toUpperCase(),
+        observacionVal,
+        e.ubicacion ? e.ubicacion.toUpperCase() : "",
+        formatTimeHHMMSS(e.hora_desde || e.fecha_hora_inicio),
+        formatTimeHHMMSS(e.hora_hasta || e.fecha_hora_fin),
+        formatDecimalComma(durHr, 2),
+        formatNumber(durMin)
+      ];
+
+      const found = procesadosMap.get(e.evento_id);
+      if (found) {
+        const hasChanged = row.some((val, idx) => String(val) !== String(found.values[idx] ?? ""));
+        if (hasChanged) {
+          procesadosUpdates.push({
+            range: `${titleProcesados}!A${found.rowIndex + 1}:Q${found.rowIndex + 1}`,
+            values: [row]
+          });
+        }
+      } else if (!seenProcesadosIds.has(e.evento_id)) {
+        seenProcesadosIds.add(e.evento_id);
+        procesadosNewRows.push(row);
+      }
+    }
+
+    if (procesadosUpdates.length > 0) {
+      await sheets.spreadsheets.values.batchUpdate({
+        spreadsheetId: sheetId,
+        requestBody: {
+          valueInputOption: "USER_ENTERED",
+          data: procesadosUpdates
+        }
+      });
+      console.log(`[ GOOGLE SHEETS ] Procesados: ${procesadosUpdates.length} filas actualizadas.`);
+    }
+
+    if (procesadosNewRows.length > 0) {
+      await sheets.spreadsheets.values.append({
+        spreadsheetId: sheetId,
+        range: `${titleProcesados}!A:A`,
+        valueInputOption: "USER_ENTERED",
+        requestBody: { values: procesadosNewRows }
+      });
+      console.log(`[ GOOGLE SHEETS ] Procesados: ${procesadosNewRows.length} nuevas filas añadidas.`);
+    }
+
+    // 3. Sincronizar turnos
+    const dailyTurnos = deriveDailyTurnos(deduplicatedEvents, masterData);
+    await syncTurnosToSheets(dailyTurnos);
+  });
 }
