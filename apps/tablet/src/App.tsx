@@ -1262,30 +1262,49 @@ export default function App() {
                   </div>
                 </div>
               </div>
-              <div className="settings-footer" style={{ display: "flex", gap: "10px", marginTop: "16px", width: "100%", justifyContent: "space-between" }}>
-                <button
-                  type="button"
-                  className="btn-control secondary"
-                  onClick={async () => {
-                    if (confirm("¿Estás seguro de que deseas restablecer la terminal? Esto borrará el historial local de paradas.")) {
-                      const allEvts = await dbService.getEvents();
-                      for (const ev of allEvts) {
-                        await dbService.deleteEvent(ev.evento_id);
+              <div className="settings-footer" style={{ display: "flex", gap: "8px", marginTop: "16px", width: "100%", justifyContent: "space-between", flexWrap: "wrap" }}>
+                <div style={{ display: "flex", gap: "8px" }}>
+                  <button
+                    type="button"
+                    className="btn-control secondary"
+                    onClick={async () => {
+                      if (confirm("¿Deseas vaciar la cola de paradas y eventos de prueba de esta tablet?\n\n(Se mantendrá configurado el secadero asignado y la URL del servidor)")) {
+                        await dbService.clearEvents();
+                        localStorage.removeItem("machine_state");
+                        localStorage.removeItem("last_sync_time");
+                        setEvents([]);
+                        setUnsyncedCount(0);
+                        setCurrentEvent(null);
+                        setMachineState("running");
+                        setIsSettingsOpen(false);
+                        alert("✅ Cola local de paradas vaciada. La tablet está limpia y lista para operar.");
                       }
-                      localStorage.clear();
-                      window.location.reload();
-                    }
-                  }}
-                  style={{ background: "rgba(239, 68, 68, 0.08)", borderColor: "rgba(239, 68, 68, 0.2)", color: "var(--accent-rose)", padding: "0 12px", width: "auto", fontSize: "12px" }}
-                >
-                  ❌ Restablecer
-                </button>
+                    }}
+                    style={{ background: "rgba(245, 158, 11, 0.08)", borderColor: "rgba(245, 158, 11, 0.3)", color: "var(--accent-amber, #f59e0b)", padding: "0 10px", width: "auto", fontSize: "12px" }}
+                  >
+                    🧹 Vaciar Cola de Paradas
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-control secondary"
+                    onClick={async () => {
+                      if (confirm("¿Estás seguro de que deseas restablecer de fábrica la terminal? Esto borrará el historial local y toda la configuración.")) {
+                        await dbService.clearEvents();
+                        localStorage.clear();
+                        window.location.reload();
+                      }
+                    }}
+                    style={{ background: "rgba(239, 68, 68, 0.08)", borderColor: "rgba(239, 68, 68, 0.2)", color: "var(--accent-rose)", padding: "0 10px", width: "auto", fontSize: "12px" }}
+                  >
+                    ❌ Restablecer Fábrica
+                  </button>
+                </div>
                 <div style={{ display: "flex", gap: "10px" }}>
                   <button type="button" className="btn-control secondary" onClick={() => setIsSettingsOpen(false)}>
                     Cerrar
                   </button>
                   <button type="submit" className="btn-control primary" style={{ flex: "none", padding: "0 20px" }}>
-                    {isSyncing ? "Guardar Ajustes" : "Guardar Ajustes"}
+                    Guardar Ajustes
                   </button>
                 </div>
               </div>

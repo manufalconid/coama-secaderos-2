@@ -16,6 +16,7 @@
     "validate:sync:postgres": "node --env-file-if-exists=.env scripts/validate-sync-postgres.mjs",
     "db:migrate": "node --env-file-if-exists=.env scripts/migrate-json-to-postgres.mjs",
     "export:erp": "node scripts/export-erp.mjs",
+    "reset:data": "node --env-file-if-exists=.env scripts/reset-operational-data.mjs",
     "check": "node --check apps/api/src/server.mjs && node --check apps/api/src/server-postgres.mjs && node --check apps/api/src/store.mjs && node --check apps/api/src/postgres-store.mjs && node --check packages/validation/src/event-validation.mjs && node --check scripts/validate-sync.mjs && node --check scripts/validate-master-data.mjs && node --check scripts/validate-sync-postgres.mjs && node --check scripts/migrate-json-to-postgres.mjs"
   },
   "workspaces": [

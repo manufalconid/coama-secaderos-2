@@ -226,6 +226,22 @@ class HybridDatabase {
     }
   }
 
+  async clearEvents(): Promise<void> {
+    if (this.isNative && this.db) {
+      await this.db.run("DELETE FROM events");
+    } else {
+      return new Promise((resolve, reject) => {
+        if (!this.indexedDb) return resolve();
+        const tx = this.indexedDb.transaction("events", "readwrite");
+        const store = tx.objectStore("events");
+        const request = store.clear();
+
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(request.error);
+      });
+    }
+  }
+
   // --- SETTINGS OPERATIONS ---
 
   async getSetting(key: string): Promise<string | null> {
