@@ -1,5 +1,5 @@
 import React from "react";
-import { Send, Tablet, Download } from "lucide-react";
+import { Send, Tablet, Download, Trash2, Edit3 } from "lucide-react";
 
 export default function EventosView({
   eventos,
@@ -8,6 +8,7 @@ export default function EventosView({
   masterData,
   secaderos,
   onStartEdit,
+  onDeleteRecord,
   selectedSecaderoFilter,
   setSelectedSecaderoFilter
 }) {
@@ -170,7 +171,7 @@ export default function EventosView({
         })}
       </div>
 
-      {/* ALERTA DE PARADA EN VIVO O MENSAJE DE OPERACIÓN NORMAL */}
+      {/* ALERTA DE PARADA EN VIVO, ESTADO DESCONOCIDO O MENSAJE DE OPERACIÓN NORMAL */}
       {activeStop ? (
         <div className="clean-card card-live-alert" style={{ marginBottom: "24px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
@@ -182,11 +183,18 @@ export default function EventosView({
             <div>Inicio: <strong>{formatTimeOnly(new Date(activeStop.fecha_hora_inicio || activeStop.inicio))} hs</strong></div>
           </div>
         </div>
+      ) : secFilteredObj?.estado === "DESCONOCIDO" ? (
+        <div className="clean-card" style={{ marginBottom: "24px", display: "flex", alignItems: "center", gap: "12px", borderLeft: "4px solid #facc15", background: "rgba(234, 179, 8, 0.04)" }}>
+          <div style={{ width: "10px", height: "10px", borderRadius: "50%", background: "#facc15", boxShadow: "0 0 10px #facc15" }} />
+          <div style={{ fontSize: "13px", color: "#fef08a" }}>
+            ⚠️ <strong>Estado Desconocido:</strong> No se puede confirmar si el secadero <strong>{secName}</strong> está operando porque la tablet se encuentra fuera de línea (sin respuesta del servidor {secFilteredObj?.ultimaComm || "hace &gt;45s"}).
+          </div>
+        </div>
       ) : (
         <div className="clean-card" style={{ marginBottom: "24px", display: "flex", alignItems: "center", gap: "12px", borderLeft: "4px solid var(--accent-emerald)", background: "rgba(16, 185, 129, 0.02)" }}>
           <div style={{ width: "8px", height: "8px", background: "var(--accent-emerald)", boxShadow: "0 0 8px var(--accent-emerald)" }} />
           <div style={{ fontSize: "13px", color: "var(--text-muted)" }}>
-            El secadero <strong>{secName}</strong> se encuentra operando normalmente. No hay paradas activas detectadas.
+            El secadero <strong>{secName}</strong> se encuentra <strong>OPERANDO</strong> normalmente (Tablet conectada y respondiendo). No hay paradas activas detectadas.
           </div>
         </div>
       )}
@@ -204,7 +212,7 @@ export default function EventosView({
               <th>Observaciones</th>
               <th style={{ width: "100px" }}>Ubicación</th>
               <th style={{ width: "90px" }}>Duración (Min)</th>
-              <th style={{ textAlign: "right", width: "70px" }}>Acción</th>
+              <th style={{ textAlign: "right", width: "140px", whiteSpace: "nowrap" }}>Acciones</th>
             </tr>
           </thead>
           <tbody>
@@ -225,10 +233,28 @@ export default function EventosView({
                   </td>
                   <td><span className="mono" style={{ color: "var(--brand-lumo-gold)" }}>{row.ubicacion}</span></td>
                   <td className="mono">{row.tiempo_parada_min}</td>
-                  <td style={{ textAlign: "right" }}>
-                    <button className="btn-secondary" style={{ minHeight: "28px", padding: "0 10px", fontSize: "11px", borderRadius: "2px" }} onClick={() => onStartEdit(row)}>
-                      Editar
-                    </button>
+                  <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
+                    <div style={{ display: "flex", gap: "6px", justifyContent: "flex-end", alignItems: "center" }}>
+                      <button
+                        className="btn-secondary"
+                        style={{ minHeight: "30px", padding: "0 10px", fontSize: "11.5px", borderRadius: "3px", display: "inline-flex", alignItems: "center", gap: "4px", fontWeight: "600" }}
+                        onClick={() => onStartEdit(row)}
+                      >
+                        <Edit3 size={12} /> Editar
+                      </button>
+                      <button
+                        className="btn-secondary"
+                        style={{ minHeight: "30px", padding: "0 8px", fontSize: "11.5px", borderRadius: "3px", color: "var(--accent-rose)", borderColor: "rgba(244, 63, 94, 0.3)", display: "inline-flex", alignItems: "center", gap: "4px" }}
+                        title="Eliminar registro de parada"
+                        onClick={() => {
+                          if (window.confirm("¿Está seguro de que desea eliminar este registro de parada de manera permanente?")) {
+                            onDeleteRecord(row.evento_id);
+                          }
+                        }}
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))

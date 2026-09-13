@@ -28,81 +28,66 @@ export default function ConfirmationStage({
   const finalReasonName = suggestedReasonName ? `[Sug.] ${suggestedReasonName}` : razonName;
 
   return (
-    <div className="stage-container" style={{ alignItems: "center" }}>
-      <div className="stage-title-block" style={{ textAlign: "center" }}>
-        <h2 className="stage-title" style={{ fontSize: "24px" }}>Resumen y Confirmación Final [Paso 4 de 4]</h2>
-        <p className="stage-subtitle" style={{ fontSize: "15px" }}>
-          Revisa el resumen de la detención antes de guardar el registro
-        </p>
-      </div>
-
-      <div
-        className="form-panel"
-        style={{
-          width: "100%",
-          maxWidth: "680px",
-          background: "var(--bg-card)",
-          padding: "24px",
-          borderRadius: "8px",
-          border: "1px solid var(--border-subtle)",
-          boxShadow: "0 8px 24px rgba(0,0,0,0.4)"
-        }}
-      >
-        {/* Tarjetas de Resumen Claras y Legibles */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "20px" }}>
-          
-          {/* Categoría (Origen) */}
-          <div
-            style={{
-              padding: "16px",
-              borderRadius: "6px",
-              background: "var(--bg-input)",
-              border: "1px solid var(--border-subtle)"
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--text-dim)", fontSize: "12px", fontWeight: 700, textTransform: "uppercase", marginBottom: "6px" }}>
-              <AlertTriangle size={16} color="var(--brand-lumo-gold)" />
-              CATEGORÍA (ORIGEN)
-            </div>
-            <div style={{ fontSize: "18px", fontWeight: "bold", color: "#fff" }}>
-              {origenName || "NO DEFINIDO"}
-            </div>
+    <div className="landscape-stage-wrapper">
+      {/* AREA PRINCIPAL (IZQUIERDA / CENTRO) */}
+      <div className="stage-main-area">
+        {/* ENCABEZADO ULTRA-COMPACTO */}
+        <div className="compact-stage-header">
+          <div className="compact-stage-title">
+            <span>CONFIRMACION</span>
           </div>
+          <span style={{ fontSize: "12px", color: "var(--text-muted)", fontWeight: "600" }}>
+            Paso 5 de 5 • Resumen final antes de guardar
+          </span>
+        </div>
 
-          {/* Tiempo Muerto (Motivo) */}
+        {/* CONTENIDO RESUMEN COMPACTO (MODE APAISADO) */}
+        <div
+          style={{
+            flex: 1,
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "10px",
+            background: "var(--bg-card)",
+            border: "1px solid var(--border-subtle)",
+            borderRadius: "8px",
+            padding: "14px",
+            overflowY: "auto"
+          }}
+        >
+          {/* Motivo (Tiempo Muerto) */}
           <div
             style={{
-              padding: "16px",
+              padding: "12px",
               borderRadius: "6px",
               background: "var(--bg-input)",
               border: "1px solid var(--border-subtle)"
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--text-dim)", fontSize: "12px", fontWeight: 700, textTransform: "uppercase", marginBottom: "6px" }}>
-              <AlertTriangle size={16} color="var(--brand-lumo-gold)" />
+            <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "var(--brand-lumo-gold)", fontSize: "10.5px", fontWeight: 800, textTransform: "uppercase", marginBottom: "3px" }}>
+              <AlertTriangle size={13} color="var(--brand-lumo-gold)" />
               TIEMPO MUERTO (MOTIVO)
             </div>
-            <div style={{ fontSize: "18px", fontWeight: "bold", color: "var(--brand-lumo-gold)" }}>
+            <div style={{ fontSize: "17px", fontWeight: "900", color: "var(--brand-lumo-gold)" }}>
               {finalReasonName || "NO DEFINIDO"}
             </div>
           </div>
 
-          {/* Observación */}
+          {/* Categoría (Origen) */}
           <div
             style={{
-              gridColumn: "1 / -1",
-              padding: "16px",
+              padding: "12px",
               borderRadius: "6px",
               background: "var(--bg-input)",
               border: "1px solid var(--border-subtle)"
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--text-dim)", fontSize: "12px", fontWeight: 700, textTransform: "uppercase", marginBottom: "6px" }}>
-              <FileText size={16} color="var(--brand-lumo-gold)" />
-              OBSERVACIÓN
+            <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "var(--text-muted)", fontSize: "10.5px", fontWeight: 800, textTransform: "uppercase", marginBottom: "3px" }}>
+              <AlertTriangle size={13} color="var(--text-muted)" />
+              CATEGORÍA (ORIGEN)
             </div>
-            <div style={{ fontSize: "16px", fontWeight: "600", color: "#fff", lineHeight: "1.4" }}>
-              {formObservacion || "Sin observaciones adicionales"}
+            <div style={{ fontSize: "17px", fontWeight: "bold", color: "#fff" }}>
+              {origenName || "NO DEFINIDO"}
             </div>
           </div>
 
@@ -111,92 +96,92 @@ export default function ConfirmationStage({
             <div
               style={{
                 gridColumn: "1 / -1",
-                padding: "16px",
+                padding: "10px 12px",
                 borderRadius: "6px",
                 background: "rgba(250, 204, 21, 0.08)",
-                border: "1px solid var(--brand-lumo-gold)"
+                border: "1px solid var(--brand-lumo-gold)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between"
               }}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--brand-lumo-gold)", fontSize: "12px", fontWeight: 700, textTransform: "uppercase", marginBottom: "6px" }}>
-                <MapPin size={16} color="var(--brand-lumo-gold)" />
-                UBICACIÓN EN SECADERO
+              <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "var(--brand-lumo-gold)", fontSize: "10.5px", fontWeight: 800, textTransform: "uppercase" }}>
+                <MapPin size={13} color="var(--brand-lumo-gold)" />
+                UBICACIÓN:
               </div>
-              <div style={{ fontSize: "16px", fontWeight: "bold", color: "#fff" }}>
+              <div style={{ fontSize: "15px", fontWeight: "bold", color: "#fff" }}>
                 {formUbicacion}
               </div>
             </div>
           )}
 
+          {/* Observación */}
+          <div
+            style={{
+              gridColumn: "1 / -1",
+              padding: "12px",
+              borderRadius: "6px",
+              background: "var(--bg-input)",
+              border: "1px solid var(--border-subtle)"
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "var(--text-muted)", fontSize: "10.5px", fontWeight: 800, textTransform: "uppercase", marginBottom: "3px" }}>
+              <FileText size={13} color="var(--text-muted)" />
+              OBSERVACIÓN
+            </div>
+            <div style={{ fontSize: "13.5px", fontWeight: "600", color: "#fff", lineHeight: "1.3" }}>
+              {formObservacion || "Sin observaciones adicionales"}
+            </div>
+          </div>
+
           {/* Duración */}
           <div
             style={{
               gridColumn: "1 / -1",
-              padding: "16px",
+              padding: "12px",
               borderRadius: "6px",
-              background: "var(--bg-input)",
+              background: "rgba(255,255,255,0.03)",
               border: "1px solid var(--border-subtle)",
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between"
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--text-dim)", fontSize: "12px", fontWeight: 700, textTransform: "uppercase" }}>
-              <Clock size={16} color="var(--brand-lumo-gold)" />
-              DURACIÓN TOTAL PARADA:
+            <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "var(--text-muted)", fontSize: "10.5px", fontWeight: 800, textTransform: "uppercase" }}>
+              <Clock size={13} color="var(--brand-lumo-gold)" />
+              DURACIÓN TOTAL:
             </div>
             <div style={{ fontSize: "20px", fontWeight: 900, color: "var(--brand-lumo-gold)" }}>
               {formatSeconds(elapsedTime)}
             </div>
           </div>
         </div>
+      </div>
 
-        {/* BOTONES DE ACCIÓN: VOLVER (Mediano/Secundario) Y ACEPTAR (GIGANTE / Principal) */}
-        <div style={{ display: "flex", gap: "16px", alignItems: "stretch", marginTop: "24px" }}>
-          {/* Botón Volver para editar */}
-          <TouchButton
-            onConfirm={onBackToEdit}
-            confirmText="TOCA DE NUEVO PARA VOLVER"
-            className="btn-control secondary"
-            style={{
-              width: "160px",
-              padding: "18px",
-              fontSize: "15px",
-              fontWeight: "bold",
-              borderRadius: "8px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "8px"
-            }}
-          >
-            <ArrowLeft size={20} /> Volver
-          </TouchButton>
+      {/* BARRA LATERAL ULTRA-COMPACTA DE ACCIONES (DERECHA, 135px) */}
+      <div className="stage-sidebar-actions">
+        <TouchButton
+          onConfirm={handleConfirmSaveStoppage}
+          confirmText="¡TOCA PARA GUARDAR!"
+          className="btn-control primary btn-sidebar-square"
+          style={{
+            background: "var(--brand-lumo-gold)",
+            color: "#000",
+            boxShadow: "0 4px 16px rgba(250, 204, 21, 0.4)"
+          }}
+        >
+          <CheckCircle2 size={26} color="#000" />
+          <span>Guardar</span>
+        </TouchButton>
 
-          {/* Botón Aceptar GIGANTE */}
-          <TouchButton
-            onConfirm={handleConfirmSaveStoppage}
-            confirmText="¡TOCA DE NUEVO PARA GUARDAR PARADA!"
-            className="btn-control primary"
-            style={{
-              flex: 1,
-              padding: "22px",
-              fontSize: "20px",
-              fontWeight: 900,
-              borderRadius: "8px",
-              background: "var(--brand-lumo-gold)",
-              color: "#000",
-              border: "none",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "12px",
-              boxShadow: "0 4px 20px rgba(250, 204, 21, 0.4)",
-              cursor: "pointer"
-            }}
-          >
-            <CheckCircle2 size={26} color="#000" /> ACEPTAR Y GUARDAR
-          </TouchButton>
-        </div>
+        <TouchButton
+          onConfirm={onBackToEdit}
+          confirmText="TOCA PARA EDITAR"
+          className="btn-control secondary btn-sidebar-square"
+        >
+          <ArrowLeft size={24} />
+          <span>Volver</span>
+        </TouchButton>
       </div>
     </div>
   );

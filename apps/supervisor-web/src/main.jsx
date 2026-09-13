@@ -9,6 +9,7 @@ import {
   Gauge,
   LayoutDashboard,
   Play,
+  BookOpen,
   RefreshCw,
   SlidersHorizontal,
   X,
@@ -24,6 +25,33 @@ import ParametrosView from "./components/ParametrosView";
 import TurnosView from "./components/TurnosView";
 import ValidacionesView from "./components/ValidacionesView";
 import PresentacionView from "./components/PresentacionView";
+
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error, errorInfo) {
+    console.error("[ PORTAL ERROR BOUNDARY ] Error capturado:", error, errorInfo);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="clean-card" style={{ margin: "24px", padding: "24px", borderLeft: "4px solid var(--accent-rose)", background: "rgba(244, 63, 94, 0.05)" }}>
+          <h2 style={{ color: "var(--accent-rose)", margin: "0 0 12px 0", fontSize: "16px" }}>⚠️ Error al cargar esta vista</h2>
+          <p style={{ color: "var(--text-muted)", fontSize: "12.5px" }}>{this.state.error?.message || "Ocurrió un inconveniente inesperado."}</p>
+          <button className="btn-primary" onClick={() => this.setState({ hasError: false, error: null })} style={{ marginTop: "12px", height: "32px", fontSize: "12px" }}>
+            🔄 Reintentar Cargar
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 const MASTER_CONFIG = {
   razones: {
@@ -216,7 +244,23 @@ function App() {
     }, 3500);
   };
 
-  const config = MASTER_CONFIG[activeMaster];
+  const [isPingingTablets, setIsPingingTablets] = useState(false);
+
+  async function handlePingTablets() {
+    setIsPingingTablets(true);
+    try {
+      const res = await apiJson("/admin/tablets/ping", { method: "POST", body: {} });
+      if (Array.isArray(res)) {
+        setTabletsStatus(res);
+      }
+    } catch {
+      await refreshData();
+    } finally {
+      setIsPingingTablets(false);
+    }
+  }
+
+  const config = MASTER_CONFIG[activeMaster] || MASTER_CONFIG["razones"];
   const rows = masterData[activeMaster] ?? [];
   const origenesById = useMemo(
     () => new Map(masterData.origenes.map(ori => [ori.origen_id, ori])),
@@ -268,7 +312,14 @@ function App() {
         setEventos([]);
       }
       setStatus(prev => ({ ...prev, updatedAt: new Date() }));
-      selectRow(masterPayload[activeMaster]?.[0] ?? null, activeMaster);
+      setSelected(prevSelected => {
+        const currentRows = masterPayload[activeMaster] || [];
+        if (!currentRows.length) return null;
+        if (!prevSelected) return currentRows[0];
+        const idKey = MASTER_CONFIG[activeMaster]?.idField || "id";
+        const matched = currentRows.find(r => r[idKey] === prevSelected[idKey]);
+        return matched || prevSelected || currentRows[0];
+      });
     } catch (err) {
       console.error(err);
       setEventos([]);
@@ -540,24 +591,46 @@ function App() {
     }
   }
 
+  async function handleDeleteRecord(eventoId) {
+    try {
+      await apiJson(`/admin/eventos/${encodeURIComponent(eventoId)}`, {
+        method: "DELETE"
+      });
+      setEventos(prev => prev.filter(item => item.evento_id !== eventoId));
+      if (editingRecord && editingRecord.event?.evento_id === eventoId) {
+        setEditingRecord(null);
+      }
+      showToast("✅ Registro de parada eliminado correctamente.");
+    } catch (err) {
+      console.error(err);
+      showToast(`❌ Error al eliminar registro: ${err.message}`);
+    }
+  }
+
   const secaderosList = useMemo(() => {
     return secaderos.map(sec => {
       const tablet = tabletsStatus.find(t => t.secadero_id === sec.id);
       const hasTablet = !!tablet;
       const isConectada = tablet ? tablet.conectada : false;
       
+      const lastContactIso = tablet?.lastContactIso || tablet?.lastSeenRx || tablet?.lastSeen;
       let ultimaComm = "Sin reporte";
-      if (tablet && tablet.lastSeen) {
-        const diffMs = Date.now() - Date.parse(tablet.lastSeen);
-        const diffMins = Math.floor(diffMs / 60000);
-        if (diffMins < 1) {
-          const diffSecs = Math.floor(diffMs / 1000);
-          ultimaComm = `Hace ${Math.max(1, diffSecs)} seg`;
-        } else if (diffMins < 60) {
-          ultimaComm = `Hace ${diffMins} min`;
-        } else {
-          const diffHours = Math.floor(diffMins / 60);
-          ultimaComm = `Hace ${diffHours} h`;
+      let ultimoContactoHora = "";
+      if (lastContactIso) {
+        const d = new Date(lastContactIso);
+        if (!isNaN(d.getTime())) {
+          ultimoContactoHora = d.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+          const diffMs = Date.now() - d.getTime();
+          const diffMins = Math.floor(diffMs / 60000);
+          if (diffMins < 1) {
+            const diffSecs = Math.floor(diffMs / 1000);
+            ultimaComm = `Hace ${Math.max(1, diffSecs)} seg`;
+          } else if (diffMins < 60) {
+            ultimaComm = `Hace ${diffMins} min`;
+          } else {
+            const diffHours = Math.floor(diffMins / 60);
+            ultimaComm = `Hace ${diffHours} h`;
+          }
         }
       }
 
@@ -607,10 +680,10 @@ function App() {
             origen = "--";
           }
         } else if (!isConectada) {
-          estado = "DESCONECTADO";
+          estado = "DESCONOCIDO";
           duracionEstado = "";
-          razon = "--";
-          origen = "--";
+          razon = "Sin conexión con tablet";
+          origen = "Terminal fuera de línea";
         } else {
           estado = "OPERANDO";
           duracionEstado = "";
@@ -653,6 +726,11 @@ function App() {
         tabletId: tablet ? tablet.tablet_id : sec.tabletId,
         tabletConectada: isConectada,
         ultimaComm,
+        ultimoContactoHora,
+        ipTabletConfigurada: tablet?.ip_tablet || null,
+        ipTabletDetectada: tablet?.lastRxIp || tablet?.lastIp || null,
+        lastPingStatus: tablet?.lastPingStatus || null,
+        lastPingLatencyMs: tablet?.lastPingLatencyMs ?? null,
         paradasTurno,
         tiempoMuertoTurno
       };
@@ -721,7 +799,7 @@ function App() {
             style={{ width: "100%", minHeight: "32px", padding: "0 10px", fontSize: "11px", marginBottom: "16px", background: "rgba(250, 204, 21, 0.04)", borderColor: "rgba(250, 204, 21, 0.15)", color: "var(--brand-lumo)" }}
             onClick={() => setActiveTab("presentacion")}
           >
-            <Play size={12} style={{ marginRight: "6px" }} /> Presentación del Proyecto
+            <BookOpen size={12} style={{ marginRight: "6px" }} /> Instrucciones de Uso
           </button>
           <div className="user-card">
             <div className="avatar">J</div>
@@ -766,6 +844,7 @@ function App() {
               masterData={masterData}
               secaderos={secaderos}
               onStartEdit={handleStartEdit}
+              onDeleteRecord={handleDeleteRecord}
               selectedSecaderoFilter={selectedSecaderoFilter}
               setSelectedSecaderoFilter={setSelectedSecaderoFilter}
             />
@@ -780,24 +859,28 @@ function App() {
 
         {activeTab === "parametros" && (
           <div className="view-container">
-            <ParametrosView
-              activeMaster={activeMaster}
-              changeMaster={changeMaster}
-              masterData={masterData}
-              filteredRows={filteredMasterRows}
-              config={config}
-              query={query}
-              setQuery={setQuery}
-              categoryFilter={categoryFilter}
-              setCategoryFilter={setCategoryFilter}
-              selected={selected}
-              selectRow={selectRow}
-              onDownloadXlsx={handleDownloadXlsx}
-              onUploadXlsx={handleUploadXlsx}
-              tabletsStatus={tabletsStatus}
-              refreshTablets={refreshData}
-              MASTER_CONFIG={MASTER_CONFIG}
-            />
+            <ErrorBoundary>
+              <ParametrosView
+                activeMaster={activeMaster}
+                changeMaster={changeMaster}
+                masterData={masterData}
+                filteredRows={filteredMasterRows}
+                config={config}
+                query={query}
+                setQuery={setQuery}
+                categoryFilter={categoryFilter}
+                setCategoryFilter={setCategoryFilter}
+                selected={selected}
+                selectRow={selectRow}
+                onDownloadXlsx={handleDownloadXlsx}
+                onUploadXlsx={handleUploadXlsx}
+                tabletsStatus={tabletsStatus}
+                refreshTablets={refreshData}
+                onPingTablets={handlePingTablets}
+                isPingingTablets={isPingingTablets}
+                MASTER_CONFIG={MASTER_CONFIG}
+              />
+            </ErrorBoundary>
           </div>
         )}
 
@@ -903,6 +986,21 @@ function App() {
                   </label>
                 </div>
 
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "-4px" }}>
+                  <span style={{ fontSize: "10px", color: "var(--text-dim)" }}>
+                    {(!editForm.endDate && !editForm.endTime) ? "🟢 Parada abierta (en vivo)" : "🔴 Parada cerrada con horario de fin"}
+                  </span>
+                  {(editForm.endDate || editForm.endTime) && (
+                    <button
+                      type="button"
+                      style={{ background: "none", border: "none", color: "var(--accent-rose)", fontSize: "10px", cursor: "pointer", textDecoration: "underline" }}
+                      onClick={() => setEditForm({ ...editForm, endDate: "", endTime: "" })}
+                    >
+                      Limpiar Fin (Reabrir Parada)
+                    </button>
+                  )}
+                </div>
+
                 <label style={{ fontSize: "11px", fontWeight: "700", color: "var(--text-dim)" }}>
                   Razón de Parada
                   <select
@@ -950,9 +1048,23 @@ function App() {
                   />
                 </label>
 
-                <button className="btn-primary" type="submit" style={{ marginTop: "8px", width: "100%" }}>
-                  Guardar Cambios
-                </button>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginTop: "12px" }}>
+                  <button
+                    type="button"
+                    className="btn-secondary"
+                    style={{ color: "var(--accent-rose)", borderColor: "rgba(244, 63, 94, 0.3)" }}
+                    onClick={() => {
+                      if (window.confirm("¿Está seguro de que desea eliminar este registro de parada de manera permanente?")) {
+                        handleDeleteRecord(editingRecord.event.evento_id);
+                      }
+                    }}
+                  >
+                    Eliminar Registro
+                  </button>
+                  <button className="btn-primary" type="submit">
+                    Guardar Cambios
+                  </button>
+                </div>
               </form>
             </div>
           </div>

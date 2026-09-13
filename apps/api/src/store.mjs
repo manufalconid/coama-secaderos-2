@@ -148,6 +148,16 @@ export class InMemorySyncStore {
     return populated;
   }
 
+  deleteEvento(eventoId) {
+    if (!this.events.has(eventoId)) {
+      throw new Error("Evento no encontrado.");
+    }
+    this.events.delete(eventoId);
+    this.eventOrigins.delete(eventoId);
+    this.saveToDisk();
+    return { success: true, deletedId: eventoId };
+  }
+
   getMasterData() {
     return this.masterData;
   }

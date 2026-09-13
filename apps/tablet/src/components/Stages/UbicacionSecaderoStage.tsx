@@ -44,26 +44,26 @@ export default function UbicacionSecaderoStage({
     : [];
 
   return (
-    <div className="stage-container">
-      <div className="stage-title-block">
-        <h2 className="stage-title">Ubicación en el Secadero</h2>
-        <p className="stage-subtitle">
-          {isUbicacionLista
-            ? "Selecciona una opción de la lista de ubicaciones"
-            : isVistaElectricos
-            ? "Vista de componentes eléctricos del secadero"
-            : isVistaMecanicos || isVistaMecanicosRodillos
-            ? "Vista de mapa mecánico y motores por puerta"
-            : isMatrizExtendida
-            ? "Vista de matriz extendida (Entrada, Secadero 1-14, Salida)"
-            : isPerfilNiveles
-            ? "Selecciona el Nivel afectado en el secadero"
-            : "Selecciona el punto específico de la falla en el mapa del secadero"}
-        </p>
-      </div>
+    <div className="landscape-stage-wrapper">
+      {/* AREA PRINCIPAL (IZQUIERDA / CENTRO) */}
+      <div className="stage-main-area">
+        {/* ENCABEZADO ULTRA-COMPACTO */}
+        <div className="compact-stage-header">
+          <div className="compact-stage-title">
+            <span>UBICACION</span>
+            {isUbicacionObligatoria ? (
+              <span className="required-asterisk">*</span>
+            ) : (
+              <span className="optional-badge">(Opcional)</span>
+            )}
+          </div>
+          <span style={{ fontSize: "12px", color: "var(--text-muted)", fontWeight: "600" }}>
+            Paso 3 de 4 • Selecciona el punto o zona afectada
+          </span>
+        </div>
 
-      <div style={{ width: "100%", maxWidth: "980px" }}>
-        {isUbicacionObligatoria && !formUbicacion && (
+        <div style={{ flex: 1, overflowY: "auto", paddingRight: "4px" }}>
+          {isUbicacionObligatoria && !formUbicacion && (
           <div
             style={{
               padding: "10px 16px",
@@ -845,32 +845,33 @@ export default function UbicacionSecaderoStage({
           </div>
         )}
 
-        {/* Botones de Navegación */}
-        <div className="action-footer-fixed" style={{ marginTop: "24px", display: "flex", justifyContent: "space-between", gap: "16px" }}>
-          <TouchButton
-            onConfirm={onBack}
-            confirmText="CONFIRMAR VOLVER"
-            className="btn-control secondary"
-            style={{ width: "160px" }}
-          >
-            <ArrowLeft size={18} /> Volver
-          </TouchButton>
-
-          <TouchButton
-            onConfirm={onNext}
-            confirmText="CONFIRMAR SIGUIENTE"
-            disabled={isNextDisabled}
-            className="btn-control primary"
-            style={{
-              flex: 1,
-              maxWidth: "320px",
-              opacity: isNextDisabled ? 0.5 : 1,
-              cursor: isNextDisabled ? "not-allowed" : "pointer"
-            }}
-          >
-            Siguiente <ArrowRight size={18} />
-          </TouchButton>
         </div>
+      </div>
+
+      {/* BARRA LATERAL ULTRA-COMPACTA DE ACCIONES (DERECHA, 135px) */}
+      <div className="stage-sidebar-actions">
+        <TouchButton
+          onConfirm={onNext}
+          confirmText="CONFIRMAR SIGUIENTE"
+          disabled={isNextDisabled}
+          className="btn-control primary btn-sidebar-square"
+          style={{
+            opacity: isNextDisabled ? 0.5 : 1,
+            cursor: isNextDisabled ? "not-allowed" : "pointer"
+          }}
+        >
+          <ArrowRight size={24} />
+          <span>Siguiente</span>
+        </TouchButton>
+
+        <TouchButton
+          onConfirm={onBack}
+          confirmText="CONFIRMAR VOLVER"
+          className="btn-control secondary btn-sidebar-square"
+        >
+          <ArrowLeft size={24} />
+          <span>Volver</span>
+        </TouchButton>
       </div>
     </div>
   );

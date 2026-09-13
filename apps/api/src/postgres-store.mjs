@@ -744,6 +744,25 @@ export class PgSyncStore {
     }
   }
 
+  async deleteEvento(eventoId) {
+    const client = await this.pool.connect();
+    try {
+      await client.query("begin");
+      const res = await client.query("delete from eventos_tiempo_muerto where evento_id = $1", [eventoId]);
+      if (res.rowCount === 0) {
+        throw new Error("Evento no encontrado.");
+      }
+      await client.query("delete from evento_origenes where evento_id = $1", [eventoId]);
+      await client.query("commit");
+      return { success: true, deletedId: eventoId };
+    } catch (err) {
+      await client.query("rollback");
+      throw err;
+    } finally {
+      client.release();
+    }
+  }
+
   async snapshot() {
     const events = await this.listEventos();
     const masterData = await this.getMasterDataInternal();

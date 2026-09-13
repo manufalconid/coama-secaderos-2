@@ -1,4 +1,6 @@
 import http from "node:http";
+import net from "node:net";
+import { exec } from "node:child_process";
 import { InMemorySyncStore, populateUnifiedFields } from "./store.mjs";
 import { PgSyncStore } from "./postgres-store.mjs";
 import { exportParametros, importParametros } from "./parametros-handler.mjs";
@@ -25,7 +27,102 @@ if (storeMode === "postgres") {
 } else {
   store = new InMemorySyncStore(undefined, { seedProposals: true, persist: true });
 }
-const tabletConnections = new Map(); // tablet_id -> { lastSeen: ISOString, ip: string }
+const tabletConnections = new Map(); // tablet_id -> { lastSeenRx, lastRxIp, lastPingTx, lastPingTxSuccess, lastPingStatus, lastPingLatencyMs }
+const CONNECTION_TOLERANCE_MS = 45000; // 45 segundos de tolerancia para considerar conectada una tablet
+
+function recordIncomingTabletComm(tabletId, clientIp) {
+  if (!tabletId) return;
+  const now = new Date().toISOString();
+  const existing = tabletConnections.get(tabletId) || {};
+  tabletConnections.set(tabletId, {
+    ...existing,
+    lastSeenRx: now,
+    lastSeen: now, // retrocompatibilidad
+    lastRxIp: clientIp,
+    ip: clientIp // retrocompatibilidad
+  });
+}
+
+function probeTabletReachability(ip, port = 8080, timeoutMs = 2000) {
+  if (!ip || ip === "127.0.0.1" || ip === "::1" || ip === "--") {
+    return Promise.resolve({ ok: false, error: "IP no configurada o reservada", latency: null });
+  }
+
+  const start = Date.now();
+  const isWin = process.platform === "win32";
+  const cmd = isWin ? `ping -n 1 -w ${timeoutMs} ${ip}` : `ping -c 1 -W 2 ${ip}`;
+
+  return new Promise((resolve) => {
+    exec(cmd, (error) => {
+      const latency = Date.now() - start;
+      if (error) {
+        resolve({ ok: false, error: "TIMEOUT (Sin respuesta ICMP)", latency });
+      } else {
+        resolve({ ok: true, error: "Host activo en red (Ping OK)", latency });
+      }
+    });
+  });
+}
+
+async function pingTabletActive(tablet) {
+  if (!tablet || !tablet.tablet_id) return;
+  const ipToPing = tablet.ip_tablet || (tabletConnections.get(tablet.tablet_id)?.lastRxIp);
+  const now = new Date().toISOString();
+  const existing = tabletConnections.get(tablet.tablet_id) || {};
+
+  if (!ipToPing) {
+    tabletConnections.set(tablet.tablet_id, {
+      ...existing,
+      lastPingTx: now,
+      lastPingStatus: "Sin IP configurada",
+      lastPingLatencyMs: null
+    });
+    return;
+  }
+
+  const result = await probeTabletReachability(ipToPing, 8080, 2000);
+  const updatedExisting = tabletConnections.get(tablet.tablet_id) || {};
+
+  tabletConnections.set(tablet.tablet_id, {
+    ...updatedExisting,
+    lastPingTx: now,
+    lastPingStatus: result.ok ? "OK" : result.error,
+    lastPingLatencyMs: result.latency,
+    ...(result.ok ? { lastPingTxSuccess: now } : {})
+  });
+}
+
+async function pingAllTablets() {
+  try {
+    const data = await store.getMasterData();
+    const tablets = (data.tablets || []).filter(t => t.activa !== false);
+    await Promise.all(tablets.map(t => pingTabletActive(t)));
+  } catch (err) {
+    console.error("[ PING ERROR ] Error durante el ping activo a tablets:", err.message);
+  }
+}
+
+function getTabletStatusDetails(t, conn) {
+  const now = Date.now();
+  const lastRxMs = conn?.lastSeenRx ? Date.parse(conn.lastSeenRx) : (conn?.lastSeen ? Date.parse(conn.lastSeen) : 0);
+  const lastTxSuccessMs = conn?.lastPingTxSuccess ? Date.parse(conn.lastPingTxSuccess) : 0;
+  const lastContactMs = Math.max(lastRxMs, lastTxSuccessMs);
+  const isConectada = lastContactMs > 0 && (now - lastContactMs < CONNECTION_TOLERANCE_MS);
+
+  return {
+    ...t,
+    lastSeen: conn?.lastSeenRx || conn?.lastSeen || null,
+    lastSeenRx: conn?.lastSeenRx || conn?.lastSeen || null,
+    lastRxIp: conn?.lastRxIp || conn?.ip || null,
+    lastIp: conn?.lastRxIp || conn?.ip || null,
+    lastPingTx: conn?.lastPingTx || null,
+    lastPingTxSuccess: conn?.lastPingTxSuccess || null,
+    lastPingStatus: conn?.lastPingStatus || "Sin probar",
+    lastPingLatencyMs: conn?.lastPingLatencyMs ?? null,
+    lastContactIso: lastContactMs > 0 ? new Date(lastContactMs).toISOString() : null,
+    conectada: isConectada
+  };
+}
 
 const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN;
 const telegramChatId = process.env.TELEGRAM_CHAT_ID;
@@ -148,20 +245,16 @@ const server = http.createServer(async (req, res) => {
       const tabletIdParam = url.searchParams.get("tablet_id");
       let matchedTabletId = tabletIdParam;
 
-      if (!matchedTabletId) {
+      if (!matchedTabletId && clientIp !== "127.0.0.1") {
         const data = await store.getMasterData();
-        const matchedTablet = data.tablets?.find(t => t.ip_tablet === clientIp)
-          || (clientIp === "127.0.0.1" ? data.tablets?.find(t => t.tablet_id === "tab-sec-omeco") : null);
+        const matchedTablet = data.tablets?.find(t => t.ip_tablet === clientIp);
         if (matchedTablet) {
           matchedTabletId = matchedTablet.tablet_id;
         }
       }
 
-      if (matchedTabletId) {
-        tabletConnections.set(matchedTabletId, {
-          lastSeen: new Date().toISOString(),
-          ip: clientIp
-        });
+      if (matchedTabletId && clientIp !== "127.0.0.1") {
+        recordIncomingTabletComm(matchedTabletId, clientIp);
       }
 
       return sendJson(res, 200, {
@@ -180,25 +273,28 @@ const server = http.createServer(async (req, res) => {
         .replace(/^::ffff:/, "")
         .replace(/^::1$/, "127.0.0.1");
 
+      const tabletIdParam = url.searchParams.get("tablet_id");
       const secaderoParam = url.searchParams.get("secadero_id");
       const data = await store.getMasterData();
-      const matchedTablet = data.tablets?.find(t => t.ip_tablet === clientIp)
-        || (clientIp === "127.0.0.1" ? data.tablets?.find(t => t.tablet_id === "tab-sec-omeco") : null);
-      
-      const fallbackTablet = secaderoParam ? data.tablets?.find(t => t.secadero_id === secaderoParam) : null;
-      const activeTablet = matchedTablet || fallbackTablet;
 
-      if (activeTablet) {
-        tabletConnections.set(activeTablet.tablet_id, {
-          lastSeen: new Date().toISOString(),
-          ip: clientIp
-        });
+      let activeTablet = null;
+      if (tabletIdParam) {
+        activeTablet = data.tablets?.find(t => t.tablet_id === tabletIdParam);
+      } else if (clientIp !== "127.0.0.1") {
+        activeTablet = data.tablets?.find(t => t.ip_tablet === clientIp);
+      }
+      if (!activeTablet && secaderoParam && clientIp !== "127.0.0.1") {
+        activeTablet = data.tablets?.find(t => t.secadero_id === secaderoParam);
+      }
+
+      if (activeTablet && clientIp !== "127.0.0.1") {
+        recordIncomingTabletComm(activeTablet.tablet_id, clientIp);
       }
 
       return sendJson(res, 200, {
         ...data,
         detectedIp: clientIp,
-        assignedSecaderoId: matchedTablet ? matchedTablet.secadero_id : (secaderoParam || null),
+        assignedSecaderoId: activeTablet ? activeTablet.secadero_id : (secaderoParam || null),
         assignedTabletId: activeTablet ? activeTablet.tablet_id : null
       });
     }
@@ -223,18 +319,21 @@ const server = http.createServer(async (req, res) => {
         .replace(/^::ffff:/, "")
         .replace(/^::1$/, "127.0.0.1");
 
+      const tabletIdParam = url.searchParams.get("tablet_id");
       const masterData = await store.getMasterData();
-      const matchedTablet = masterData.tablets?.find(t => t.ip_tablet === clientIp)
-        || (clientIp === "127.0.0.1" ? masterData.tablets?.find(t => t.tablet_id === "tab-sec-omeco") : null);
 
       const body = await readJson(req);
+      const connTabletId = tabletIdParam || body.events?.[0]?.tablet_id;
 
-      const connTabletId = matchedTablet ? matchedTablet.tablet_id : (body.events?.[0]?.tablet_id || null);
+      let matchedTablet = null;
       if (connTabletId) {
-        tabletConnections.set(connTabletId, {
-          lastSeen: new Date().toISOString(),
-          ip: clientIp
-        });
+        matchedTablet = masterData.tablets?.find(t => t.tablet_id === connTabletId);
+      } else if (clientIp !== "127.0.0.1") {
+        matchedTablet = masterData.tablets?.find(t => t.ip_tablet === clientIp);
+      }
+
+      if (matchedTablet && clientIp !== "127.0.0.1") {
+        recordIncomingTabletComm(matchedTablet.tablet_id, clientIp);
       }
 
       if (Array.isArray(body.events)) {
@@ -438,6 +537,10 @@ server.on("clientError", (err, socket) => {
 
 server.listen(port, host, () => {
   console.log(`COAMA API escuchando en http://${host}:${port}`);
+  // Iniciar sondeo activo de conectividad cada 15 segundos
+  setInterval(() => {
+    pingAllTablets().catch(err => console.error("[ PING TIMER ERROR ]", err));
+  }, 15000);
 });
 
 function createStore(mode) {
@@ -520,12 +623,19 @@ async function handleAdminRoute(req, res, url) {
       const data = await store.getMasterData();
       const statusList = (data.tablets || []).map(t => {
         const conn = tabletConnections.get(t.tablet_id);
-        return {
-          ...t,
-          lastSeen: conn ? conn.lastSeen : null,
-          lastIp: conn ? conn.ip : null,
-          conectada: conn ? (Date.now() - Date.parse(conn.lastSeen) < 60000) : false
-        };
+        return getTabletStatusDetails(t, conn);
+      });
+      return sendJson(res, 200, statusList);
+    }
+  }
+
+  if (resource === "tablets" && id === "ping") {
+    if (req.method === "POST" || req.method === "GET") {
+      await pingAllTablets();
+      const data = await store.getMasterData();
+      const statusList = (data.tablets || []).map(t => {
+        const conn = tabletConnections.get(t.tablet_id);
+        return getTabletStatusDetails(t, conn);
       });
       return sendJson(res, 200, statusList);
     }
@@ -549,6 +659,15 @@ async function handleAdminRoute(req, res, url) {
         return sendJson(res, 200, updatedEvent);
       }
       return sendJson(res, 200, rawUpdatedEvent);
+    }
+    if (req.method === "DELETE" && id) {
+      try {
+        const decodedId = decodeURIComponent(id);
+        const result = await store.deleteEvento(decodedId);
+        return sendJson(res, 200, result);
+      } catch (err) {
+        return sendJson(res, 400, { error: err.message });
+      }
     }
   }
 

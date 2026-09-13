@@ -4,7 +4,9 @@ import {
   WifiOff,
   Settings,
   X,
-  Save
+  Save,
+  Eye,
+  EyeOff
 } from "lucide-react";
 import { dbService, type StoppageEvent } from "./db";
 
@@ -89,6 +91,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<"operar" | "historial">("operar");
 
   // UI States
+  const [isHeaderVisible, setIsHeaderVisible] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<StoppageEvent | null>(null);
   const [syncStatus, setSyncStatus] = useState<"online" | "offline">("offline");
@@ -217,7 +220,8 @@ export default function App() {
   async function fetchMasterData(urlToUse = settings.supervisorUrl, secaderoIdToUse = settings.secaderoId) {
     try {
       let res: Response | undefined;
-      const queryParams = secaderoIdToUse ? `?secadero_id=${encodeURIComponent(secaderoIdToUse)}` : "";
+      const tabletIdParam = settings.tabletId || (secaderoIdToUse === "sec-omeco" ? "tab-sec-omeco" : secaderoIdToUse === "sec-benecke" ? "tab-sec-benecke" : secaderoIdToUse === "sec-raute" ? "tab-sec-raute" : "");
+      const queryParams = `?secadero_id=${encodeURIComponent(secaderoIdToUse || "")}&tablet_id=${encodeURIComponent(tabletIdParam)}`;
       const candidateUrls = [
         urlToUse ? `${urlToUse.replace(/\/+$/, "")}/master-data${queryParams}` : null,
         `/api/master-data${queryParams}`,
@@ -279,7 +283,7 @@ export default function App() {
     setIsScanning(true);
     setScanMessage("Escaneando subredes locales...");
 
-    const subnets = ["192.168.10", "192.168.1", "192.168.0"];
+    const subnets = ["192.168.110", "192.168.10", "192.168.1", "192.168.0", "192.168.2"];
     try {
       const parts = window.location.hostname.split(".");
       if (parts.length === 4) {
@@ -350,7 +354,8 @@ export default function App() {
     if (eventsToSync.length === 0) {
       try {
         let res: Response | undefined;
-        const queryParams = settings.tabletId ? `?tablet_id=${encodeURIComponent(settings.tabletId)}` : "";
+        const tabletIdParam = settings.tabletId || (settings.secaderoId === "sec-omeco" ? "tab-sec-omeco" : settings.secaderoId === "sec-benecke" ? "tab-sec-benecke" : settings.secaderoId === "sec-raute" ? "tab-sec-raute" : "");
+        const queryParams = `?tablet_id=${encodeURIComponent(tabletIdParam)}&secadero_id=${encodeURIComponent(settings.secaderoId || "")}`;
         const candidateHealthUrls = [
           urlToUse ? `${urlToUse.replace(/\/+$/, "")}/health${queryParams}` : null,
           `/api/health${queryParams}`,
@@ -479,16 +484,30 @@ export default function App() {
     return sec ? sec.nombre : settings.secaderoId || "No Asignado";
   }, [masterData?.secaderos, settings.secaderoId]);
 
-  const filteredReasons = useMemo(() => {
-    return (masterData?.razones || []).filter((r: any) =>
-      r.activa && (Array.isArray(r.origen_ids) && r.origen_ids.includes(formOrigenId))
-    );
-  }, [masterData?.razones, formOrigenId]);
+  const reasonFrequencies = useMemo(() => {
+    const counts: Record<string, number> = {};
+    (eventHistory || []).forEach(e => {
+      if (e.razon_id) {
+        counts[e.razon_id] = (counts[e.razon_id] || 0) + 1;
+      }
+    });
+    return counts;
+  }, [eventHistory]);
 
   const selectedReasonObj = useMemo(() => {
     if (!formRazonId) return null;
     return (masterData?.razones || []).find((r: any) => r.razon_id === formRazonId) || null;
   }, [masterData?.razones, formRazonId]);
+
+  const availableOrigenesForReason = useMemo(() => {
+    if (!selectedReasonObj || !Array.isArray(selectedReasonObj.origen_ids) || selectedReasonObj.origen_ids.length === 0) {
+      return masterData?.origenes || [];
+    }
+    const filtered = (masterData?.origenes || []).filter((o: any) =>
+      selectedReasonObj.origen_ids.includes(o.origen_id)
+    );
+    return filtered.length > 0 ? filtered : (masterData?.origenes || []);
+  }, [masterData?.origenes, selectedReasonObj]);
 
   const parsedPredefinedObservations = useMemo(() => {
     if (!selectedReasonObj || !selectedReasonObj.observaciones_predefinidas) return [];
@@ -587,32 +606,12 @@ export default function App() {
     setFormObservacion("");
     setFormUbicacion("");
     
-    setCurrentStage("STAGE_ORIGEN");
+    // Iniciar directamente en Paso 1: Tiempo Muerto / Razón
+    setCurrentStage("STAGE_RAZON");
   }
 
   function handleSelectOrigen(id: string) {
     setFormOrigenId(id);
-    setCurrentStage("STAGE_RAZON");
-  }
-
-  function handleSelectReason(id: string) {
-    setFormRazonId(id);
-    setSuggestedReasonName("");
-    setCurrentStage("STAGE_OBSERVACION");
-  }
-
-  function handleSaveSuggestedReason() {
-    if (!suggestedReasonName.trim()) return;
-    setFormRazonId("");
-    setCurrentStage("STAGE_OBSERVACION");
-  }
-
-  function handleNextFromObservacion() {
-    if (selectedReasonObj?.ubicacion_fija && selectedReasonObj.ubicacion_fija.trim()) {
-      setFormUbicacion(selectedReasonObj.ubicacion_fija.trim().toUpperCase());
-      setCurrentStage("STAGE_CONFIRMATION");
-      return;
-    }
 
     const hasLocation = !!(
       selectedReasonObj?.ubicacion_lista ||
@@ -630,12 +629,62 @@ export default function App() {
     if (hasLocation) {
       setCurrentStage("STAGE_UBICACION");
     } else {
-      setCurrentStage("STAGE_CONFIRMATION");
+      setCurrentStage("STAGE_OBSERVACION");
     }
   }
 
-  function handleNextFromUbicacion() {
+  function handleSelectReason(id: string) {
+    setFormRazonId(id);
+    setSuggestedReasonName("");
+
+    const reasonObj = (masterData?.razones || []).find((r: any) => r.razon_id === id);
+    const matchingOrigenes = (masterData?.origenes || []).filter((o: any) =>
+      Array.isArray(reasonObj?.origen_ids) && reasonObj.origen_ids.includes(o.origen_id)
+    );
+
+    if (matchingOrigenes.length === 1) {
+      // Preseleccionar única categoría automáticamente para ahorrar un clic
+      setFormOrigenId(matchingOrigenes[0].origen_id);
+
+      const hasLocation = !!(
+        reasonObj?.ubicacion_lista ||
+        reasonObj?.vista_electricos ||
+        reasonObj?.vista_mecanicos ||
+        reasonObj?.vista_mecanicos_rodillos ||
+        reasonObj?.matriz ||
+        reasonObj?.matriz_extendida ||
+        reasonObj?.mostrar_perfil_completo ||
+        reasonObj?.mostrar_perfil_niveles ||
+        reasonObj?.mostrar_perfil ||
+        reasonObj?.ubicacion_obligatoria
+      );
+
+      if (hasLocation) {
+        setCurrentStage("STAGE_UBICACION");
+      } else {
+        setCurrentStage("STAGE_OBSERVACION");
+      }
+    } else {
+      // 2 o más categorías (o ninguna definida): mostrar selección de origen
+      setFormOrigenId("");
+      setCurrentStage("STAGE_ORIGEN");
+    }
+  }
+
+  function handleSaveSuggestedReason() {
+    if (!suggestedReasonName.trim()) return;
+    setFormRazonId("");
+    setFormOrigenId("");
+    // Derivar a selección de categoría para que el operario determine el origen del motivo personalizado
+    setCurrentStage("STAGE_ORIGEN");
+  }
+
+  function handleNextFromObservacion() {
     setCurrentStage("STAGE_CONFIRMATION");
+  }
+
+  function handleNextFromUbicacion() {
+    setCurrentStage("STAGE_OBSERVACION");
   }
 
   async function handleConfirmSaveStoppage() {
@@ -868,50 +917,80 @@ export default function App() {
 
   return (
     <div className="app-container">
-      {/* APP HEADER */}
-      <header className="app-header">
-        <div className="brand-info">
-          <img src="./lumo-transparent-logo.png" alt="LUMO" className="lumo-logo-header" />
-          <span className="machine-header-title">
-            {assignedSecaderoName}
-          </span>
-        </div>
+      {/* BOTON FLOTANTE / COMPACTO PARA MOSTRAR/OCULTAR ENCABEZADO SUPERIOR */}
+      <button
+        onClick={() => setIsHeaderVisible(!isHeaderVisible)}
+        title={isHeaderVisible ? "Ocultar panel superior" : "Mostrar panel superior"}
+        style={{
+          position: "fixed",
+          top: "8px",
+          right: "12px",
+          zIndex: 100,
+          background: isHeaderVisible ? "rgba(245, 158, 11, 0.2)" : "rgba(14, 19, 32, 0.85)",
+          border: isHeaderVisible ? "1px solid var(--brand-lumo-gold)" : "1px solid var(--border-subtle)",
+          color: isHeaderVisible ? "var(--brand-lumo-gold)" : "var(--text-muted)",
+          borderRadius: "6px",
+          padding: "6px 10px",
+          display: "flex",
+          alignItems: "center",
+          gap: "6px",
+          fontSize: "11px",
+          fontWeight: "700",
+          cursor: "pointer",
+          backdropFilter: "blur(6px)",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.4)"
+        }}
+      >
+        {isHeaderVisible ? <EyeOff size={16} /> : <Eye size={16} />}
+        <span>{isHeaderVisible ? "Ocultar Header" : "Header"}</span>
+      </button>
 
-        <div className="header-right">
-          {currentStage === "MAIN" && (
-            <div className="segmented-control">
-              <button
-                className={`control-tab ${activeTab === "operar" ? "active" : ""}`}
-                onClick={() => setActiveTab("operar")}
-              >
-                Operar
-              </button>
-              <button
-                className={`control-tab ${activeTab === "historial" ? "active" : ""}`}
-                onClick={() => setActiveTab("historial")}
-              >
-                Historial
-              </button>
-            </div>
-          )}
-
-          <div className={`sync-status-indicator ${syncStatus}`} onClick={() => forceSync()}>
-            {syncStatus === "online" ? <Wifi size={14} /> : <WifiOff size={14} />}
-            <span>
-              {isSyncing ? "..." : syncStatus === "online" ? "Sincro" : "Red offline"}
+      {/* APP HEADER (COLAPSABLE, OCULTO POR DEFECTO) */}
+      {isHeaderVisible && (
+        <header className="app-header">
+          <div className="brand-info">
+            <img src="./lumo-transparent-logo.png" alt="LUMO" className="lumo-logo-header" />
+            <span className="machine-header-title">
+              {assignedSecaderoName}
             </span>
           </div>
 
-          <button className="btn-circle" style={{ width: "auto", padding: "0 12px", gap: "6px", display: "flex", alignItems: "center", border: "1px solid var(--border-active)" }} onClick={() => {
-            setInputUrl(settings.supervisorUrl);
-            setInputSecadero(settings.secaderoId);
-            setIsSettingsOpen(true);
-          }}>
-            <Settings size={16} />
-            <span style={{ fontSize: "12px", fontWeight: "600" }}>Ajustes</span>
-          </button>
-        </div>
-      </header>
+          <div className="header-right" style={{ marginRight: "110px" }}>
+            {currentStage === "MAIN" && (
+              <div className="segmented-control">
+                <button
+                  className={`control-tab ${activeTab === "operar" ? "active" : ""}`}
+                  onClick={() => setActiveTab("operar")}
+                >
+                  Operar
+                </button>
+                <button
+                  className={`control-tab ${activeTab === "historial" ? "active" : ""}`}
+                  onClick={() => setActiveTab("historial")}
+                >
+                  Historial
+                </button>
+              </div>
+            )}
+
+            <div className={`sync-status-indicator ${syncStatus}`} onClick={() => forceSync()}>
+              {syncStatus === "online" ? <Wifi size={14} /> : <WifiOff size={14} />}
+              <span>
+                {isSyncing ? "..." : syncStatus === "online" ? "Sincro" : "Red offline"}
+              </span>
+            </div>
+
+            <button className="btn-circle" style={{ width: "auto", padding: "0 12px", gap: "6px", display: "flex", alignItems: "center", border: "1px solid var(--border-active)" }} onClick={() => {
+              setInputUrl(settings.supervisorUrl);
+              setInputSecadero(settings.secaderoId);
+              setIsSettingsOpen(true);
+            }}>
+              <Settings size={16} />
+              <span style={{ fontSize: "12px", fontWeight: "600" }}>Ajustes</span>
+            </button>
+          </div>
+        </header>
+      )}
 
       {/* CORE WORKSPACE */}
       <div className="content-zone">
@@ -961,22 +1040,24 @@ export default function App() {
           />
         )}
 
-        {currentStage === "STAGE_ORIGEN" && (
-          <OrigenStage
-            origenes={masterData.origenes}
-            selectedOrigenId={formOrigenId}
-            handleSelectOrigen={handleSelectOrigen}
-            handleResetDeclarationFlow={handleResetDeclarationFlow}
-          />
-        )}
-
         {currentStage === "STAGE_RAZON" && (
           <RazonStage
-            filteredReasons={filteredReasons}
+            allReasons={masterData.razones}
+            reasonFrequencies={reasonFrequencies}
             selectedReasonId={formRazonId}
             handleSelectReason={handleSelectReason}
             onSuggestCustom={() => setCurrentStage("STAGE_SUGGEST_RAZON")}
-            onGoBack={() => setCurrentStage("STAGE_ORIGEN")}
+            onCancelFlow={handleResetDeclarationFlow}
+          />
+        )}
+
+        {currentStage === "STAGE_ORIGEN" && (
+          <OrigenStage
+            origenes={availableOrigenesForReason}
+            selectedOrigenId={formOrigenId}
+            selectedReasonName={selectedReasonObj?.nombre}
+            handleSelectOrigen={handleSelectOrigen}
+            onGoBack={() => setCurrentStage("STAGE_RAZON")}
           />
         )}
 
@@ -989,6 +1070,28 @@ export default function App() {
           />
         )}
 
+        {currentStage === "STAGE_UBICACION" && (
+          <UbicacionSecaderoStage
+            selectedReasonObj={selectedReasonObj}
+            isPerfilCompleto={!!(selectedReasonObj?.mostrar_perfil_completo ?? selectedReasonObj?.mostrar_perfil)}
+            isPerfilNiveles={!!selectedReasonObj?.mostrar_perfil_niveles}
+            isUbicacionObligatoria={!!(selectedReasonObj?.ubicacion_obligatoria ?? selectedReasonObj?.mostrar_perfil)}
+            formUbicacion={formUbicacion}
+            setFormUbicacion={setFormUbicacion}
+            onBack={() => {
+              const matchingOrigenes = (masterData?.origenes || []).filter((o: any) =>
+                Array.isArray(selectedReasonObj?.origen_ids) && selectedReasonObj.origen_ids.includes(o.origen_id)
+              );
+              if (matchingOrigenes.length === 1) {
+                setCurrentStage("STAGE_RAZON");
+              } else {
+                setCurrentStage("STAGE_ORIGEN");
+              }
+            }}
+            onNext={handleNextFromUbicacion}
+          />
+        )}
+
         {currentStage === "STAGE_OBSERVACION" && (
           <ObservacionStage
             origenName={chosenOrigenObj ? chosenOrigenObj.nombre : formOrigenId}
@@ -998,21 +1101,37 @@ export default function App() {
             formObservacion={formObservacion}
             setFormObservacion={setFormObservacion}
             parsedPredefinedObservations={parsedPredefinedObservations}
-            onBack={() => setCurrentStage(suggestedReasonName ? "STAGE_SUGGEST_RAZON" : "STAGE_RAZON")}
+            onBack={() => {
+              if (suggestedReasonName) {
+                setCurrentStage("STAGE_SUGGEST_RAZON");
+                return;
+              }
+              const hasLocation = !!(
+                selectedReasonObj?.ubicacion_lista ||
+                selectedReasonObj?.vista_electricos ||
+                selectedReasonObj?.vista_mecanicos ||
+                selectedReasonObj?.vista_mecanicos_rodillos ||
+                selectedReasonObj?.matriz ||
+                selectedReasonObj?.matriz_extendida ||
+                selectedReasonObj?.mostrar_perfil_completo ||
+                selectedReasonObj?.mostrar_perfil_niveles ||
+                selectedReasonObj?.mostrar_perfil ||
+                selectedReasonObj?.ubicacion_obligatoria
+              );
+              if (hasLocation) {
+                setCurrentStage("STAGE_UBICACION");
+                return;
+              }
+              const matchingOrigenes = (masterData?.origenes || []).filter((o: any) =>
+                Array.isArray(selectedReasonObj?.origen_ids) && selectedReasonObj.origen_ids.includes(o.origen_id)
+              );
+              if (matchingOrigenes.length === 1) {
+                setCurrentStage("STAGE_RAZON");
+              } else {
+                setCurrentStage("STAGE_ORIGEN");
+              }
+            }}
             onNext={handleNextFromObservacion}
-          />
-        )}
-
-        {currentStage === "STAGE_UBICACION" && (
-          <UbicacionSecaderoStage
-            selectedReasonObj={selectedReasonObj}
-            isPerfilCompleto={!!(selectedReasonObj?.mostrar_perfil_completo ?? selectedReasonObj?.mostrar_perfil)}
-            isPerfilNiveles={!!selectedReasonObj?.mostrar_perfil_niveles}
-            isUbicacionObligatoria={!!(selectedReasonObj?.ubicacion_obligatoria ?? selectedReasonObj?.mostrar_perfil)}
-            formUbicacion={formUbicacion}
-            setFormUbicacion={setFormUbicacion}
-            onBack={() => setCurrentStage("STAGE_OBSERVACION")}
-            onNext={handleNextFromUbicacion}
           />
         )}
 

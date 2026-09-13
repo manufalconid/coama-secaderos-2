@@ -32,12 +32,13 @@ export default function OperacionView({ secaderos, totalDowntime = "0m", onSelec
               <div className="secadero-card-top">
                 <h3>{sec.nombre}</h3>
                 
-                {/* ESTADO + HACE CUANTO LO ESTÁ */}
-                <span className={`state-tag ${(sec.estado === "SIN_TABLET" || sec.estado === "DESCONECTADO") ? "pendiente" : sec.estado.toLowerCase()}`}>
+                {/* ESTADO + HACE CUÁANTO LO ESTÁ */}
+                <span className={`state-tag ${sec.estado === "SIN_TABLET" ? "pendiente" : sec.estado === "DESCONOCIDO" ? "pendiente" : sec.estado.toLowerCase()}`}
+                      style={sec.estado === "DESCONOCIDO" ? { background: "rgba(234, 179, 8, 0.15)", color: "#facc15", borderColor: "rgba(234, 179, 8, 0.3)" } : {}}>
                   {sec.estado === "SIN_TABLET" ? (
                     "SIN TABLET"
-                  ) : sec.estado === "DESCONECTADO" ? (
-                    "DESCONECTADO"
+                  ) : sec.estado === "DESCONOCIDO" ? (
+                    "❓ DESCONOCIDO"
                   ) : (
                     <>
                       {sec.estado}{" "}
@@ -62,14 +63,22 @@ export default function OperacionView({ secaderos, totalDowntime = "0m", onSelec
                 </div>
               )}
 
+              {sec.estado === "DESCONOCIDO" && (
+                <div style={{ margin: "0 0 14px 0", padding: "8px 12px", background: "rgba(234, 179, 8, 0.08)", border: "1px solid rgba(234, 179, 8, 0.2)", borderRadius: "6px", fontSize: "11.5px", color: "#fef08a" }}>
+                  ⚠️ Tablet inalcanzable (Servidor sin contacto hace &gt;45s). Estado operativo no verificado.
+                </div>
+              )}
+
               <div className="data-list" style={{ marginBottom: "18px" }}>
                 <div className="data-item">
-                  <span>Tiempo muerto acumulado en el turno:</span>
+                  <span>Tiempo muerto acumulado turno:</span>
                   <strong style={{ color: "var(--brand-lumo)" }}>{sec.tiempoMuertoTurno}</strong>
                 </div>
                 <div className="data-item">
-                  <span>Última Sync:</span>
-                  <span style={{ fontSize: "11.5px" }}>{sec.ultimaComm}</span>
+                  <span>Último contacto servidor-tablet:</span>
+                  <span style={{ fontSize: "11.5px", fontWeight: "600" }}>
+                    {sec.ultimaComm} {sec.ultimoContactoHora ? `(${sec.ultimoContactoHora})` : ""}
+                  </span>
                 </div>
               </div>
 
