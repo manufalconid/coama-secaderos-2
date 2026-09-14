@@ -53,11 +53,30 @@ async function autoReconcileSnapshotWithPostgres(pgStore) {
   }
 }
 
+async function connectToPostgresStore() {
+  const candidateUrls = [
+    process.env.DATABASE_URL,
+    "postgres://coama:coama_dev_password@127.0.0.1:5432/coama_tiempos_muertos",
+    "postgres://postgres:coama_dev@127.0.0.1:5432/coama_tiempos_muertos",
+    "postgres://postgres:postgres@127.0.0.1:5432/coama_tiempos_muertos"
+  ].filter(Boolean);
+
+  let lastErr = null;
+  for (const connStr of candidateUrls) {
+    try {
+      const pgStore = new PgSyncStore({ connectionString: connStr });
+      await pgStore.pool.query("SELECT 1");
+      return pgStore;
+    } catch (err) {
+      lastErr = err;
+    }
+  }
+  throw lastErr || new Error("No se pudo conectar a PostgreSQL en 127.0.0.1:5432.");
+}
+
 if (storeMode === "postgres") {
   try {
-    const pgStore = new PgSyncStore();
-    // Probamos la conexión
-    await pgStore.pool.query("SELECT 1");
+    const pgStore = await connectToPostgresStore();
     store = pgStore;
     console.log("[ OK ] Conectado a la base de datos PostgreSQL.");
     autoReconcileSnapshotWithPostgres(pgStore).catch(e => console.warn("[ AUTO-SYNC Warning ]", e.message));
@@ -75,8 +94,7 @@ if (process.env.API_STORE === "postgres") {
   setInterval(async () => {
     if (storeMode === "memory") {
       try {
-        const testStore = new PgSyncStore();
-        await testStore.pool.query("SELECT 1");
+        const testStore = await connectToPostgresStore();
         console.log("[ AUTO-RECONNECT ] Conexión con PostgreSQL restaurada. Conmutando a PostgreSQL...");
         store = testStore;
         storeMode = "postgres";
@@ -85,7 +103,7 @@ if (process.env.API_STORE === "postgres") {
         // Continúa en modo de contingencia en memoria
       }
     }
-  }, 20000);
+  }, 15000);
 }
 const tabletConnections = new Map(); // tablet_id -> { lastSeenRx, lastRxIp, lastPingTx, lastPingTxSuccess, lastPingStatus, lastPingLatencyMs }
 const CONNECTION_TOLERANCE_MS = 45000; // 45 segundos de tolerancia para considerar conectada una tablet
