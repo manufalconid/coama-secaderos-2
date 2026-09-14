@@ -2,12 +2,29 @@ import { readdir, readFile } from "node:fs/promises";
 import pg from "pg";
 import { PgSyncStore } from "../apps/api/src/postgres-store.mjs";
 
-const { Pool } = pg;
-const connectionString =
-  process.env.DATABASE_URL ??
-  "postgres://coama:coama_dev_password@127.0.0.1:5432/coama_tiempos_muertos";
+const candidateUrls = [
+  process.env.DATABASE_URL,
+  "postgres://coama:coama_dev_password@127.0.0.1:5432/coama_tiempos_muertos",
+  "postgres://postgres:coama_dev@127.0.0.1:5432/coama_tiempos_muertos",
+  "postgres://postgres:postgres@127.0.0.1:5432/coama_tiempos_muertos"
+].filter(Boolean);
 
-const pool = new Pool({ connectionString });
+let pool = null;
+let connectionString = null;
+for (const connStr of candidateUrls) {
+  try {
+    const testPool = new Pool({ connectionString: connStr });
+    await testPool.query("SELECT 1");
+    pool = testPool;
+    connectionString = connStr;
+    break;
+  } catch (_) {}
+}
+
+if (!pool) {
+  throw new Error("No se pudo conectar a PostgreSQL en 127.0.0.1:5432 con ninguna credencial.");
+}
+
 const store = new PgSyncStore({ pool });
 
 const event = {
