@@ -5,45 +5,36 @@ import pg from "pg";
 
 const { Pool } = pg;
 
-const connectionString =
-  process.env.DATABASE_URL ??
-  "postgres://postgres:coama_dev@127.0.0.1:5432/coama_tiempos_muertos";
+const candidateUrls = [
+  process.env.DATABASE_URL,
+  "postgres://coama:coama_dev_password@127.0.0.1:5432/coama_tiempos_muertos",
+  "postgres://postgres:coama_dev@127.0.0.1:5432/coama_tiempos_muertos",
+  "postgres://postgres:postgres@127.0.0.1:5432/coama_tiempos_muertos"
+].filter(Boolean);
 
 console.log("=========================================================");
 console.log(" LUMO Secaderos - Migración y Sincronización PostgreSQL");
 console.log("=========================================================\n");
-console.log(`📡 Conectando a PostgreSQL: ${connectionString.replace(/:[^:@]+@/, ":****@")}...`);
 
-// Auto-crear base de datos coama_tiempos_muertos si no existe
-const parsedUrl = new URL(connectionString);
-const targetDbName = parsedUrl.pathname.replace(/^\//, "") || "coama_tiempos_muertos";
-const rootDbUrl = `${parsedUrl.protocol}//${parsedUrl.username}:${parsedUrl.password}@${parsedUrl.host}/postgres`;
-
-const rootPool = new Pool({ connectionString: rootDbUrl });
-try {
-  const checkDb = await rootPool.query("SELECT 1 FROM pg_database WHERE datname = $1", [targetDbName]);
-  if (checkDb.rowCount === 0) {
-    console.log(`🔨 Creando base de datos '${targetDbName}'...`);
-    await rootPool.query(`CREATE DATABASE "${targetDbName}"`);
-    console.log(`✅ Base de datos '${targetDbName}' creada exitosamente.\n`);
-  }
-} catch (rootErr) {
-  console.warn(`(Nota: verificación inicial de DB root: ${rootErr.message})`);
-} finally {
-  await rootPool.end();
+let pool = null;
+let connectionString = null;
+for (const connStr of candidateUrls) {
+  try {
+    const testPool = new Pool({ connectionString: connStr });
+    await testPool.query("SELECT 1");
+    pool = testPool;
+    connectionString = connStr;
+    break;
+  } catch (_) {}
 }
 
-let pool;
-try {
-  pool = new Pool({ connectionString });
-  await pool.query("SELECT 1");
-  console.log("✅ Conexión establecida con éxito con la base de datos de LUMO.\n");
-} catch (err) {
-  console.error("❌ ERROR: No se pudo conectar a la base de datos.");
-  console.error(`Detalle: ${err.message}`);
-  console.error("\nVerifica que PostgreSQL esté instalado y corriendo en el puerto 5432 con la contraseña correcta.");
+if (!pool) {
+  console.error("❌ ERROR: No se pudo conectar a PostgreSQL en 127.0.0.1:5432 con ninguna credencial.");
+  console.error("Verifica que Docker o PostgreSQL local estén corriendo.");
   process.exit(1);
 }
+
+console.log(`📡 Conectado a PostgreSQL: ${connectionString.replace(/:[^:@]+@/, ":****@")}\n`);
 
 try {
   // 1. APLICAR MIGRACIONES SQL EN ORDEN

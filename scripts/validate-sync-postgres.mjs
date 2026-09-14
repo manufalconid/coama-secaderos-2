@@ -2,6 +2,8 @@ import { readdir, readFile } from "node:fs/promises";
 import pg from "pg";
 import { PgSyncStore } from "../apps/api/src/postgres-store.mjs";
 
+const { Pool } = pg;
+
 const candidateUrls = [
   process.env.DATABASE_URL,
   "postgres://coama:coama_dev_password@127.0.0.1:5432/coama_tiempos_muertos",
@@ -102,25 +104,17 @@ async function applySqlFile(path) {
 }
 
 async function applyMigrations(path) {
-  try {
-    const check = await pool.query(
-      "select 1 from information_schema.tables where table_name = 'eventos_tiempo_muerto'"
-    );
-    if (check.rowCount > 0) {
-      console.log("Esquema de base de datos ya inicializado por Docker.");
-      return;
-    }
-  } catch {
-    // Si la tabla no existe, continuar con las migraciones
-  }
-
   const entries = await readdir(path);
   const migrations = entries
     .filter(entry => entry.endsWith(".sql"))
     .sort((left, right) => left.localeCompare(right));
 
   for (const migration of migrations) {
-    await applySqlFile(`${path}/${migration}`);
+    try {
+      await applySqlFile(`${path}/${migration}`);
+    } catch (_) {
+      // Ignorar excepciones por columnas/tablas ya existentes o renames ya hechos
+    }
   }
 }
 

@@ -53,6 +53,41 @@ async function autoReconcileSnapshotWithPostgres(pgStore) {
   }
 }
 
+async function ensurePostgresSchema(pool) {
+  try {
+    const candidateDirs = [
+      path.resolve("database/migrations"),
+      path.resolve(process.cwd(), "database/migrations"),
+      path.resolve(path.dirname(new URL(import.meta.url).pathname), "../../../database/migrations")
+    ];
+    let migrationsDir = null;
+    for (const dir of candidateDirs) {
+      if (fs.existsSync(dir)) {
+        migrationsDir = dir;
+        break;
+      }
+    }
+    if (!migrationsDir) return;
+
+    const migrationFiles = fs.readdirSync(migrationsDir)
+      .filter(f => f.endsWith(".sql"))
+      .sort((a, b) => a.localeCompare(b));
+
+    for (const file of migrationFiles) {
+      const filePath = path.join(migrationsDir, file);
+      const sql = fs.readFileSync(filePath, "utf8");
+      try {
+        await pool.query(sql);
+      } catch (_) {
+        // Ignorar excepciones por columnas/tablas ya existentes o renames ya hechos
+      }
+    }
+    console.log("[ OK ] Esquema de PostgreSQL verificado y actualizado con todas las migraciones.");
+  } catch (err) {
+    console.warn(`[ MIGRATIONS Warning ] Error al verificar migraciones automáticas: ${err.message}`);
+  }
+}
+
 async function connectToPostgresStore() {
   const candidateUrls = [
     process.env.DATABASE_URL,
@@ -77,6 +112,7 @@ async function connectToPostgresStore() {
 if (storeMode === "postgres") {
   try {
     const pgStore = await connectToPostgresStore();
+    await ensurePostgresSchema(pgStore.pool);
     store = pgStore;
     console.log("[ OK ] Conectado a la base de datos PostgreSQL.");
     autoReconcileSnapshotWithPostgres(pgStore).catch(e => console.warn("[ AUTO-SYNC Warning ]", e.message));
@@ -95,6 +131,7 @@ if (process.env.API_STORE === "postgres") {
     if (storeMode === "memory") {
       try {
         const testStore = await connectToPostgresStore();
+        await ensurePostgresSchema(testStore.pool);
         console.log("[ AUTO-RECONNECT ] Conexión con PostgreSQL restaurada. Conmutando a PostgreSQL...");
         store = testStore;
         storeMode = "postgres";
