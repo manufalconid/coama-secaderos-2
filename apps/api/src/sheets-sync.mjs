@@ -652,109 +652,111 @@ export async function syncProcessedEventToSheets(e, masterData = null) {
   });
 }
 
-export async function syncTurnosToSheets(turnos) {
-  return enqueueSheetsTask(async () => {
-    const title = "turnos";
-    const headers = [
-      "fecha", "linea", "turno_id", "turno_id_completo", "turno_td_tn", 
-      "nombre", "supervisor", "hora_inicio", "hora_fin", 
-      "horas_totales", "horas_programadas", "horas_muertas"
-    ];
+export async function syncTurnosInternal(turnos) {
+  const title = "turnos";
+  const headers = [
+    "fecha", "linea", "turno_id", "turno_id_completo", "turno_td_tn", 
+    "nombre", "supervisor", "hora_inicio", "hora_fin", 
+    "horas_totales", "horas_programadas", "horas_muertas"
+  ];
 
-    const sheets = getSheetsClient();
-    if (!sheets) return;
-    const sheetId = getSheetId();
+  const sheets = getSheetsClient();
+  if (!sheets) return;
+  const sheetId = getSheetId();
 
-    const ok = await ensureSheetExists(title, headers);
-    if (!ok) return;
+  const ok = await ensureSheetExists(title, headers);
+  if (!ok) return;
 
-    try {
-      const existing = await getExistingRows(title);
-      const turnosMap = new Map(); // key = turno_id_completo -> { rowIndex, values }
-      
-      const hasCompletoHeader = existing.length > 0 && existing[0][3] === "turno_id_completo";
+  try {
+    const existing = await getExistingRows(title);
+    const turnosMap = new Map(); // key = turno_id_completo -> { rowIndex, values }
+    
+    const hasCompletoHeader = existing.length > 0 && existing[0][3] === "turno_id_completo";
 
-      for (let i = 1; i < existing.length; i++) {
-        const r = existing[i];
-        let key = "";
-        if (hasCompletoHeader && r[3]) {
-          key = r[3];
-        } else {
-          const f = r[0] || "";
-          const linea = r[1] || "";
-          const code = (hasCompletoHeader ? r[4] : r[3]) || "TD";
-          const sup = (hasCompletoHeader ? r[6] : r[5]) || "";
-          key = getTurnoIdCompleto(f, code, linea, sup);
-        }
-
-        if (key && !turnosMap.has(key)) {
-          turnosMap.set(key, { rowIndex: i, values: r });
-        }
+    for (let i = 1; i < existing.length; i++) {
+      const r = existing[i];
+      let key = "";
+      if (hasCompletoHeader && r[3]) {
+        key = r[3];
+      } else {
+        const f = r[0] || "";
+        const linea = r[1] || "";
+        const code = (hasCompletoHeader ? r[4] : r[3]) || "TD";
+        const sup = (hasCompletoHeader ? r[6] : r[5]) || "";
+        key = getTurnoIdCompleto(f, code, linea, sup);
       }
 
-      const updates = [];
-      const newRows = [];
-      const seenKeys = new Set(turnosMap.keys());
-
-      for (const t of turnos) {
-        const code = t.turno_td_tn || getTurnoCode(t.fecha, t.hora_inicio, t.hora_fin, t.turno_id || t.nombre);
-        const turnoIdCompleto = t.turno_id_completo || getTurnoIdCompleto(t.fecha, code, t.linea, t.supervisor);
-        const fFormatted = formatDateShort(t.fecha);
-
-        const row = [
-          fFormatted,
-          t.linea || "",
-          t.turno_id || "",
-          turnoIdCompleto,
-          code,
-          t.nombre || "",
-          t.supervisor || "",
-          formatHour2Digits(t.hora_inicio),
-          formatHour2Digits(t.hora_fin),
-          formatNumber(t.horas_totales),
-          formatNumber(t.horas_programadas),
-          formatDecimalComma(t.horas_muertas, 2)
-        ];
-
-        const found = turnosMap.get(turnoIdCompleto);
-        if (found) {
-          const hasChanged = row.some((val, idx) => String(val) !== String(found.values[idx] ?? ""));
-          if (hasChanged) {
-            updates.push({
-              range: `${title}!A${found.rowIndex + 1}:L${found.rowIndex + 1}`,
-              values: [row]
-            });
-          }
-        } else if (!seenKeys.has(turnoIdCompleto)) {
-          seenKeys.add(turnoIdCompleto);
-          newRows.push(row);
-        }
+      if (key && !turnosMap.has(key)) {
+        turnosMap.set(key, { rowIndex: i, values: r });
       }
-
-      if (updates.length > 0) {
-        await sheets.spreadsheets.values.batchUpdate({
-          spreadsheetId: sheetId,
-          requestBody: {
-            valueInputOption: "USER_ENTERED",
-            data: updates
-          }
-        });
-        console.log(`[ GOOGLE SHEETS ] Turnos: ${updates.length} filas actualizadas.`);
-      }
-
-      if (newRows.length > 0) {
-        await sheets.spreadsheets.values.append({
-          spreadsheetId: sheetId,
-          range: `${title}!A:A`,
-          valueInputOption: "USER_ENTERED",
-          requestBody: { values: newRows }
-        });
-        console.log(`[ GOOGLE SHEETS ] Turnos: ${newRows.length} nuevas filas añadidas.`);
-      }
-    } catch (err) {
-      console.error("[ GOOGLE SHEETS ] Error al sincronizar turnos:", err);
     }
-  });
+
+    const updates = [];
+    const newRows = [];
+    const seenKeys = new Set(turnosMap.keys());
+
+    for (const t of turnos) {
+      const code = t.turno_td_tn || getTurnoCode(t.fecha, t.hora_inicio, t.hora_fin, t.turno_id || t.nombre);
+      const turnoIdCompleto = t.turno_id_completo || getTurnoIdCompleto(t.fecha, code, t.linea, t.supervisor);
+      const fFormatted = formatDateShort(t.fecha);
+
+      const row = [
+        fFormatted,
+        t.linea || "",
+        t.turno_id || "",
+        turnoIdCompleto,
+        code,
+        t.nombre || "",
+        t.supervisor || "",
+        formatHour2Digits(t.hora_inicio),
+        formatHour2Digits(t.hora_fin),
+        formatNumber(t.horas_totales),
+        formatNumber(t.horas_programadas),
+        formatDecimalComma(t.horas_muertas, 2)
+      ];
+
+      const found = turnosMap.get(turnoIdCompleto);
+      if (found) {
+        const hasChanged = row.some((val, idx) => String(val) !== String(found.values[idx] ?? ""));
+        if (hasChanged) {
+          updates.push({
+            range: `${title}!A${found.rowIndex + 1}:L${found.rowIndex + 1}`,
+            values: [row]
+          });
+        }
+      } else if (!seenKeys.has(turnoIdCompleto)) {
+        seenKeys.add(turnoIdCompleto);
+        newRows.push(row);
+      }
+    }
+
+    if (updates.length > 0) {
+      await sheets.spreadsheets.values.batchUpdate({
+        spreadsheetId: sheetId,
+        requestBody: {
+          valueInputOption: "USER_ENTERED",
+          data: updates
+        }
+      });
+      console.log(`[ GOOGLE SHEETS ] Turnos: ${updates.length} filas actualizadas.`);
+    }
+
+    if (newRows.length > 0) {
+      await sheets.spreadsheets.values.append({
+        spreadsheetId: sheetId,
+        range: `${title}!A:A`,
+        valueInputOption: "USER_ENTERED",
+        requestBody: { values: newRows }
+      });
+      console.log(`[ GOOGLE SHEETS ] Turnos: ${newRows.length} nuevas filas añadidas.`);
+    }
+  } catch (err) {
+    console.error("[ GOOGLE SHEETS ] Error al sincronizar turnos:", err);
+  }
+}
+
+export async function syncTurnosToSheets(turnos) {
+  return enqueueSheetsTask(() => syncTurnosInternal(turnos));
 }
 
 export async function exportAllToSheets(events, masterData) {
@@ -1010,6 +1012,6 @@ export async function exportAllToSheets(events, masterData) {
 
     // 3. Sincronizar turnos
     const dailyTurnos = deriveDailyTurnos(deduplicatedEvents, masterData);
-    await syncTurnosToSheets(dailyTurnos);
+    await syncTurnosInternal(dailyTurnos);
   });
 }

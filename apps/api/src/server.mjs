@@ -17,7 +17,7 @@ import { exec } from "node:child_process";
 import { InMemorySyncStore, populateUnifiedFields } from "./store.mjs";
 import { PgSyncStore } from "./postgres-store.mjs";
 import { exportParametros, importParametros } from "./parametros-handler.mjs";
-import { syncRawEventToSheets, syncProcessedEventToSheets, exportAllToSheets, formatErpIsoLocal } from "./sheets-sync.mjs";
+import { syncRawEventToSheets, syncProcessedEventToSheets, syncTurnosToSheets, deriveDailyTurnos, exportAllToSheets, formatErpIsoLocal } from "./sheets-sync.mjs";
 
 
 import fs from "node:fs";
@@ -478,6 +478,14 @@ const server = http.createServer(async (req, res) => {
             }
           }
         }
+
+        // Sincronizar tabla de turnos en Google Sheets con los datos consolidados
+        store.listEventos().then(allEvts => {
+          store.getMasterData().then(m => {
+            const dailyTurnos = deriveDailyTurnos(allEvts, m);
+            syncTurnosToSheets(dailyTurnos).catch(err => console.error("Error al sincronizar turnos a Google Sheets post-sync:", err));
+          });
+        }).catch(err => console.error("Error recuperando eventos para turnos post-sync:", err));
       }
 
       return sendJson(res, 200, syncResult);
@@ -714,6 +722,10 @@ async function handleAdminRoute(req, res, url) {
         } else if (updatedEvent.estado_evento === "cerrado") {
           syncRawEventToSheets(updatedEvent, "cerrado", masterData).catch(err => console.error("Error al sincronizar evento editado (cerrado) a Google Sheets:", err));
           syncProcessedEventToSheets(updatedEvent, masterData).catch(err => console.error("Error al sincronizar evento editado (procesado) a Google Sheets:", err));
+          store.listEventos().then(allEvts => {
+            const dailyTurnos = deriveDailyTurnos(allEvts, masterData);
+            syncTurnosToSheets(dailyTurnos).catch(err => console.error("Error al sincronizar turnos editados a Google Sheets:", err));
+          }).catch(err => console.error("Error recuperando eventos tras edición:", err));
         }
         return sendJson(res, 200, updatedEvent);
       }
