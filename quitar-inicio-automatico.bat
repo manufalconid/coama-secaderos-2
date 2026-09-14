@@ -1,21 +1,17 @@
 @echo off
-title Desactivar Inicio Automático con Windows - COAMA Secaderos
+title Desactivar Inicio Automático con Windows - LUMO Secaderos
 chcp 65001 > nul
 
 echo ====================================================
-echo  Desactivando Inicio Automático de Windows...
+echo   Desactivando Inicio Automático de Windows...
 echo ====================================================
 echo.
 
-set "STARTUP_FOLDER=%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup"
-set "SHORTCUT=%STARTUP_FOLDER%\Iniciar Coama Secaderos.lnk"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$startup = [Environment]::GetFolderPath('Startup'); if (-not $startup) { $startup = [System.IO.Path]::Combine($env:APPDATA, 'Microsoft\Windows\Start Menu\Programs\Startup') }; $s1 = [System.IO.Path]::Combine($startup, 'Iniciar LUMO Secaderos.lnk'); $s2 = [System.IO.Path]::Combine($startup, 'Iniciar Coama Secaderos.lnk'); if (Test-Path $s1) { Remove-Item $s1 -Force; Write-Host 'Eliminado:' $s1 }; if (Test-Path $s2) { Remove-Item $s2 -Force; Write-Host 'Eliminado:' $s2 }; Write-Host '¡Inicio automático deshabilitado con éxito!'"
 
-if exist "%SHORTCUT%" (
-    del /f /q "%SHORTCUT%"
-    echo ¡ÉXITO! El inicio automático ha sido deshabilitado.
-) else (
-    echo No se encontró ninguna automatización de inicio previamente configurada.
-)
-
+echo.
+echo ====================================================
+echo   Proceso finalizado.
+echo ====================================================
 echo.
 pause

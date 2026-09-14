@@ -1,5 +1,6 @@
 @echo off
-title Coama Secaderos - Detener Procesos
+title LUMO Secaderos - Detener Procesos
+chcp 65001 > nul
 
 echo ====================================================
 echo   LUMO - DETENIENDO TODOS LOS SERVICIOS Y PROCESOS
@@ -14,8 +15,8 @@ powershell -NoProfile -Command "Stop-Process -Name node -Force -ErrorAction Sile
 
 echo.
 echo ====================================================
-echo   Servicios detenidos con exito.
-echo   Los archivos ya no estan bloqueados.
+echo   Servicios detenidos con éxito.
+echo   Los puertos y archivos han sido liberados.
 echo ====================================================
 echo.
 pause
