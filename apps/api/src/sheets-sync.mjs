@@ -567,7 +567,7 @@ export async function syncProcessedEventToSheets(e, masterData = null) {
 
     const title = "registros_procesados";
     const headers = [
-      "evento_id", "fecha_de_registro", "linea", "turno_id", "turno_td_tn", "supervisor_turno", "turno_hora_desde", "turno_hora_hasta",
+      "evento_id", "fecha_de_registro", "linea", "turno_id", "turno_id_completo", "turno_td_tn", "supervisor_turno", "turno_hora_desde", "turno_hora_hasta",
       "tiempo_de_turno_en_horas_programadas",
       "categoria", "tiempo_muerto", "observacion", "ubicacion",
       "tiempo_muerto_hora_desde", "tiempo_muerto_hora_hasta",
@@ -594,14 +594,17 @@ export async function syncProcessedEventToSheets(e, masterData = null) {
     const horasProg = formatNumber(e.horas_totales_turno ?? 12);
     const compositeTurnoId = getCompositeTurnoId(e.fecha_registro, e.hora_inicio_turno, e.hora_fin_turno, e.turno_id || e.tipo_turno);
     const turnoCode = getTurnoCode(e.fecha_registro, e.hora_inicio_turno, e.hora_fin_turno, e.turno_id || e.tipo_turno);
+    const supervisor = getSupervisorForEvent(e, masterData);
+    const turnoIdCompleto = getTurnoIdCompleto(e.fecha_registro, turnoCode, e.linea, supervisor);
 
     const row = [
       e.evento_id || "",
       formatDateShort(e.fecha_registro),
       (e.linea || "").toUpperCase(),
       compositeTurnoId,
+      turnoIdCompleto,
       turnoCode,
-      getSupervisorForEvent(e, masterData),
+      supervisor,
       formatHour2Digits(e.hora_inicio_turno || "06:00:00"),
       formatHour2Digits(e.hora_fin_turno || "18:00:00"),
       horasProg,
@@ -631,7 +634,7 @@ export async function syncProcessedEventToSheets(e, masterData = null) {
         if (hasChanged) {
           await sheets.spreadsheets.values.update({
             spreadsheetId: sheetId,
-            range: `${title}!A${foundIndex + 1}:Q${foundIndex + 1}`,
+            range: `${title}!A${foundIndex + 1}:R${foundIndex + 1}`,
             valueInputOption: "USER_ENTERED",
             requestBody: { values: [row] }
           });
@@ -700,32 +703,46 @@ export async function syncTurnosInternal(turnos) {
       const turnoIdCompleto = t.turno_id_completo || getTurnoIdCompleto(t.fecha, code, t.linea, t.supervisor);
       const fFormatted = formatDateShort(t.fecha);
 
-      const row = [
-        fFormatted,
-        t.linea || "",
-        t.turno_id || "",
-        turnoIdCompleto,
-        code,
-        t.nombre || "",
-        t.supervisor || "",
-        formatHour2Digits(t.hora_inicio),
-        formatHour2Digits(t.hora_fin),
-        formatNumber(t.horas_totales),
-        formatNumber(t.horas_programadas),
-        formatDecimalComma(t.horas_muertas, 2)
-      ];
-
       const found = turnosMap.get(turnoIdCompleto);
       if (found) {
-        const hasChanged = row.some((val, idx) => String(val) !== String(found.values[idx] ?? ""));
+        const targetRow = found.rowIndex + 1;
+        const rowAK = [
+          fFormatted,
+          t.linea || "",
+          t.turno_id || "",
+          turnoIdCompleto,
+          code,
+          t.nombre || "",
+          t.supervisor || "",
+          formatHour2Digits(t.hora_inicio),
+          formatHour2Digits(t.hora_fin),
+          formatNumber(t.horas_totales),
+          formatNumber(t.horas_programadas)
+        ];
+        const hasChanged = rowAK.some((val, idx) => String(val) !== String(found.values[idx] ?? ""));
         if (hasChanged) {
           updates.push({
-            range: `${title}!A${found.rowIndex + 1}:L${found.rowIndex + 1}`,
-            values: [row]
+            range: `${title}!A${targetRow}:K${targetRow}`,
+            values: [rowAK]
           });
         }
       } else if (!seenKeys.has(turnoIdCompleto)) {
         seenKeys.add(turnoIdCompleto);
+        const newRowNum = existing.length + newRows.length + 1;
+        const row = [
+          fFormatted,
+          t.linea || "",
+          t.turno_id || "",
+          turnoIdCompleto,
+          code,
+          t.nombre || "",
+          t.supervisor || "",
+          formatHour2Digits(t.hora_inicio),
+          formatHour2Digits(t.hora_fin),
+          formatNumber(t.horas_totales),
+          formatNumber(t.horas_programadas),
+          `=SUMAR.SI(registros_procesados!E:E; D${newRowNum}; registros_procesados!Q:Q)`
+        ];
         newRows.push(row);
       }
     }
@@ -738,7 +755,7 @@ export async function syncTurnosInternal(turnos) {
           data: updates
         }
       });
-      console.log(`[ GOOGLE SHEETS ] Turnos: ${updates.length} filas actualizadas.`);
+      console.log(`[ GOOGLE SHEETS ] Turnos: ${updates.length} filas actualizadas (columnas A:K).`);
     }
 
     if (newRows.length > 0) {
@@ -748,7 +765,7 @@ export async function syncTurnosInternal(turnos) {
         valueInputOption: "USER_ENTERED",
         requestBody: { values: newRows }
       });
-      console.log(`[ GOOGLE SHEETS ] Turnos: ${newRows.length} nuevas filas añadidas.`);
+      console.log(`[ GOOGLE SHEETS ] Turnos: ${newRows.length} nuevas filas añadidas con fórmula SUMIF en columna L.`);
     }
   } catch (err) {
     console.error("[ GOOGLE SHEETS ] Error al sincronizar turnos:", err);
@@ -915,7 +932,7 @@ export async function exportAllToSheets(events, masterData) {
     // 2. Sincronizar registros procesados incrementalmente (con actualización in-place)
     const titleProcesados = "registros_procesados";
     const headersProcesados = [
-      "evento_id", "fecha_de_registro", "linea", "turno_id", "turno_td_tn", "supervisor_turno", "turno_hora_desde", "turno_hora_hasta",
+      "evento_id", "fecha_de_registro", "linea", "turno_id", "turno_id_completo", "turno_td_tn", "supervisor_turno", "turno_hora_desde", "turno_hora_hasta",
       "tiempo_de_turno_en_horas_programadas",
       "categoria", "tiempo_muerto", "observacion", "ubicacion",
       "tiempo_muerto_hora_desde", "tiempo_muerto_hora_hasta",
@@ -953,14 +970,17 @@ export async function exportAllToSheets(events, masterData) {
       const horasProg = formatNumber(e.horas_totales_turno ?? 12);
       const compositeTurnoId = getCompositeTurnoId(e.fecha_registro, e.hora_inicio_turno, e.hora_fin_turno, e.turno_id || e.tipo_turno);
       const turnoCode = getTurnoCode(e.fecha_registro, e.hora_inicio_turno, e.hora_fin_turno, e.turno_id || e.tipo_turno);
+      const supervisor = getSupervisorForEvent(e, masterData);
+      const turnoIdCompleto = getTurnoIdCompleto(e.fecha_registro, turnoCode, e.linea, supervisor);
 
       const row = [
         e.evento_id || "",
         formatDateShort(e.fecha_registro),
         (e.linea || "").toUpperCase(),
         compositeTurnoId,
+        turnoIdCompleto,
         turnoCode,
-        getSupervisorForEvent(e, masterData),
+        supervisor,
         formatHour2Digits(e.hora_inicio_turno || "06:00:00"),
         formatHour2Digits(e.hora_fin_turno || "18:00:00"),
         horasProg,
@@ -979,7 +999,7 @@ export async function exportAllToSheets(events, masterData) {
         const hasChanged = row.some((val, idx) => String(val) !== String(found.values[idx] ?? ""));
         if (hasChanged) {
           procesadosUpdates.push({
-            range: `${titleProcesados}!A${found.rowIndex + 1}:Q${found.rowIndex + 1}`,
+            range: `${titleProcesados}!A${found.rowIndex + 1}:R${found.rowIndex + 1}`,
             values: [row]
           });
         }
