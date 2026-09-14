@@ -1,4 +1,5 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useRef, useCallback } from "react";
+import { Capacitor } from "@capacitor/core";
 import {
   Wifi,
   WifiOff,
@@ -974,7 +975,7 @@ export default function App() {
             inputUrl={inputUrl}
             setInputUrl={setInputUrl}
             onConnect={async (url) => {
-              const ok = await fetchMasterData(url, settings.secaderoId);
+              const ok = await runSyncCycle(url);
               if (ok) {
                 setSettings((prev: any) => {
                   const next = { ...prev, supervisorUrl: url };
