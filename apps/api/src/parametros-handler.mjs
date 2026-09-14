@@ -106,6 +106,15 @@ export async function exportParametros(store) {
   return buffer;
 }
 
+export function parseBool(val, defaultVal = false) {
+  if (val === true || val === 1) return true;
+  if (val === false || val === 0 || val === null || val === undefined) return false;
+  const s = String(val).trim().toUpperCase();
+  if (s === "SI" || s === "S" || s === "TRUE" || s === "1" || s === "VERDADERO" || s === "YES") return true;
+  if (s === "NO" || s === "N" || s === "FALSE" || s === "0" || s === "FALSO" || s === "") return false;
+  return Boolean(defaultVal);
+}
+
 export async function importParametros(store, buffer) {
   // 1. Leer el libro desde el buffer
   const wb = XLSX.read(buffer, { type: "buffer" });
@@ -126,12 +135,12 @@ export async function importParametros(store, buffer) {
   const secaderosParsed = new Map();
   const tabletsParsed = [];
   for (const row of tabletsData) {
-    const tabletId = (row["Tablet ID"] || "").toString().trim().toLowerCase();
-    const secaderoId = (row["Secadero ID"] || "").toString().trim().toLowerCase();
-    const nameTablet = (row["Nombre Tablet"] || "").toString().trim();
-    const nameSecadero = (row["Secadero/Linea"] || "").toString().trim();
-    const ipVal = (row["IP Tablet"] || "").toString().trim();
-    const activaVal = (row["Activa"] || "").toString().trim().toUpperCase();
+    const tabletId = (row["Tablet ID"] || row["tablet_id"] || "").toString().trim().toLowerCase();
+    const secaderoId = (row["Secadero ID"] || row["secadero_id"] || "").toString().trim().toLowerCase();
+    const nameTablet = (row["Nombre Tablet"] || row["nombre_tablet"] || row["nombre"] || "").toString().trim();
+    const nameSecadero = (row["Secadero/Linea"] || row["Secadero / Linea"] || row["secadero"] || "").toString().trim();
+    const ipVal = (row["IP Tablet"] || row["ip_tablet"] || "").toString().trim();
+    const activaVal = row["Activa"] ?? row["activa"] ?? row["Activo"] ?? row["activo"];
 
     if (!tabletId || !secaderoId || !nameSecadero) continue;
 
@@ -149,33 +158,35 @@ export async function importParametros(store, buffer) {
       secadero_id: secaderoId,
       nombre: nameTablet || `Tablet ${nameSecadero}`,
       ip_tablet: ipVal || null,
-      activa: activaVal === "SI" || activaVal === "TRUE"
+      activa: parseBool(activaVal, true)
     });
-  }  // Parsear Catálogo de Paradas
+  }
+
+  // Parsear Catálogo de Paradas
   const origenesParsed = new Map();
   const razonesParsedMap = new Map();
   const linksMap = new Map();
 
   for (const row of paradasData) {
-    const origNamesRaw = (row["Categoria (Origen)"] || "").toString().trim();
-    const razonName = (row["Tiempo Muerto (Razon)"] || "").toString().trim();
-    const codigo = (row["Codigo"] || "").toString().trim();
-    const obsPre = (row["Observaciones Predefinidas"] || "").toString().trim();
-    const obligVal = (row["Observacion Obligatoria"] || "").toString().trim().toUpperCase();
-    const ubicacionObligVal = (row["Ubicacion Obligatoria"] || "").toString().trim().toUpperCase();
+    const origNamesRaw = (row["Categoria (Origen)"] || row["Origen"] || row["Categoria"] || "").toString().trim();
+    const razonName = (row["Tiempo Muerto (Razon)"] || row["Razon"] || row["Nombre"] || "").toString().trim();
+    const codigo = (row["Codigo"] || row["codigo"] || "").toString().trim();
+    const obsPre = (row["Observaciones Predefinidas"] || row["observaciones_predefinidas"] || "").toString().trim();
+    const obligVal = row["Observacion Obligatoria"] ?? row["Observacion obligatoria"] ?? row["observacion_obligatoria"];
+    const ubicacionObligVal = row["Ubicacion Obligatoria"] ?? row["Ubicacion obligatoria"] ?? row["ubicacion_obligatoria"];
 
-    const ubicacionFija = (row["Ubicacion Fija"] || row["Ubicacion fija"] || "").toString().trim();
-    const ubicacionLista = (row["Ubicacion Lista"] || row["Ubicacion lista"] || "").toString().trim();
+    const ubicacionFija = (row["Ubicacion Fija"] || row["Ubicacion fija"] || row["ubicacion_fija"] || "").toString().trim();
+    const ubicacionLista = (row["Ubicacion Lista"] || row["Ubicacion lista"] || row["ubicacion_lista"] || "").toString().trim();
 
-    const vistaElectricosVal = (row["Vista Electricos"] || row["Vista electricos"] || "").toString().trim().toUpperCase();
-    const vistaMecanicosVal = (row["Vista Mecanicos"] || row["Vista mecanicos"] || "").toString().trim().toUpperCase();
-    const vistaMecanicosRodillosVal = (row["Vista Mecanicos Rodillos"] || row["Vista mecanicos rodillos"] || "").toString().trim().toUpperCase();
-    const matrizVal = (row["Matriz"] || row["matriz"] || "").toString().trim().toUpperCase();
-    const matrizExtendidaVal = (row["Matriz Extendida"] || row["Matriz extendida"] || "").toString().trim().toUpperCase();
+    const vistaElectricosVal = row["Vista Electricos"] ?? row["Vista electricos"] ?? row["vista_electricos"];
+    const vistaMecanicosVal = row["Vista Mecanicos"] ?? row["Vista mecanicos"] ?? row["vista_mecanicos"];
+    const vistaMecanicosRodillosVal = row["Vista Mecanicos Rodillos"] ?? row["Vista mecanicos rodillos"] ?? row["vista_mecanicos_rodillos"];
+    const matrizVal = row["Matriz"] ?? row["matriz"];
+    const matrizExtendidaVal = row["Matriz Extendida"] ?? row["Matriz extendida"] ?? row["matriz_extendida"];
 
-    const perfilCompletoVal = (row["Mostrar Perfil Secadero completo"] || "").toString().trim().toUpperCase();
-    const perfilNivelesVal = (row["Mostrar Perfil Secadero niveles"] || "").toString().trim().toUpperCase();
-    const perfilLegacyVal = (row["Mostrar Perfil Secadero"] || "").toString().trim().toUpperCase();
+    const perfilCompletoVal = row["Mostrar Perfil Secadero completo"] ?? row["Mostrar Perfil Secadero Completo"] ?? "";
+    const perfilNivelesVal = row["Mostrar Perfil Secadero niveles"] ?? row["Mostrar Perfil Secadero Niveles"] ?? "";
+    const perfilLegacyVal = row["Mostrar Perfil Secadero"] ?? row["Mostrar perfil secadero"] ?? "";
 
     if (!razonName) continue;
 
@@ -199,15 +210,41 @@ export async function importParametros(store, buffer) {
       linksMap.set(`${razonId}:${origId}`, { razon_id: razonId, origen_id: origId });
     }
 
-    const isVistaElectricos = vistaElectricosVal === "SI" || vistaElectricosVal === "TRUE";
-    const isVistaMecanicos = vistaMecanicosVal === "SI" || vistaMecanicosVal === "TRUE";
-    const isVistaMecanicosRodillos = vistaMecanicosRodillosVal === "SI" || vistaMecanicosRodillosVal === "TRUE";
-    const isMatriz = matrizVal === "SI" || matrizVal === "TRUE";
-    const isMatrizExtendida = matrizExtendidaVal === "SI" || matrizExtendidaVal === "TRUE";
+    const isVistaElectricos = parseBool(vistaElectricosVal, false);
+    const isVistaMecanicos = parseBool(vistaMecanicosVal, false);
+    const isVistaMecanicosRodillos = parseBool(vistaMecanicosRodillosVal, false);
+    const isMatriz = parseBool(matrizVal, false);
+    const isMatrizExtendida = parseBool(matrizExtendidaVal, false);
 
-    const isPerfilCompleto = perfilCompletoVal === "SI" || perfilCompletoVal === "TRUE" || (perfilCompletoVal === "" && (perfilLegacyVal === "SI" || perfilLegacyVal === "TRUE"));
-    const isPerfilNiveles = perfilNivelesVal === "SI" || perfilNivelesVal === "TRUE";
-    const isUbicacionOblig = ubicacionObligVal === "SI" || ubicacionObligVal === "TRUE" || ((isPerfilCompleto || isPerfilNiveles || isVistaElectricos || isVistaMecanicos || isVistaMecanicosRodillos || isMatriz || isMatrizExtendida || ubicacionLista) && ubicacionObligVal === "");
+    const isPerfilCompleto = parseBool(perfilCompletoVal, false) || (String(perfilCompletoVal ?? "").trim() === "" && parseBool(perfilLegacyVal, false));
+    const isPerfilNiveles = parseBool(perfilNivelesVal, false);
+
+    let isUbicacionOblig = false;
+    if (ubicacionObligVal !== undefined && ubicacionObligVal !== null && String(ubicacionObligVal).trim() !== "") {
+      isUbicacionOblig = parseBool(ubicacionObligVal, false);
+    } else {
+      isUbicacionOblig = Boolean(
+        isPerfilCompleto ||
+        isPerfilNiveles ||
+        isVistaElectricos ||
+        isVistaMecanicos ||
+        isVistaMecanicosRodillos ||
+        isMatriz ||
+        isMatrizExtendida ||
+        (ubicacionLista && ubicacionLista.length > 0)
+      );
+    }
+
+    const isObservacionOblig = parseBool(obligVal, false);
+    const isMostrarPerfil = Boolean(
+      isPerfilCompleto ||
+      isPerfilNiveles ||
+      isVistaElectricos ||
+      isVistaMecanicos ||
+      isVistaMecanicosRodillos ||
+      isMatriz ||
+      isMatrizExtendida
+    );
 
     if (razonesParsedMap.has(razonId)) {
       const existing = razonesParsedMap.get(razonId);
@@ -218,7 +255,7 @@ export async function importParametros(store, buffer) {
       });
       if (codigo && !existing.codigo) existing.codigo = codigo;
       if (obsPre && !existing.observaciones_predefinidas) existing.observaciones_predefinidas = obsPre;
-      if (obligVal === "SI" || obligVal === "TRUE") existing.observacion_obligatoria = true;
+      if (isObservacionOblig) existing.observacion_obligatoria = true;
       if (isUbicacionOblig) existing.ubicacion_obligatoria = true;
       if (ubicacionFija) existing.ubicacion_fija = ubicacionFija;
       if (ubicacionLista) existing.ubicacion_lista = ubicacionLista;
@@ -229,14 +266,22 @@ export async function importParametros(store, buffer) {
       if (isMatrizExtendida) existing.matriz_extendida = true;
       if (isPerfilCompleto) existing.mostrar_perfil_completo = true;
       if (isPerfilNiveles) existing.mostrar_perfil_niveles = true;
-      existing.mostrar_perfil = existing.mostrar_perfil_completo || existing.mostrar_perfil_niveles || existing.vista_electricos || existing.vista_mecanicos || existing.vista_mecanicos_rodillos || existing.matriz || existing.matriz_extendida;
+      existing.mostrar_perfil = Boolean(
+        existing.mostrar_perfil_completo ||
+        existing.mostrar_perfil_niveles ||
+        existing.vista_electricos ||
+        existing.vista_mecanicos ||
+        existing.vista_mecanicos_rodillos ||
+        existing.matriz ||
+        existing.matriz_extendida
+      );
     } else {
       razonesParsedMap.set(razonId, {
         razon_id: razonId,
         codigo: codigo || null,
         nombre: razonName,
         activa: true,
-        observacion_obligatoria: obligVal === "SI" || obligVal === "TRUE",
+        observacion_obligatoria: isObservacionOblig,
         ubicacion_obligatoria: isUbicacionOblig,
         observaciones_predefinidas: obsPre || null,
         ubicacion_fija: ubicacionFija || null,
@@ -246,7 +291,7 @@ export async function importParametros(store, buffer) {
         vista_mecanicos_rodillos: isVistaMecanicosRodillos,
         matriz: isMatriz,
         matriz_extendida: isMatrizExtendida,
-        mostrar_perfil: isPerfilCompleto || isPerfilNiveles || isVistaElectricos || isVistaMecanicos || isVistaMecanicosRodillos || isMatriz || isMatrizExtendida,
+        mostrar_perfil: isMostrarPerfil,
         mostrar_perfil_completo: isPerfilCompleto,
         mostrar_perfil_niveles: isPerfilNiveles,
         origen_ids: mappedOrigenIds
@@ -260,14 +305,14 @@ export async function importParametros(store, buffer) {
   // Parsear Turnos
   const turnosParsedMap = new Map();
   for (const row of turnosData) {
-    const turnoId = (row["Turno ID"] || "").toString().trim().toLowerCase();
-    const name = (row["Nombre"] || "").toString().trim();
-    const supervisor = (row["Supervisor"] || row["Supervisor Asignado"] || row["Nombre Supervisor"] || "").toString().trim();
-    const start = (row["Hora Inicio"] || "").toString().trim();
-    const end = (row["Hora Fin"] || "").toString().trim();
-    const tot = Number(row["Horas Totales"] || 12.0);
-    const vig = (row["Fecha Vigencia"] || "").toString().trim();
-    const act = (row["Activo"] || "").toString().trim().toUpperCase();
+    const turnoId = (row["Turno ID"] || row["turno_id"] || "").toString().trim().toLowerCase();
+    const name = (row["Nombre"] || row["nombre"] || "").toString().trim();
+    const supervisor = (row["Supervisor"] || row["Supervisor Asignado"] || row["Nombre Supervisor"] || row["supervisor"] || "").toString().trim();
+    const start = (row["Hora Inicio"] || row["hora_inicio"] || "").toString().trim();
+    const end = (row["Hora Fin"] || row["hora_fin"] || "").toString().trim();
+    const tot = Number(row["Horas Totales"] || row["horas_totales"] || 12.0);
+    const vig = (row["Fecha Vigencia"] || row["fecha_inicio_vigencia"] || "").toString().trim();
+    const act = row["Activo"] ?? row["activo"];
 
     if (!turnoId || !name || !start || !end) continue;
 
@@ -281,7 +326,7 @@ export async function importParametros(store, buffer) {
       horas_totales: tot,
       horas_descanso: 0.00,
       fecha_inicio_vigencia: vig || "2026-08-26",
-      activo: act !== "NO" && act !== "FALSE"
+      activo: parseBool(act, true)
     });
   }
   const turnosParsed = Array.from(turnosParsedMap.values());
@@ -402,20 +447,20 @@ export async function importParametros(store, buffer) {
           `,
           [
             r.razon_id,
-            r.codigo,
+            r.codigo || null,
             r.nombre,
-            r.activa,
-            r.observacion_obligatoria,
-            r.observaciones_predefinidas,
-            r.mostrar_perfil,
-            r.ubicacion_obligatoria ?? false,
-            r.ubicacion_fija ?? null,
-            r.ubicacion_lista ?? null,
-            r.vista_electricos ?? false,
-            r.vista_mecanicos ?? false,
-            r.vista_mecanicos_rodillos ?? false,
-            r.matriz ?? false,
-            r.matriz_extendida ?? false
+            parseBool(r.activa, true),
+            parseBool(r.observacion_obligatoria, false),
+            r.observaciones_predefinidas || null,
+            parseBool(r.mostrar_perfil, false),
+            parseBool(r.ubicacion_obligatoria, false),
+            r.ubicacion_fija || null,
+            r.ubicacion_lista || null,
+            parseBool(r.vista_electricos, false),
+            parseBool(r.vista_mecanicos, false),
+            parseBool(r.vista_mecanicos_rodillos, false),
+            parseBool(r.matriz, false),
+            parseBool(r.matriz_extendida, false)
           ]
         );
       }
