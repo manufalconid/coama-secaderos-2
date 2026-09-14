@@ -77,9 +77,12 @@ export default function App() {
   const [dbReady, setDbReady] = useState(false);
   const [settings, setSettings] = useState(() => {
     const saved = localStorage.getItem("tablet_settings");
-    return saved
-      ? JSON.parse(saved)
-      : { supervisorUrl: "http://192.168.10.15:8080", secaderoId: "", tabletId: "" };
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (_) {}
+    }
+    return { supervisorUrl: "", secaderoId: "", tabletId: "" };
   });
 
   const [masterData, setMasterData] = useState<any>(FALLBACK_MASTER_DATA);
@@ -217,67 +220,156 @@ export default function App() {
     };
   }, [machineState, activeEvent]);
 
-  async function fetchMasterData(urlToUse = settings.supervisorUrl, secaderoIdToUse = settings.secaderoId) {
-    try {
-      let res: Response | undefined;
-      const tabletIdParam = settings.tabletId || (secaderoIdToUse === "sec-omeco" ? "tab-sec-omeco" : secaderoIdToUse === "sec-benecke" ? "tab-sec-benecke" : secaderoIdToUse === "sec-raute" ? "tab-sec-raute" : "");
-      const queryParams = `?secadero_id=${encodeURIComponent(secaderoIdToUse || "")}&tablet_id=${encodeURIComponent(tabletIdParam)}`;
-      const candidateUrls = [
-        urlToUse ? `${urlToUse.replace(/\/+$/, "")}/master-data${queryParams}` : null,
-        `/api/master-data${queryParams}`,
-        `http://127.0.0.1:8080/master-data${queryParams}`
-      ].filter(Boolean) as string[];
+  const isSyncRunningRef = useRef(false);
 
-      for (const targetUrl of candidateUrls) {
-        try {
-          const attempt = await fetch(targetUrl, { signal: getTimeoutSignal(2000) });
-          if (attempt.ok) {
-            res = attempt;
-            break;
-          }
-        } catch {
-          // Try next target URL
-        }
+  function getEffectiveApiUrl(urlToUse?: string): string {
+    const trimmed = (urlToUse !== undefined ? urlToUse : settings.supervisorUrl || "").trim().replace(/\/+$/, "");
+    if (trimmed) {
+      if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://")) {
+        return `http://${trimmed}`;
       }
-
-      if (res && res.ok) {
-        const payload = await res.json();
-        const normalized = {
-          secaderos: Array.isArray(payload?.secaderos) ? payload.secaderos : FALLBACK_MASTER_DATA.secaderos,
-          origenes: Array.isArray(payload?.origenes) ? payload.origenes : FALLBACK_MASTER_DATA.origenes,
-          razones: Array.isArray(payload?.razones) ? payload.razones : FALLBACK_MASTER_DATA.razones,
-          productos: Array.isArray(payload?.productos) ? payload.productos : (FALLBACK_MASTER_DATA.productos || []),
-          operarios: Array.isArray(payload?.operarios) ? payload.operarios : (FALLBACK_MASTER_DATA.operarios || []),
-          turnos: Array.isArray(payload?.turnos) ? payload.turnos : [],
-          detectedIp: payload?.detectedIp || null
-        };
-        setMasterData(normalized);
-        localStorage.setItem("cached_master_data", JSON.stringify(normalized));
-
-        if (payload.assignedSecaderoId || payload.assignedTabletId) {
-          setSettings((prev: any) => {
-            const next = {
-              ...prev,
-              secaderoId: payload.assignedSecaderoId || prev.secaderoId,
-              tabletId: payload.assignedTabletId || prev.tabletId
-            };
-            localStorage.setItem("tablet_settings", JSON.stringify(next));
-            return next;
-          });
-        }
-
-        setSyncStatus("online");
-        updateLastSync();
-        return true;
-      } else {
-        setSyncStatus("offline");
-        return false;
+      return trimmed;
+    }
+    // Only in non-native browser preview mode, fallback to same host if not localhost
+    if (!Capacitor.isNativePlatform() && typeof window !== "undefined" && window.location.hostname) {
+      const h = window.location.hostname;
+      if (h && h !== "localhost" && h !== "127.0.0.1") {
+        return `http://${h}:8080`;
       }
-    } catch {
+    }
+    return "";
+  }
+
+  const runSyncCycle = useCallback(async (forcedUrl?: string, forcedEvents?: StoppageEvent[]) => {
+    if (isSyncRunningRef.current) return false;
+    const effectiveUrl = getEffectiveApiUrl(forcedUrl);
+
+    if (!effectiveUrl) {
       setSyncStatus("offline");
       return false;
     }
-  }
+
+    isSyncRunningRef.current = true;
+    setIsSyncing(true);
+
+    try {
+      const tabletIdParam = settings.tabletId || (settings.secaderoId === "sec-omeco" ? "tab-sec-omeco" : settings.secaderoId === "sec-benecke" ? "tab-sec-benecke" : settings.secaderoId === "sec-raute" ? "tab-sec-raute" : "");
+      const queryParams = `?tablet_id=${encodeURIComponent(tabletIdParam)}&secadero_id=${encodeURIComponent(settings.secaderoId || "")}`;
+
+      // 1. Strict Health Check
+      const healthRes = await fetch(`${effectiveUrl}/health${queryParams}`, {
+        signal: getTimeoutSignal(2500),
+        headers: { Accept: "application/json" }
+      });
+
+      if (!healthRes.ok) {
+        setSyncStatus("offline");
+        return false;
+      }
+
+      const healthData = await healthRes.json().catch(() => null);
+      if (!healthData || healthData.service !== "coama-api") {
+        // Router or captive portal false positive
+        setSyncStatus("offline");
+        return false;
+      }
+
+      // 2. Fetch Master Data
+      const masterRes = await fetch(`${effectiveUrl}/master-data${queryParams}`, {
+        signal: getTimeoutSignal(3000),
+        headers: { Accept: "application/json" }
+      });
+
+      if (masterRes.ok) {
+        const payload = await masterRes.json().catch(() => null);
+        if (payload && Array.isArray(payload.secaderos)) {
+          const normalized = {
+            secaderos: payload.secaderos,
+            origenes: Array.isArray(payload.origenes) ? payload.origenes : FALLBACK_MASTER_DATA.origenes,
+            razones: Array.isArray(payload.razones) ? payload.razones : FALLBACK_MASTER_DATA.razones,
+            productos: Array.isArray(payload.productos) ? payload.productos : (FALLBACK_MASTER_DATA.productos || []),
+            operarios: Array.isArray(payload.operarios) ? payload.operarios : (FALLBACK_MASTER_DATA.operarios || []),
+            turnos: Array.isArray(payload.turnos) ? payload.turnos : [],
+            detectedIp: payload.detectedIp || null
+          };
+          setMasterData(normalized);
+          localStorage.setItem("cached_master_data", JSON.stringify(normalized));
+
+          if (payload.assignedSecaderoId || payload.assignedTabletId) {
+            setSettings((prev: any) => {
+              const next = {
+                ...prev,
+                secaderoId: payload.assignedSecaderoId || prev.secaderoId,
+                tabletId: payload.assignedTabletId || prev.tabletId
+              };
+              localStorage.setItem("tablet_settings", JSON.stringify(next));
+              return next;
+            });
+          }
+        }
+      }
+
+      // 3. Sync Pending Events if any
+      const eventsToSync = forcedEvents || pendingEvents;
+      if (eventsToSync.length > 0) {
+        const eventsPayload = eventsToSync.map(e => {
+          const origenes = [];
+          if (e.origen_id) {
+            origenes.push({ origen_id: e.origen_id });
+          }
+          let propuesta_manual = null;
+          if (e.observacion && e.observacion.startsWith("[Sugerido] ")) {
+            const match = e.observacion.match(/^\[Sugerido\] (.*?)\.(?:\s*(.*))?$/);
+            if (match) {
+              propuesta_manual = {
+                tipo: "razon",
+                texto: match[1].trim(),
+                comentario: match[2] ? match[2].trim() : ""
+              };
+            }
+          }
+          return {
+            ...e,
+            origenes,
+            propuesta_manual
+          };
+        });
+
+        const syncRes = await fetch(`${effectiveUrl}/sync/events`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ events: eventsPayload }),
+          signal: getTimeoutSignal(4000)
+        });
+
+        if (syncRes.ok) {
+          const syncResult = await syncRes.json().catch(() => null);
+          if (syncResult && Array.isArray(syncResult.accepted)) {
+            const acceptedIds = new Set(syncResult.accepted.map((item: any) => item.evento_id));
+            for (const e of eventsToSync) {
+              if (acceptedIds.has(e.evento_id)) {
+                await dbService.saveEvent({ ...e, sincronizado: true });
+              }
+            }
+            setPendingEvents(prev => prev.filter(e => !acceptedIds.has(e.evento_id)));
+            setEventHistory(prev =>
+              prev.map(e => (acceptedIds.has(e.evento_id) ? { ...e, sincronizado: true } : e))
+            );
+          }
+        }
+      }
+
+      setSyncStatus("online");
+      updateLastSync();
+      return true;
+    } catch {
+      setSyncStatus("offline");
+      return false;
+    } finally {
+      setIsSyncing(false);
+      isSyncRunningRef.current = false;
+    }
+  }, [settings.supervisorUrl, settings.secaderoId, settings.tabletId, pendingEvents]);
 
   async function handleAutoDiscover() {
     setIsScanning(true);
@@ -340,144 +432,28 @@ export default function App() {
     }
 
     if (foundUrl) {
-      setScanMessage(`¡Servidor encontrado en ${foundUrl}!`);
+      setScanMessage(`¡Servidor detectado en ${foundUrl}!`);
       setInputUrl(foundUrl);
-      fetchMasterData(foundUrl);
+      await runSyncCycle(foundUrl);
     } else {
-      setScanMessage("No se detectó el servidor. Por favor, ingrésalo manualmente.");
+      setScanMessage("No se detectó el servidor. Ingrésalo manualmente arriba (ej: http://192.168.1.50:8080).");
     }
     setIsScanning(false);
   }
 
-  async function syncPendingEvents(eventsToSync = pendingEvents, urlToUse = settings.supervisorUrl) {
-    if (isSyncing) return;
-    if (eventsToSync.length === 0) {
-      try {
-        let res: Response | undefined;
-        const tabletIdParam = settings.tabletId || (settings.secaderoId === "sec-omeco" ? "tab-sec-omeco" : settings.secaderoId === "sec-benecke" ? "tab-sec-benecke" : settings.secaderoId === "sec-raute" ? "tab-sec-raute" : "");
-        const queryParams = `?tablet_id=${encodeURIComponent(tabletIdParam)}&secadero_id=${encodeURIComponent(settings.secaderoId || "")}`;
-        const candidateHealthUrls = [
-          urlToUse ? `${urlToUse.replace(/\/+$/, "")}/health${queryParams}` : null,
-          `/api/health${queryParams}`,
-          `http://127.0.0.1:8080/health${queryParams}`
-        ].filter(Boolean) as string[];
-
-        for (const targetUrl of candidateHealthUrls) {
-          try {
-            const attempt = await fetch(targetUrl, { signal: getTimeoutSignal(2000) });
-            if (attempt.ok) {
-              res = attempt;
-              break;
-            }
-          } catch {
-            // Try next target URL
-          }
-        }
-        if (res && res.ok) {
-          setSyncStatus("online");
-          updateLastSync();
-        } else {
-          setSyncStatus("offline");
-        }
-      } catch {
-        setSyncStatus("offline");
-      }
-      return;
-    }
-
-    const eventsPayload = eventsToSync.map(e => {
-      const origenes = [];
-      if (e.origen_id) {
-        origenes.push({ origen_id: e.origen_id });
-      }
-      
-      let propuesta_manual = null;
-      if (e.observacion && e.observacion.startsWith("[Sugerido] ")) {
-        const match = e.observacion.match(/^\[Sugerido\] (.*?)\.(?:\s*(.*))?$/);
-        if (match) {
-          propuesta_manual = {
-            tipo: "razon",
-            texto: match[1].trim(),
-            comentario: match[2] ? match[2].trim() : ""
-          };
-        }
-      }
-
-      return {
-        ...e,
-        origenes,
-        propuesta_manual
-      };
-    });
-
-    setIsSyncing(true);
-    try {
-      let res: Response | undefined;
-      const candidateSyncUrls = [
-        urlToUse ? `${urlToUse.replace(/\/+$/, "")}/sync/events` : null,
-        `/api/sync/events`,
-        `http://127.0.0.1:8080/sync/events`
-      ].filter(Boolean) as string[];
-
-      for (const targetUrl of candidateSyncUrls) {
-        try {
-          const attempt = await fetch(targetUrl, {
-            method: "POST",
-            headers: { "content-type": "application/json" },
-            body: JSON.stringify({ events: eventsPayload }),
-            signal: getTimeoutSignal(3000)
-          });
-          if (attempt.ok) {
-            res = attempt;
-            break;
-          }
-        } catch {
-          // Try next target URL
-        }
-      }
-
-      if (res && res.ok) {
-        const syncResult = await res.json();
-        const acceptedIds = new Set(syncResult.accepted.map((item: any) => item.evento_id));
-
-        for (const e of eventsToSync) {
-          if (acceptedIds.has(e.evento_id)) {
-            await dbService.saveEvent({ ...e, sincronizado: true });
-          }
-        }
-
-        setPendingEvents(prev => prev.filter(e => !acceptedIds.has(e.evento_id)));
-        setEventHistory(prev =>
-          prev.map(e => (acceptedIds.has(e.evento_id) ? { ...e, sincronizado: true } : e))
-        );
-        setSyncStatus("online");
-        updateLastSync();
-      } else {
-        setSyncStatus("offline");
-      }
-    } catch {
-      setSyncStatus("offline");
-    } finally {
-      setIsSyncing(false);
-    }
-  }
-
   async function forceSync() {
-    await fetchMasterData();
-    await syncPendingEvents();
+    await runSyncCycle();
   }
 
   useEffect(() => {
-    fetchMasterData();
-    syncPendingEvents();
+    runSyncCycle();
 
     const interval = setInterval(() => {
-      fetchMasterData();
-      syncPendingEvents();
-    }, 10000);
+      runSyncCycle();
+    }, 8000);
 
     return () => clearInterval(interval);
-  }, [settings.supervisorUrl, settings.secaderoId, pendingEvents.length]);
+  }, [runSyncCycle]);
 
   const assignedSecaderoName = useMemo(() => {
     const sec = (masterData?.secaderos || []).find((s: any) => s.secadero_id === settings.secaderoId);
@@ -773,7 +749,7 @@ export default function App() {
     setCurrentStage("MAIN");
 
     setTimeout(() => {
-      syncPendingEvents([
+      runSyncCycle(undefined, [
         ...pendingEvents.filter(item => item.evento_id !== activeEvent.evento_id),
         ...toSync
       ]);
@@ -857,7 +833,7 @@ export default function App() {
     setEditingEvent(null);
     
     setTimeout(() => {
-      syncPendingEvents([
+      runSyncCycle(undefined, [
         ...pendingEvents.filter(item => item.evento_id !== editingEvent.evento_id),
         updatedEvent
       ]);
@@ -866,12 +842,8 @@ export default function App() {
 
   async function handleSaveSettings(e: React.FormEvent) {
     e.preventDefault();
-    const trimmedUrl = inputUrl.trim().replace(/\/$/, "");
+    const trimmedUrl = inputUrl.trim().replace(/\/+$/, "");
     
-    setIsSyncing(true);
-    await fetchMasterData(trimmedUrl, inputSecadero);
-    setIsSyncing(false);
-
     setSettings((prev: any) => {
       const next = {
         ...prev,
@@ -888,7 +860,7 @@ export default function App() {
       setCurrentStage("MAIN");
     }
 
-    syncPendingEvents(pendingEvents, trimmedUrl);
+    await runSyncCycle(trimmedUrl);
   }
 
   function formatSeconds(totalSecs: number) {
@@ -1181,37 +1153,82 @@ export default function App() {
             <form onSubmit={handleSaveSettings}>
               <div className="settings-body">
                 <div className="form-field">
-                  <label className="form-label" style={{ display: "flex", justifyContent: "space-between" }}>
-                    <span>Servidor Supervisor (IP)</span>
-                    <button
-                      type="button"
-                      onClick={handleAutoDiscover}
-                      disabled={isScanning}
-                      style={{
-                        background: "transparent",
-                        border: "none",
-                        color: "var(--brand-lumo)",
-                        cursor: "pointer",
-                        fontSize: "12px",
-                        fontWeight: "700",
-                        padding: 0,
-                        textTransform: "uppercase",
-                        letterSpacing: "0.5px"
-                      }}
-                    >
-                      {isScanning ? "Buscando..." : "🔍 Autodetectar"}
-                    </button>
+                  <label className="form-label" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span>URL del Servidor (Central)</span>
+                    <div style={{ display: "flex", gap: "10px" }}>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          const target = getEffectiveApiUrl(inputUrl);
+                          if (!target) {
+                            setScanMessage("⚠️ Ingresa la IP del servidor primero (ej: http://192.168.1.50:8080)");
+                            return;
+                          }
+                          setScanMessage(`Probando conexión con ${target}...`);
+                          try {
+                            const res = await fetch(`${target}/health`, {
+                              signal: getTimeoutSignal(2500),
+                              headers: { Accept: "application/json" }
+                            });
+                            if (res.ok) {
+                              const data = await res.json().catch(() => null);
+                              if (data && data.service === "coama-api") {
+                                setScanMessage(`🟢 ¡Conectado con éxito a COAMA Server (${target})!`);
+                                await runSyncCycle(target);
+                                return;
+                              }
+                            }
+                            setScanMessage(`🔴 Respuesta no válida desde ${target}.`);
+                          } catch (e: any) {
+                            setScanMessage(`🔴 No se pudo conectar a ${target}. Verifica la IP y que el servidor esté en la misma red Wi-Fi.`);
+                          }
+                        }}
+                        style={{
+                          background: "transparent",
+                          border: "none",
+                          color: "var(--brand-lumo)",
+                          cursor: "pointer",
+                          fontSize: "12px",
+                          fontWeight: "700",
+                          padding: 0,
+                          textTransform: "uppercase",
+                          letterSpacing: "0.5px"
+                        }}
+                      >
+                        🧪 Probar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleAutoDiscover}
+                        disabled={isScanning}
+                        style={{
+                          background: "transparent",
+                          border: "none",
+                          color: "var(--brand-lumo-gold)",
+                          cursor: "pointer",
+                          fontSize: "12px",
+                          fontWeight: "700",
+                          padding: 0,
+                          textTransform: "uppercase",
+                          letterSpacing: "0.5px"
+                        }}
+                      >
+                        {isScanning ? "Buscando..." : "🔍 Autodetectar"}
+                      </button>
+                    </div>
                   </label>
                   <input
                     type="url"
-                    required
-                    placeholder="http://192.168.10.15:8080"
+                    placeholder="Ej: http://192.168.1.50:8080"
                     value={inputUrl}
-                    onChange={e => setInputUrl(e.target.value)}
+                    onChange={e => {
+                      setInputUrl(e.target.value);
+                      setScanMessage("");
+                    }}
                     className="input-text"
                   />
                   {scanMessage && (
-                    <span style={{ fontSize: "11.5px", color: "var(--brand-lumo-gold)", marginTop: "4px", display: "block" }}>
+                    <span style={{ fontSize: "11.5px", color: scanMessage.startsWith("🟢") ? "var(--state-ok)" : scanMessage.startsWith("🔴") ? "var(--state-alert)" : "var(--brand-lumo-gold)", marginTop: "4px", display: "block" }}>
                       {scanMessage}
                     </span>
                   )}
@@ -1240,7 +1257,7 @@ export default function App() {
                     <div style={{ display: "flex", justifyContent: "space-between" }}>
                       <span style={{ color: "var(--text-muted)" }}>Estado de Red:</span>
                       <strong style={{ color: syncStatus === "online" ? "var(--state-ok)" : "var(--state-alert)" }}>
-                        {syncStatus === "online" ? "CONECTADO" : "DESCONECTADO"}
+                        {syncStatus === "online" ? "🟢 CONECTADO" : "🔴 DESCONECTADO"}
                       </strong>
                     </div>
                     <div style={{ display: "flex", justifyContent: "space-between" }}>
@@ -1272,10 +1289,10 @@ export default function App() {
                         await dbService.clearEvents();
                         localStorage.removeItem("machine_state");
                         localStorage.removeItem("last_sync_time");
-                        setEvents([]);
-                        setUnsyncedCount(0);
-                        setCurrentEvent(null);
-                        setMachineState("running");
+                        setEventHistory([]);
+                        setPendingEvents([]);
+                        setActiveEvent(null);
+                        setMachineState("produciendo");
                         setIsSettingsOpen(false);
                         alert("✅ Cola local de paradas vaciada. La tablet está limpia y lista para operar.");
                       }
