@@ -276,6 +276,89 @@ async function processTelegramQueue() {
   }
 }
 
+const MIME_TYPES = {
+  ".html": "text/html; charset=utf-8",
+  ".js": "application/javascript; charset=utf-8",
+  ".mjs": "application/javascript; charset=utf-8",
+  ".css": "text/css; charset=utf-8",
+  ".json": "application/json; charset=utf-8",
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".gif": "image/gif",
+  ".svg": "image/svg+xml",
+  ".ico": "image/x-icon",
+  ".mp4": "video/mp4",
+  ".woff": "font/woff",
+  ".woff2": "font/woff2",
+  ".ttf": "font/ttf"
+};
+
+function tryServeStatic(req, res, url) {
+  if (req.method !== "GET" && req.method !== "HEAD") return false;
+
+  const potentialRoots = [
+    path.resolve("apps/supervisor-web/dist"),
+    path.resolve("coama-secaderos-2/apps/supervisor-web/dist")
+  ];
+
+  const distRoot = potentialRoots.find(p => fs.existsSync(p));
+  if (!distRoot) return false;
+
+  const apiPrefixes = ["/api", "/admin", "/sync", "/master-data", "/debug", "/export", "/health"];
+  const isApi = apiPrefixes.some(p => url.pathname === p || url.pathname.startsWith(p + "/"));
+
+  if (isApi) return false;
+
+  let reqPath = url.pathname;
+  if (reqPath === "/" || reqPath === "/portal" || reqPath === "/portal/") {
+    reqPath = "/index.html";
+  }
+
+  const safeSuffix = path.normalize(reqPath).replace(/^(\.\.[\/\\])+/, "");
+  let filePath = path.join(distRoot, safeSuffix);
+
+  if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+    const ext = path.extname(filePath).toLowerCase();
+    const contentType = MIME_TYPES[ext] || "application/octet-stream";
+    const stat = fs.statSync(filePath);
+    res.writeHead(200, {
+      "Content-Type": contentType,
+      "Content-Length": stat.size,
+      "Access-Control-Allow-Origin": "*",
+      "Cache-Control": ext === ".html" ? "no-cache" : "public, max-age=31536000"
+    });
+    if (req.method === "HEAD") {
+      res.end();
+      return true;
+    }
+    fs.createReadStream(filePath).pipe(res);
+    return true;
+  }
+
+  const acceptsHtml = (req.headers.accept || "").includes("text/html");
+  if (acceptsHtml) {
+    const indexPath = path.join(distRoot, "index.html");
+    if (fs.existsSync(indexPath)) {
+      const stat = fs.statSync(indexPath);
+      res.writeHead(200, {
+        "Content-Type": "text/html; charset=utf-8",
+        "Content-Length": stat.size,
+        "Access-Control-Allow-Origin": "*",
+        "Cache-Control": "no-cache"
+      });
+      if (req.method === "HEAD") {
+        res.end();
+        return true;
+      }
+      fs.createReadStream(indexPath).pipe(res);
+      return true;
+    }
+  }
+
+  return false;
+}
+
 const server = http.createServer(async (req, res) => {
   // Log request
   console.log(`[REQ] ${req.method} ${req.url} from ${req.socket.remoteAddress}`);
@@ -293,6 +376,10 @@ const server = http.createServer(async (req, res) => {
 
   try {
     const url = new URL(req.url ?? "/", `http://${req.headers.host}`);
+
+    if (tryServeStatic(req, res, url)) {
+      return;
+    }
 
     if (req.method === "GET" && url.pathname === "/health") {
       const clientIp = (req.headers["x-forwarded-for"] || req.headers["x-real-ip"] || req.socket.remoteAddress || "")
