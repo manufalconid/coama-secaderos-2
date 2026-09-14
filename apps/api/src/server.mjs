@@ -18,6 +18,7 @@ import { InMemorySyncStore, populateUnifiedFields } from "./store.mjs";
 import { PgSyncStore } from "./postgres-store.mjs";
 import { exportParametros, importParametros } from "./parametros-handler.mjs";
 import { syncRawEventToSheets, syncProcessedEventToSheets, syncTurnosToSheets, deriveDailyTurnos, exportAllToSheets, formatErpIsoLocal } from "./sheets-sync.mjs";
+import { getGridOptions, exportGridExcel } from "./grid-export-handler.mjs";
 
 
 import fs from "node:fs";
@@ -366,7 +367,7 @@ const server = http.createServer(async (req, res) => {
       return sendJson(res, 200, { success: true });
     }
 
-    if (url.pathname.startsWith("/admin/")) {
+    if (url.pathname.startsWith("/admin/") || url.pathname.startsWith("/api/admin/")) {
       return handleAdminRoute(req, res, url);
     }
 
@@ -623,7 +624,11 @@ function createStore(mode) {
 }
 
 async function handleAdminRoute(req, res, url) {
-  const parts = url.pathname.split("/").filter(Boolean);
+  let pathname = url.pathname;
+  if (pathname.startsWith("/api/")) {
+    pathname = pathname.slice(4);
+  }
+  const parts = pathname.split("/").filter(Boolean);
   const resource = parts[1];
   const id = parts[2];
   const action = parts[3];
@@ -776,6 +781,45 @@ async function handleAdminRoute(req, res, url) {
         const masterData = await store.getMasterData();
         await exportAllToSheets(events, masterData);
         return sendJson(res, 200, { success: true, message: "Sincronización completa con Google Sheets realizada con éxito." });
+      } catch (err) {
+        return sendJson(res, 500, { error: err.message });
+      }
+    }
+  }
+
+  if (resource === "grid") {
+    if (req.method === "GET" && id === "options") {
+      try {
+        const options = await getGridOptions(store);
+        return sendJson(res, 200, options);
+      } catch (err) {
+        return sendJson(res, 500, { error: err.message });
+      }
+    }
+    if ((req.method === "POST" || req.method === "GET") && id === "export") {
+      try {
+        let params = {};
+        if (req.method === "POST") {
+          params = await readJson(req);
+        } else {
+          params = {
+            fechaInicio: url.searchParams.get("fechaInicio"),
+            fechaFin: url.searchParams.get("fechaFin"),
+            lineas: url.searchParams.get("lineas") ? url.searchParams.get("lineas").split(",") : []
+          };
+        }
+
+        const { buffer, filename } = await exportGridExcel(store, params);
+        const encodedFilename = encodeURIComponent(filename);
+        res.writeHead(200, {
+          "content-type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          "content-disposition": `attachment; filename="${filename}"; filename*=UTF-8''${encodedFilename}`,
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+          "Access-Control-Allow-Headers": "Content-Type",
+          "Access-Control-Expose-Headers": "Content-Disposition"
+        });
+        return res.end(buffer);
       } catch (err) {
         return sendJson(res, 500, { error: err.message });
       }

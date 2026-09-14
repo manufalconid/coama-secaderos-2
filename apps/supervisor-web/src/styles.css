@@ -461,6 +461,127 @@ button {
   border-color: var(--text-dim);
 }
 
+/* HERO GRID BUTTON */
+.btn-grid-hero {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 40px;
+  border-radius: 3px;
+  padding: 0 18px;
+  background: linear-gradient(135deg, #facc15 0%, #eab308 100%);
+  color: #050505;
+  font-size: 12.5px;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+  border: 1px solid #facc15;
+  box-shadow: 0 0 16px rgba(250, 204, 21, 0.22), 0 2px 8px rgba(0, 0, 0, 0.4);
+  transition: all 0.25s var(--ease-spring);
+  cursor: pointer;
+}
+
+.btn-grid-hero:hover {
+  background: linear-gradient(135deg, #fde047 0%, #facc15 100%);
+  box-shadow: 0 0 24px rgba(250, 204, 21, 0.45), 0 4px 12px rgba(0, 0, 0, 0.5);
+  transform: translateY(-1px);
+}
+
+.btn-grid-hero:active {
+  transform: translateY(0);
+}
+
+/* SUBTLE MUTED BUTTONS */
+.btn-subtle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 34px;
+  border-radius: 2px;
+  padding: 0 12px;
+  border: 1px solid #222222;
+  background: rgba(255, 255, 255, 0.02);
+  color: #888888;
+  font-size: 11.5px;
+  font-weight: 500;
+  transition: all 0.2s var(--ease-apple);
+  cursor: pointer;
+}
+
+.btn-subtle:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: #333333;
+  color: #cccccc;
+}
+
+.btn-subtle:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* LINE CHIPS & PRESETS */
+.chip-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 3px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid var(--border-subtle);
+  background: #111111;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s var(--ease-apple);
+  user-select: none;
+}
+
+.filter-chip:hover {
+  border-color: #333333;
+  color: var(--text-main);
+  background: #161616;
+}
+
+.filter-chip.active {
+  background: rgba(250, 204, 21, 0.12);
+  border-color: var(--brand-lumo);
+  color: var(--brand-lumo);
+  font-weight: 700;
+}
+
+.preset-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 2px;
+  background: #161616;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.preset-btn:hover {
+  background: #202020;
+  color: var(--text-main);
+  border-color: #383838;
+}
+
+.preset-btn.active {
+  background: rgba(250, 204, 21, 0.15);
+  border-color: var(--brand-lumo);
+  color: var(--brand-lumo);
+}
+
 /* TABLES */
 .clean-table {
   width: 100%;
