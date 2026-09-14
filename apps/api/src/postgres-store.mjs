@@ -430,26 +430,24 @@ export class PgSyncStore {
   async getMasterDataInternal(externalClient = null) {
     const client = externalClient ?? await this.pool.connect();
     try {
-      const [razonesRes, origenesRes, secaderosRes, tabletsRes, razonOrigenesRes, turnosRes] = await Promise.all([
-        client.query(
-          "select razon_id, codigo, nombre, activa, observacion_obligatoria, observaciones_predefinidas, mostrar_perfil, ubicacion_obligatoria, ubicacion_fija, ubicacion_lista, vista_electricos, vista_mecanicos, vista_mecanicos_rodillos, matriz, matriz_extendida from razones_parada where activa = true order by nombre"
-        ),
-        client.query(
-          "select origen_id, codigo, nombre, activo as activa from origenes_parada where activo = true order by nombre"
-        ),
-        client.query(
-          "select secadero_id, codigo, nombre, activo from secaderos where activo = true order by codigo"
-        ),
-        client.query(
-          "select tablet_id, secadero_id, nombre, activa, ip_tablet from tablets where activa = true order by nombre"
-        ),
-        client.query(
-          "select razon_id, origen_id from razon_origenes"
-        ),
-        client.query(
-          "select turno_id, nombre, supervisor, hora_inicio, hora_fin, horas_totales, horas_descanso, activo, fecha_inicio_vigencia from turnos where activo = true order by fecha_inicio_vigencia desc, nombre"
-        )
-      ]);
+      const razonesRes = await client.query(
+        "select razon_id, codigo, nombre, activa, observacion_obligatoria, observaciones_predefinidas, mostrar_perfil, ubicacion_obligatoria, ubicacion_fija, ubicacion_lista, vista_electricos, vista_mecanicos, vista_mecanicos_rodillos, matriz, matriz_extendida from razones_parada where activa = true order by nombre"
+      );
+      const origenesRes = await client.query(
+        "select origen_id, codigo, nombre, activo as activa from origenes_parada where activo = true order by nombre"
+      );
+      const secaderosRes = await client.query(
+        "select secadero_id, codigo, nombre, activo from secaderos where activo = true order by codigo"
+      );
+      const tabletsRes = await client.query(
+        "select tablet_id, secadero_id, nombre, activa, ip_tablet from tablets where activa = true order by nombre"
+      );
+      const razonOrigenesRes = await client.query(
+        "select razon_id, origen_id from razon_origenes"
+      );
+      const turnosRes = await client.query(
+        "select turno_id, nombre, supervisor, hora_inicio, hora_fin, horas_totales, horas_descanso, activo, fecha_inicio_vigencia from turnos where activo = true order by fecha_inicio_vigencia desc, nombre"
+      );
 
       const origenesMap = new Map();
       for (const row of razonOrigenesRes.rows) {
@@ -727,10 +725,8 @@ export class PgSyncStore {
     const populatedEvents = events.map(e => populateUnifiedFields(e, masterData));
     const client = await this.pool.connect();
     try {
-      const [eventOrigins, manualProposals] = await Promise.all([
-        client.query("select * from evento_origenes order by evento_id, evento_origen_id"),
-        client.query("select * from propuestas_maestro order by creado_en, propuesta_id")
-      ]);
+      const eventOrigins = await client.query("select * from evento_origenes order by evento_id, evento_origen_id");
+      const manualProposals = await client.query("select * from propuestas_maestro order by creado_en, propuesta_id");
 
       return {
         events: populatedEvents,

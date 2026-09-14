@@ -4,6 +4,13 @@ if (typeof process.loadEnvFile === "function") {
   } catch (_) {}
 }
 
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("[ UNHANDLED REJECTION ]", reason);
+});
+process.on("uncaughtException", (err) => {
+  console.error("[ UNCAUGHT EXCEPTION ]", err);
+});
+
 import http from "node:http";
 import net from "node:net";
 import { exec } from "node:child_process";
